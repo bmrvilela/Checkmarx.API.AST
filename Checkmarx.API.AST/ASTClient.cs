@@ -31,7 +31,8 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Reflection.Metadata;
+using Checkmarx.API.AST.Services.QueryEditor;
+using System.Diagnostics;
 
 namespace Checkmarx.API.AST
 {
@@ -125,6 +126,10 @@ namespace Checkmarx.API.AST
                                 .HandleTransientHttpError()
                                 .WaitAndRetryAsync(10, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
 
+        internal static readonly Policy _genericRetryPolicy = Policy
+                                .Handle<Exception>()
+                                .WaitAndRetry(10, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
+
         public const string SettingsAPISecuritySwaggerFolderFileFilter = "scan.config.apisec.swaggerFilter";
         public const string SettingsProjectRepoUrl = "scan.handler.git.repository";
         public const string SettingsProjectExclusions = "scan.config.sast.filter";
@@ -160,7 +165,7 @@ namespace Checkmarx.API.AST
         {
             get
             {
-                if (Connected && _projects  == null)
+                if (Connected && _projects == null)
                     _projects = new Projects($"{ASTServer.AbsoluteUri}api/projects", _httpClient);
 
                 return _projects;
@@ -172,7 +177,7 @@ namespace Checkmarx.API.AST
         {
             get
             {
-                if (Connected && _featureFlags  == null)
+                if (Connected && _featureFlags == null)
                     _featureFlags = new FeatureFlags(ASTServer, _httpClient);
 
                 return _featureFlags;
@@ -184,7 +189,7 @@ namespace Checkmarx.API.AST
         {
             get
             {
-                if (Connected && _lists  == null)
+                if (Connected && _lists == null)
                     _lists = new Lists(ASTServer, _httpClient);
 
                 return _lists;
@@ -196,7 +201,7 @@ namespace Checkmarx.API.AST
         {
             get
             {
-                if (Connected && _scans  == null)
+                if (Connected && _scans == null)
                     _scans = new Scans($"{ASTServer.AbsoluteUri}api/scans", _httpClient);
 
                 return _scans;
@@ -208,7 +213,7 @@ namespace Checkmarx.API.AST
         {
             get
             {
-                if (Connected && _reports  == null)
+                if (Connected && _reports == null)
                     _reports = new Reports($"{ASTServer.AbsoluteUri}api/reports", _httpClient);
 
                 return _reports;
@@ -220,7 +225,7 @@ namespace Checkmarx.API.AST
         {
             get
             {
-                if (Connected && _requests  == null)
+                if (Connected && _requests == null)
                     _requests = new Requests(ASTServer, _httpClient);
 
                 return _requests;
@@ -233,7 +238,7 @@ namespace Checkmarx.API.AST
         {
             get
             {
-                if (Connected && _accessManagement  == null)
+                if (Connected && _accessManagement == null)
                     _accessManagement = new AccessManagement(ASTServer, _httpClient);
 
                 return _accessManagement;
@@ -246,7 +251,7 @@ namespace Checkmarx.API.AST
         {
             get
             {
-                if (Connected && _SASTMetadata  == null)
+                if (Connected && _SASTMetadata == null)
                     _SASTMetadata = new SASTMetadata($"{ASTServer.AbsoluteUri}api/sast-metadata", _httpClient);
 
                 return _SASTMetadata;
@@ -258,7 +263,7 @@ namespace Checkmarx.API.AST
         {
             get
             {
-                if (Connected && _applications  == null)
+                if (Connected && _applications == null)
                     _applications = new Applications($"{ASTServer.AbsoluteUri}api/applications", _httpClient);
 
                 return _applications;
@@ -275,7 +280,7 @@ namespace Checkmarx.API.AST
         {
             get
             {
-                if (Connected && _SASTResults  == null)
+                if (Connected && _SASTResults == null)
                     _SASTResults = new SASTResults(ASTServer, _httpClient);
 
                 return _SASTResults;
@@ -292,7 +297,7 @@ namespace Checkmarx.API.AST
         {
             get
             {
-                if (Connected && _SASTResultsPredicates  == null)
+                if (Connected && _SASTResultsPredicates == null)
                     _SASTResultsPredicates = new SASTResultsPredicates(ASTServer, _httpClient);
 
 
@@ -327,7 +332,7 @@ namespace Checkmarx.API.AST
         {
             get
             {
-                if (Connected && _kicsResults  == null)
+                if (Connected && _kicsResults == null)
                     _kicsResults = new KicsResults($"{ASTServer.AbsoluteUri}api/kics-results", _httpClient);
 
 
@@ -345,7 +350,7 @@ namespace Checkmarx.API.AST
         {
             get
             {
-                if (Connected && _kicsResultsPredicates  == null)
+                if (Connected && _kicsResultsPredicates == null)
                     _kicsResultsPredicates = new KICSResultsPredicates(ASTServer, _httpClient);
 
 
@@ -363,7 +368,7 @@ namespace Checkmarx.API.AST
         {
             get
             {
-                if (Connected && _cxOneSCA  == null)
+                if (Connected && _cxOneSCA == null)
                     _cxOneSCA = new CxOneSCA(ASTServer, _httpClient);
 
                 return _cxOneSCA;
@@ -379,7 +384,7 @@ namespace Checkmarx.API.AST
         {
             get
             {
-                if (Connected && _scannersResults  == null)
+                if (Connected && _scannersResults == null)
                     _scannersResults = new ScannersResults($"{ASTServer.AbsoluteUri}api/results", _httpClient);
 
 
@@ -398,7 +403,7 @@ namespace Checkmarx.API.AST
         {
             get
             {
-                if (Connected && _resultsSummary  == null)
+                if (Connected && _resultsSummary == null)
                     _resultsSummary = new ResultsSummary($"{ASTServer.AbsoluteUri}api/scan-summary", _httpClient);
 
                 return _resultsSummary;
@@ -410,7 +415,7 @@ namespace Checkmarx.API.AST
         {
             get
             {
-                if (Connected && _resultsOverview  == null)
+                if (Connected && _resultsOverview == null)
                     _resultsOverview = new ResultsOverview($"{ASTServer.AbsoluteUri}api/results-overview", _httpClient);
 
 
@@ -429,7 +434,7 @@ namespace Checkmarx.API.AST
         {
             get
             {
-                if (Connected && _configuration  == null)
+                if (Connected && _configuration == null)
                     _configuration = new Configuration($"{ASTServer.AbsoluteUri}api/configuration", _httpClient);
 
                 return _configuration;
@@ -442,7 +447,7 @@ namespace Checkmarx.API.AST
         {
             get
             {
-                if (Connected && _repostore  == null)
+                if (Connected && _repostore == null)
                     _repostore = new Repostore($"{ASTServer.AbsoluteUri}api/repostore/code", _httpClient);
 
 
@@ -457,7 +462,7 @@ namespace Checkmarx.API.AST
         {
             get
             {
-                if (Connected && _uploads  == null)
+                if (Connected && _uploads == null)
                     _uploads = new Uploads($"{ASTServer.AbsoluteUri}api/uploads", _httpClient);
 
 
@@ -472,7 +477,7 @@ namespace Checkmarx.API.AST
         {
             get
             {
-                if (Connected && _presetManagement  == null)
+                if (Connected && _presetManagement == null)
                     _presetManagement = new PresetManagement($"{ASTServer.AbsoluteUri}api/presets", _httpClient);
 
 
@@ -487,7 +492,7 @@ namespace Checkmarx.API.AST
         {
             get
             {
-                if (Connected && _sastQuery  == null)
+                if (Connected && _sastQuery == null)
                     _sastQuery = new SASTQuery(ASTServer.AbsoluteUri, _httpClient);
 
                 return _sastQuery;
@@ -501,12 +506,23 @@ namespace Checkmarx.API.AST
         {
             get
             {
-                if (Connected && _sastQueriesAudit  == null)
+                if (Connected && _sastQueriesAudit == null)
                     _sastQueriesAudit = new SASTQueriesAudit($"{ASTServer.AbsoluteUri}api/cx-audit", _httpClient);
 
-
-
                 return _sastQueriesAudit;
+            }
+        }
+
+        private QueryEditor _queryEditor;
+
+        public QueryEditor QueryEditor
+        {
+            get
+            {
+                if (Connected && _queryEditor == null)
+                    _queryEditor = new QueryEditor($"{ASTServer.AbsoluteUri}api/query-editor", _httpClient);
+
+                return _queryEditor;
             }
         }
 
@@ -519,7 +535,7 @@ namespace Checkmarx.API.AST
         {
             get
             {
-                if (Connected && _logs  == null)
+                if (Connected && _logs == null)
                     _logs = new Logs(ASTServer, _httpClient);
 
                 return _logs;
@@ -1494,7 +1510,7 @@ namespace Checkmarx.API.AST
 
             SCA.UpdateResultState(new PackageInfo
             {
-                PackageManager= vulnerabilityRisk.PackageManager,
+                PackageManager = vulnerabilityRisk.PackageManager,
                 PackageName = vulnerabilityRisk.PackageName,
                 PackageVersion = vulnerabilityRisk.PackageVersion,
                 VulnerabilityId = vulnerabilityRisk.Id,
@@ -1806,11 +1822,6 @@ namespace Checkmarx.API.AST
             return SASTQuery.GetQueryForProject(projectId, queryPath, tenantLevel);
         }
 
-        public Services.SASTQuery.Query GetCxLevelQuery(string queryPath)
-        {
-            return SASTQuery.GetCxLevelQuery(queryPath);
-        }
-
         public void SaveProjectQuery(Guid projectId, string queryName, string queryPath, string source)
         {
             SASTQuery.SaveProjectQuery(projectId.ToString(), queryName, queryPath, source);
@@ -1821,9 +1832,197 @@ namespace Checkmarx.API.AST
             SASTQuery.DeleteProjectQuery(projectId, queryPath);
         }
 
+        #region QueryEditor
+
+        Dictionary<Guid, Dictionary<Guid, Guid>> _queryEditorSessionCache = new Dictionary<Guid, Dictionary<Guid, Guid>>();
+        private Guid getQueryEditorSessionId(Guid projectId, Guid scanId)
+        {
+            if (_queryEditorSessionCache.ContainsKey(projectId))
+            {
+                if (!_queryEditorSessionCache[projectId].ContainsKey(scanId))
+                {
+                    var sessionId = createNewSessionId(projectId, scanId);
+                    _queryEditorSessionCache[projectId].Add(scanId, sessionId);
+                }
+                else
+                {
+                    bool errorSession = false;
+                    try
+                    {
+                        QueryEditor.PingSessionAsync(_queryEditorSessionCache[projectId][scanId]).ConfigureAwait(false);
+                    }
+                    catch
+                    {
+                        errorSession = true;
+                    }
+
+                    if (errorSession)
+                    {
+                        var sessionId = createNewSessionId(projectId, scanId);
+                        _queryEditorSessionCache[projectId][scanId] = sessionId;
+                    }
+                }
+            }
+            else
+            {
+                var sessionId = createNewSessionId(projectId, scanId);
+                _queryEditorSessionCache[projectId] = new Dictionary<Guid, Guid>() { { scanId, sessionId } };
+            }
+
+            return _queryEditorSessionCache[projectId][scanId];
+        }
+
+        public Guid createNewSessionId(Guid projectId, Guid scanId)
+        {
+            var session = QueryEditor.CreateSessionAsync(new Services.QueryEditor.SessionRequest() { ProjectId = projectId, ScanId = scanId, Scanner = "sast", Timeout = 3000 }).Result;
+
+            bool completed = false;
+            Guid? id = null;
+            while (!completed)
+            {
+                System.Threading.Thread.Sleep(5 * 1000);
+
+                var status = QueryEditor.CheckRequestSessionStatusAsync(session.Id, session.Data.RequestID.Value).Result;
+
+                if (status.Completed)
+                {
+                    completed = true;
+                    if (status.Status == RequestStatusStatus.Finished)
+                        id = session.Id;
+                    else
+                        throw new Exception($"Error creating session for project {projectId} with status \"{status.Status.ToString()}\".");
+                }
+            }
+
+            if (id == null)
+                throw new Exception($"Unknown error creating session for project {projectId}");
+
+
+            return id.Value;
+        }
+
+        private void endQueryEditorSessions()
+        {
+            foreach (var project in _queryEditorSessionCache)
+            {
+                foreach (var session in project.Value)
+                {
+                    try
+                    {
+                        QueryEditor.DeleteSessionAsync(session.Value).ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        Trace.WriteLine($"Error ending queryEditor session for project {project.Key}");
+                    }
+                }
+            }
+
+            _queryEditorSessionCache.Clear();
+        }
+
+        public IEnumerable<Services.QueryEditor.QueriesTree> GetProjectScanQueryNodes(Guid projectId, Guid scanId)
+        {
+            var session = getQueryEditorSessionId(projectId, scanId);
+
+            return QueryEditor.GetQueriesAsync(session).Result;
+        }
+
+        public Services.QueryEditor.QueryResponse GetProjectQueryByEditorQuery(Guid projectId, Guid scanId, string editorQueryId, bool includeMetadata = false, bool includeSource = false)
+        {
+            var session = getQueryEditorSessionId(projectId, scanId);
+
+            return QueryEditor.GetQueryAsync(session, editorQueryId, includeMetadata, includeSource).Result;
+        }
+
+        public string CreateProjectQueryByEditorQuery(Guid projectId, Guid scanId, string editorQueryId, string name, string path, long cwe, string language, string group, string severity, bool executable, long description, long sastId, List<string> presets, string source)
+        {
+            return _genericRetryPolicy.Execute(() => createProjectQueryByEditorQuery(projectId, scanId, editorQueryId, name, path, cwe, language, group, severity, executable, description, sastId, presets, source));
+        }
+
+        private string createProjectQueryByEditorQuery(Guid projectId, Guid scanId, string editorQueryId, string name, string path, long cwe, string language, string group, string severity, bool executable, long description, long sastId, List<string> presets, string source)
+        {
+            var session = getQueryEditorSessionId(projectId, scanId);
+
+            CreateQueryRequest createBody = new CreateQueryRequest()
+            {
+                Name = name,
+                Cwe = cwe,
+                Language = language,
+                Group = group,
+                Severity = severity,
+                Executable = executable,
+                Description = description,
+
+                Id = editorQueryId,
+                Level = "project",
+                Path = path,
+                Presets = presets,
+                SastId = sastId,
+
+                Source = source
+            };
+
+            var createQueryResult = QueryEditor.CreateQueryAsync(createBody, session).Result;
+
+            bool completed = false;
+            string id = null;
+            while (!completed)
+            {
+                System.Threading.Thread.Sleep(5 * 1000);
+
+                var status = QueryEditor.CheckRequestStatusAsync(session, createQueryResult.Id).Result;
+
+                if (status.Completed)
+                {
+                    completed = true;
+                    if (status.Status == RequestStatusStatus.Finished)
+                        id = status.Value?.Id;
+                    else
+                        throw new Exception($"Error creating query for project {projectId} with status \"{status.Status.ToString()}\". Message: \"{status.Value.Message}\"");
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(id))
+                throw new Exception($"Unknown error creating query for project {projectId}");
+
+            return id;
+        }
+
+        public bool DeleteProjectQueryByEditorQuery(Guid projectId, Guid scanId, string editorQueryId)
+        {
+            return _genericRetryPolicy.Execute(() => deleteProjectQueryByEditorQuery(projectId, scanId, editorQueryId));
+        }
+
+        private bool deleteProjectQueryByEditorQuery(Guid projectId, Guid scanId, string editorQueryId)
+        {
+            var session = getQueryEditorSessionId(projectId, scanId);
+
+            var deleteQueryResult = QueryEditor.DeleteQueryAsync(session, editorQueryId).Result;
+
+            bool completed = false;
+            while (!completed)
+            {
+                System.Threading.Thread.Sleep(5 * 1000);
+
+                var status = QueryEditor.CheckRequestStatusAsync(session, deleteQueryResult.Id).Result;
+
+                if (status.Completed)
+                {
+                    completed = true;
+                    if (status.Status != RequestStatusStatus.Finished)
+                        throw new Exception($"Error deleting query for project {projectId} with status \"{status.Status.ToString()}\". Message: \"{status.Value.Message}\"");
+                }
+            }
+
+            return true;
+        }
+
         #endregion
 
-        #region GrphQL
+        #endregion
+
+        #region GraphQL
 
         public SCALegalRisks GetSCAScanLegalRisk(Guid scanId)
         {
@@ -1990,16 +2189,17 @@ namespace Checkmarx.API.AST
 
 
         private IDictionary<Guid, Group> _groups = null;
-        public IDictionary<Guid,Group> Groups { 
-            get 
+        public IDictionary<Guid, Group> Groups
+        {
+            get
             {
                 if (_groups == null)
                 {
-                    _groups = AccessManagement.GetGroupsAsync().Result.ToDictionary(x => x.Id); 
+                    _groups = AccessManagement.GetGroupsAsync().Result.ToDictionary(x => x.Id);
                 }
 
                 return _groups;
-            } 
+            }
         }
 
         private IDictionary<Guid, User> _users = null;
@@ -2018,8 +2218,14 @@ namespace Checkmarx.API.AST
 
         #endregion
 
-        #region Static Methods
-
-        #endregion
+        private bool _disposed = false;
+        public void Dispose()
+        {
+            if (!_disposed)
+            {
+                endQueryEditorSessions();
+                _disposed = true;
+            }
+        }
     }
 }
