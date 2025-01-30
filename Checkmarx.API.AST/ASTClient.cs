@@ -123,7 +123,12 @@ namespace Checkmarx.API.AST
 
         internal static readonly IAsyncPolicy<HttpResponseMessage> _retryPolicy = HttpPolicyExtensions
                                 .HandleTransientHttpError()
-                                .WaitAndRetryAsync(10, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
+                                .WaitAndRetryAsync(10, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
+                                (exception, timeSpan, retryCount, context) =>
+                                {
+                                    // Optional: Log the retry attempt
+                                    Console.WriteLine($"Retry {retryCount} after {timeSpan.TotalSeconds} seconds due to: {exception.Exception.Message}");
+                                });
 
         public const string SettingsAPISecuritySwaggerFolderFileFilter = "scan.config.apisec.swaggerFilter";
         public const string SettingsProjectRepoUrl = "scan.handler.git.repository";
@@ -1990,16 +1995,17 @@ namespace Checkmarx.API.AST
 
 
         private IDictionary<Guid, Group> _groups = null;
-        public IDictionary<Guid,Group> Groups { 
-            get 
+        public IDictionary<Guid, Group> Groups
+        {
+            get
             {
                 if (_groups == null)
                 {
-                    _groups = AccessManagement.GetGroupsAsync().Result.ToDictionary(x => x.Id); 
+                    _groups = AccessManagement.GetGroupsAsync().Result.ToDictionary(x => x.Id);
                 }
 
                 return _groups;
-            } 
+            }
         }
 
         private IDictionary<Guid, User> _users = null;
