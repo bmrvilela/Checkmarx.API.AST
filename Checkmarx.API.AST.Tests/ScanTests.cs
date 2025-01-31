@@ -52,6 +52,17 @@ namespace Checkmarx.API.AST.Tests
         }
 
         [TestMethod]
+        public void FixedResultsTest()
+        {
+            Guid projectId = new Guid("89cfe246-ea1a-468f-9546-a814c180da01");
+
+            Guid baseScan = new Guid("f2c0dbc6-4e91-4b3e-867e-e5c1add753d8");
+            Guid resolveScan = new Guid("f767d726-b743-4b65-8766-f87fbf36926f");
+
+            var compare = astclient.GetSASTScanCompareResultsByScans(baseScan, resolveScan).ToList();
+        }
+
+        [TestMethod]
         public void GetScanLegalRiskTest()
         {
             Guid scanId = new Guid("261d7043-8f2c-4e77-bfa4-b37dad7c19ce");

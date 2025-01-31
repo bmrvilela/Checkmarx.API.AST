@@ -4,10 +4,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Text;
-using Checkmarx.API.AST.Exceptions;
+using System.Threading.Tasks;
 using static Checkmarx.API.AST.ASTClient;
-using System.Threading;
 
 namespace Checkmarx.API.AST.Services
 {
@@ -25,373 +25,64 @@ namespace Checkmarx.API.AST.Services
         public IEnumerable<Query> GetQueries()
         {
             string serverRestEndpoint = $"{_baseUrl}api/cx-audit/queries";
-            WebRequest request = WebRequest.Create(serverRestEndpoint);
-            request.Method = "GET";
-            request.Headers.Add("Authorization", _httpClient.DefaultRequestHeaders.Authorization.Parameter);
 
-            try
+            return _genericRetryPolicy.Execute(() =>
             {
-                using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+                using (var requestMessage = new HttpRequestMessage(HttpMethod.Get, serverRestEndpoint))
                 {
-                    using (Stream dataStream = response.GetResponseStream())
+                    requestMessage.Headers.Authorization = _httpClient.DefaultRequestHeaders.Authorization;
+
+                    try
                     {
-                        using (StreamReader reader = new StreamReader(dataStream))
+                        using (var response = _httpClient.Send(requestMessage, HttpCompletionOption.ResponseHeadersRead))
                         {
-                            string responseFromServer = reader.ReadToEnd();
-                            return JsonConvert.DeserializeObject<IEnumerable<Query>>(responseFromServer);//["results"].ToObject<IEnumerable<dynamic>>();
+                            if (!response.IsSuccessStatusCode)
+                            {
+                                throw new HttpRequestException($"Server response HTTP status: {response.StatusCode} ({(int)response.StatusCode})");
+                            }
+
+                            var responseFromServer = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                            return JsonConvert.DeserializeObject<IEnumerable<Query>>(responseFromServer);
                         }
                     }
-                }
-            }
-            catch (WebException we)
-            {
-                if (we.Response != null)
-                {
-                    if (we.Status == WebExceptionStatus.ProtocolError)
-                        throw new WebException($"Server response HTTP status: {((HttpWebResponse)we.Response).StatusCode} ({(int)((HttpWebResponse)we.Response).StatusCode})");
-
-                    using (Stream dataStream = we.Response.GetResponseStream())
+                    catch (HttpRequestException ex)
                     {
-                        using (StreamReader reader = new StreamReader(dataStream))
-                        {
-                            string responseFromServer = reader.ReadToEnd();
-                        }
+                        throw new Exception("An error occurred while fetching queries.", ex);
                     }
                 }
-                throw we;
-            }
-
+            });
         }
 
         public IEnumerable<Query> GetQueriesForProject(Guid projId)
         {
             string serverRestEndpoint = $"{_baseUrl}api/cx-audit/queries?projectId={projId}";
-            WebRequest request = WebRequest.Create(serverRestEndpoint);
-            request.Method = "GET";
-            request.Headers.Add("Authorization", _httpClient.DefaultRequestHeaders.Authorization.Parameter);
 
-            try
+            return _genericRetryPolicy.Execute(() =>
             {
-                using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+                using (var requestMessage = new HttpRequestMessage(HttpMethod.Get, serverRestEndpoint))
                 {
-                    using (Stream dataStream = response.GetResponseStream())
+                    requestMessage.Headers.Authorization = _httpClient.DefaultRequestHeaders.Authorization;
+
+                    try
                     {
-                        using (StreamReader reader = new StreamReader(dataStream))
+                        using (var response = _httpClient.Send(requestMessage, HttpCompletionOption.ResponseHeadersRead))
                         {
-                            string responseFromServer = reader.ReadToEnd();
-                            return JsonConvert.DeserializeObject<IEnumerable<Query>>(responseFromServer);//["results"].ToObject<IEnumerable<dynamic>>();
+                            if (!response.IsSuccessStatusCode)
+                            {
+                                throw new HttpRequestException($"Server response HTTP status: {response.StatusCode} ({(int)response.StatusCode})");
+                            }
+
+                            var responseFromServer = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                            return JsonConvert.DeserializeObject<IEnumerable<Query>>(responseFromServer);
                         }
                     }
-                }
-            }
-            catch (WebException we)
-            {
-                if (we.Response != null)
-                {
-                    if (we.Status == WebExceptionStatus.ProtocolError)
-                        throw new WebException($"Server response HTTP status: {((HttpWebResponse)we.Response).StatusCode} ({(int)((HttpWebResponse)we.Response).StatusCode})");
-
-                    using (Stream dataStream = we.Response.GetResponseStream())
+                    catch (HttpRequestException ex)
                     {
-                        using (StreamReader reader = new StreamReader(dataStream))
-                        {
-                            string responseFromServer = reader.ReadToEnd();
-                        }
+                        throw new Exception("An error occurred while fetching queries.", ex);
                     }
                 }
-                throw we;
-            }
-
+            });
         }
-
-        public Query GetQueryForProject(Guid projId, string queryPath, bool tenantLevel)
-        {
-            string serverRestEndpoint = $"{_baseUrl}api/cx-audit/queries/{(tenantLevel ? "Corp" : projId)}/{System.Web.HttpUtility.UrlEncode(queryPath)}";
-            WebRequest request = WebRequest.Create(serverRestEndpoint);
-            request.Method = "GET";
-            request.Headers.Add("Authorization", _httpClient.DefaultRequestHeaders.Authorization.Parameter);
-
-            try
-            {
-                using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
-                {
-                    using (Stream dataStream = response.GetResponseStream())
-                    {
-                        using (StreamReader reader = new StreamReader(dataStream))
-                        {
-                            string responseFromServer = reader.ReadToEnd();
-                            return JsonConvert.DeserializeObject<Query>(responseFromServer);
-                        }
-                    }
-                }
-            }
-            catch (WebException we)
-            {
-                if (we.Response != null)
-                {
-                    if (we.Status == WebExceptionStatus.ProtocolError)
-                    {
-                        throw new WebException($"Server response HTTP status: {((HttpWebResponse)we.Response).StatusCode} ({(int)((HttpWebResponse)we.Response).StatusCode})");
-                    }
-                    using (Stream dataStream = we.Response.GetResponseStream())
-                    {
-                        using (StreamReader reader = new StreamReader(dataStream))
-                        {
-                            string responseFromServer = reader.ReadToEnd();
-                        }
-                    }
-                }
-                throw we;
-            }
-
-        }
-
-        public dynamic GetCxLevelQuery(string queryPath)
-        {
-            string serverRestEndpoint = $"{_baseUrl}api/cx-audit/queries/Cx/{System.Web.HttpUtility.UrlEncode(queryPath)}";
-            WebRequest request = WebRequest.Create(serverRestEndpoint);
-            request.Method = "GET";
-            request.Headers.Add("Authorization", _httpClient.DefaultRequestHeaders.Authorization.Parameter);
-
-            try
-            {
-                using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
-                {
-                    using (Stream dataStream = response.GetResponseStream())
-                    {
-                        using (StreamReader reader = new StreamReader(dataStream))
-                        {
-                            string responseFromServer = reader.ReadToEnd();
-                            return JsonConvert.DeserializeObject<Query>(responseFromServer);
-                        }
-                    }
-                }
-            }
-            catch (WebException we)
-            {
-                if (we.Response != null)
-                {
-                    if (we.Status == WebExceptionStatus.ProtocolError)
-                    {
-                        throw new WebException($"Server response HTTP status: {((HttpWebResponse)we.Response).StatusCode} ({(int)((HttpWebResponse)we.Response).StatusCode})");
-                    }
-                    using (Stream dataStream = we.Response.GetResponseStream())
-                    {
-                        using (StreamReader reader = new StreamReader(dataStream))
-                        {
-                            string responseFromServer = reader.ReadToEnd();
-                        }
-                    }
-                }
-                throw we;
-            }
-
-        }
-
-        public void DeleteProjectQuery(Guid projId, string queryPath)
-        {
-            string serverRestEndpoint = $"{_baseUrl}api/cx-audit/queries/{projId}/{System.Web.HttpUtility.UrlEncode(queryPath)}";
-            WebRequest request = WebRequest.Create(serverRestEndpoint);
-            request.Method = "DELETE";
-            request.Headers.Add("Authorization", _httpClient.DefaultRequestHeaders.Authorization.Parameter);
-
-
-            try
-            {
-                using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
-                {
-                    using (Stream dataStream = response.GetResponseStream())
-                    {
-                        using (StreamReader reader = new StreamReader(dataStream))
-                        {
-                            return;
-                        }
-                    }
-                }
-            }
-            catch (WebException we)
-            {
-                if (we.Response != null)
-                {
-                    if (we.Status == WebExceptionStatus.ProtocolError)
-                    {
-                        throw new WebException($"Server response HTTP status: {((HttpWebResponse)we.Response).StatusCode} ({(int)((HttpWebResponse)we.Response).StatusCode})");
-                    }
-                    using (Stream dataStream = we.Response.GetResponseStream())
-                    {
-                        using (StreamReader reader = new StreamReader(dataStream))
-                        {
-                            string responseFromServer = reader.ReadToEnd();
-                        }
-                    }
-                }
-                throw;
-            }
-        }
-
-        public void DeleteCorpQuery(string queryPath)
-        {
-            string serverRestEndpoint = $"{_baseUrl}api/cx-audit/queries/corp/{System.Web.HttpUtility.UrlEncode(queryPath)}";
-            WebRequest request = WebRequest.Create(serverRestEndpoint);
-            request.Method = "DELETE";
-            request.Headers.Add("Authorization", _httpClient.DefaultRequestHeaders.Authorization.Parameter);
-
-            try
-            {
-                using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
-                {
-                    using (Stream dataStream = response.GetResponseStream())
-                    {
-                        using (StreamReader reader = new StreamReader(dataStream))
-                        {
-                            //string responseFromServer = reader.ReadToEnd();
-                            //return JsonConvert.DeserializeObject<dynamic>(responseFromServer);
-                            return;
-                        }
-                    }
-                }
-            }
-            catch (WebException we)
-            {
-                if (we.Response != null)
-                {
-                    if (we.Status == WebExceptionStatus.ProtocolError)
-                    {
-                        throw new WebException($"Server response HTTP status: {((HttpWebResponse)we.Response).StatusCode} ({(int)((HttpWebResponse)we.Response).StatusCode})");
-                    }
-                    using (Stream dataStream = we.Response.GetResponseStream())
-                    {
-                        using (StreamReader reader = new StreamReader(dataStream))
-                        {
-                            string responseFromServer = reader.ReadToEnd();
-                        }
-                    }
-                }
-                throw we;
-            }
-
-        }
-
-        public void SaveProjectQuery(string projId, string aname, string aqueryPath, string asource)
-        {
-            string serverRestEndpoint = $"{_baseUrl}api/cx-audit/queries/{projId}";
-            WebRequest request = WebRequest.Create(serverRestEndpoint);
-            request.Method = "PUT";
-            request.Headers.Add("Authorization", _httpClient.DefaultRequestHeaders.Authorization.Parameter);
-
-            try
-            {
-
-                var payload = new List<dynamic>() {
-                    new {
-                    name = aname,
-                    path = aqueryPath,
-                    source = asource
-                }
-                };
-                string json = JsonConvert.SerializeObject(payload);
-                byte[] byteArray = Encoding.UTF8.GetBytes(json);
-
-                request.ContentLength = byteArray.Length;
-                using (Stream dataStream = request.GetRequestStream())
-                {
-                    dataStream.Write(byteArray, 0, byteArray.Length);
-                }
-
-                using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
-                {
-                    using (Stream dataStream = response.GetResponseStream())
-                    {
-                        using (StreamReader reader = new StreamReader(dataStream))
-                        {
-                            //string responseFromServer = reader.ReadToEnd();
-                            //return JsonConvert.DeserializeObject<dynamic>(responseFromServer);
-                            return;
-                        }
-                    }
-                }
-            }
-            catch (WebException we)
-            {
-                if (we.Response != null)
-                {
-                    if (we.Status == WebExceptionStatus.ProtocolError)
-                    {
-                        throw new WebException($"Server response HTTP status: {((HttpWebResponse)we.Response).StatusCode} ({(int)((HttpWebResponse)we.Response).StatusCode})");
-                    }
-                    using (Stream dataStream = we.Response.GetResponseStream())
-                    {
-                        using (StreamReader reader = new StreamReader(dataStream))
-                        {
-                            string responseFromServer = reader.ReadToEnd();
-                        }
-                    }
-                }
-                throw we;
-            }
-
-        }
-
-        public void SaveCorpQuery(string aname, string aqueryPath, string asource)
-        {
-            string serverRestEndpoint = $"{_baseUrl}api/cx-audit/queries/corp";
-            WebRequest request = WebRequest.Create(serverRestEndpoint);
-            request.Method = "PUT";
-            request.Headers.Add("Authorization", _httpClient.DefaultRequestHeaders.Authorization.Parameter);
-
-            try
-            {
-
-                var payload = new List<dynamic>() {
-                    new {
-                    name = aname,
-                    path = aqueryPath,
-                    source = asource
-                }
-                };
-                string json = JsonConvert.SerializeObject(payload);
-                byte[] byteArray = Encoding.UTF8.GetBytes(json);
-
-                request.ContentLength = byteArray.Length;
-                using (Stream dataStream = request.GetRequestStream())
-                {
-                    dataStream.Write(byteArray, 0, byteArray.Length);
-                }
-
-                using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
-                {
-                    using (Stream dataStream = response.GetResponseStream())
-                    {
-                        using (StreamReader reader = new StreamReader(dataStream))
-                        {
-                            //string responseFromServer = reader.ReadToEnd();
-                            //return JsonConvert.DeserializeObject<dynamic>(responseFromServer);
-                            return;
-                        }
-                    }
-                }
-            }
-            catch (WebException we)
-            {
-                if (we.Response != null)
-                {
-                    if (we.Status == WebExceptionStatus.ProtocolError)
-                    {
-                        throw new WebException($"Server response HTTP status: {((HttpWebResponse)we.Response).StatusCode} ({(int)((HttpWebResponse)we.Response).StatusCode})");
-                    }
-                    using (Stream dataStream = we.Response.GetResponseStream())
-                    {
-                        using (StreamReader reader = new StreamReader(dataStream))
-                        {
-                            string responseFromServer = reader.ReadToEnd();
-                        }
-                    }
-                }
-                throw we;
-            }
-
-        }
-
 
         public partial class Query
         {
