@@ -741,7 +741,7 @@ namespace Checkmarx.API.AST.Services.SASTMetadata
         public System.Collections.Generic.IDictionary<string, double> FileCountOfDetectedButNotScannedLanguages { get; set; }
 
         [Newtonsoft.Json.JsonProperty("scannedFilesPerLanguage", Required = Newtonsoft.Json.Required.AllowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.IDictionary<string, Anonymous> ScannedFilesPerLanguage { get; set; }
+        public System.Collections.Generic.IDictionary<string, ScanFilesStats> ScannedFilesPerLanguage { get; set; }
 
         private System.Collections.Generic.IDictionary<string, object> _additionalProperties = new System.Collections.Generic.Dictionary<string, object>();
 
@@ -778,7 +778,7 @@ namespace Checkmarx.API.AST.Services.SASTMetadata
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "13.15.10.0 (NJsonSchema v10.6.10.0 (Newtonsoft.Json v12.0.0.0))")]
-    public partial class Anonymous
+    public partial class ScanFilesStats
     {
         [Newtonsoft.Json.JsonProperty("goodFiles", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public double GoodFiles { get; set; }
