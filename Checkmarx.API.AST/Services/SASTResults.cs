@@ -484,7 +484,7 @@ namespace Checkmarx.API.AST.Services.SASTResults
         /// <param name="sort">Sort results by the specified parameter. Enter '-/+' for ascending/descending order, followed by the parameter.</param>
         /// <returns>Successful operation</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual System.Threading.Tasks.Task<SastResultCompareResponse> GetSASTResultsCompareByScansAsync(Guid scan_id, Guid base_scan_id,
+        public virtual System.Threading.Tasks.Task<SastResultCompareResponse> GetSASTResultsCompareByScansAsync(Guid base_scan_id, Guid scan_id,
             string authorization = null,
             string accept = null,
             System.Guid? correlationId = null,

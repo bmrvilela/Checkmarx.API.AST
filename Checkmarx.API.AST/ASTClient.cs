@@ -1066,10 +1066,10 @@ namespace Checkmarx.API.AST
                 switch (scanKind)
                 {
                     case ScanRetrieveKind.First:
-                        scans = scans.Take(1);
+                        scans = scans.Skip(Math.Max(0, scans.Count() - 1));
                         break;
                     case ScanRetrieveKind.Last:
-                        scans = scans.Skip(Math.Max(0, scans.Count() - 1));
+                        scans = scans.Take(1);
                         break;
                     case ScanRetrieveKind.All:
                         break;
@@ -1820,21 +1820,6 @@ namespace Checkmarx.API.AST
         public IEnumerable<Services.SASTQuery.Query> GetTeamCorpLevelQueries(Guid projectId)
         {
             return SASTQuery.GetQueriesForProject(projectId).Where(x => x.IsExecutable);
-        }
-
-        public Services.SASTQuery.Query GetProjectQuery(Guid projectId, string queryPath, bool tenantLevel)
-        {
-            return SASTQuery.GetQueryForProject(projectId, queryPath, tenantLevel);
-        }
-
-        public void SaveProjectQuery(Guid projectId, string queryName, string queryPath, string source)
-        {
-            SASTQuery.SaveProjectQuery(projectId.ToString(), queryName, queryPath, source);
-        }
-
-        public void DeleteProjectQuery(Guid projectId, string queryPath)
-        {
-            SASTQuery.DeleteProjectQuery(projectId, queryPath);
         }
 
         #region QueryEditor
