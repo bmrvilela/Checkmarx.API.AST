@@ -19,6 +19,7 @@ namespace Checkmarx.API.AST.Services
 {
     using System = global::System;
     using static Checkmarx.API.AST.ASTClient;
+    using Checkmarx.API.AST.Exceptions;
 
     [System.CodeDom.Compiler.GeneratedCode("NSwag", "13.20.0.0 (NJsonSchema v10.9.0.0 (Newtonsoft.Json v11.0.0.0))")]
     public partial class PresetManagement

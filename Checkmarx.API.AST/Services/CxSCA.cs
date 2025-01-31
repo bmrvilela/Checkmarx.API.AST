@@ -25,6 +25,7 @@ namespace Checkmarx.API.AST.Services
     using System.Collections.Generic;
     using Newtonsoft.Json;
     using System.Diagnostics;
+    using Checkmarx.API.AST.Exceptions;
 
     public class PackageInfo
     {
