@@ -5,7 +5,9 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
-using System.Threading.Tasks;
+using Checkmarx.API.AST.Exceptions;
+using static Checkmarx.API.AST.ASTClient;
+using System.Threading;
 
 namespace Checkmarx.API.AST.Services
 {
@@ -202,8 +204,6 @@ namespace Checkmarx.API.AST.Services
                     {
                         using (StreamReader reader = new StreamReader(dataStream))
                         {
-                            //string responseFromServer = reader.ReadToEnd();
-                            //return JsonConvert.DeserializeObject<dynamic>(responseFromServer);
                             return;
                         }
                     }
@@ -225,9 +225,8 @@ namespace Checkmarx.API.AST.Services
                         }
                     }
                 }
-                throw we;
+                throw;
             }
-
         }
 
         public void DeleteCorpQuery(string queryPath)

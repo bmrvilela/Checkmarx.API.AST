@@ -61,6 +61,20 @@ namespace Checkmarx.API.AST.Models
 
         #region SAST
 
+
+        private Metrics _metrics;
+        public Metrics Metrics
+        {
+            get
+            {
+                if (_metrics == null)
+                    _metrics = _client.SASTMetadata.MetricsAsync(Id).Result;
+                
+                return _metrics;
+            }
+        }
+
+
         private string preset;
         public string Preset
         {
@@ -73,6 +87,7 @@ namespace Checkmarx.API.AST.Models
             }
             private set { preset = value; }
         }
+
 
 
 
@@ -104,7 +119,7 @@ namespace Checkmarx.API.AST.Models
                     try
                     {
                         // The CxOne API gives 404 when the engines doesn't do anything.
-                        var scannedLanguages = _client.SASTMetadata.MetricsAsync(Id).Result.ScannedFilesPerLanguage?.Select(x => x.Key);
+                        var scannedLanguages = Metrics?.ScannedFilesPerLanguage?.Select(x => x.Key);
                         if (scannedLanguages != null)
                             _languages = string.Join(";", scannedLanguages);
                     }
