@@ -373,16 +373,13 @@ namespace Checkmarx.API.AST.Services.SASTMetadata
             }
         }
 
-
-
-
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <param name="authorization">REQUIRED: JWT authorization token</param>
         /// <param name="correlationId">correlation id to keep track of a flow if many APIs are involved</param>
         /// <param name="accept">API version should be appended to this header</param>
         /// <returns>The engine versions for the provided scans</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<System.Collections.Generic.ICollection<ScanEngineVersionInfo>> EngineVersionAsync(System.Collections.Generic.IEnumerable<System.Guid> scan_ids, string authorization = null, System.Guid? correlationId = null, string accept = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        public virtual async System.Threading.Tasks.Task<System.Collections.Generic.IEnumerable<ScanEngineVersionInfo>> EngineVersionAsync(System.Collections.Generic.IEnumerable<System.Guid> scan_ids, string authorization = null, System.Guid? correlationId = null, string accept = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
         {
             if (scan_ids == null)
                 throw new System.ArgumentNullException("scan_ids");
@@ -800,11 +797,6 @@ namespace Checkmarx.API.AST.Services.SASTMetadata
         }
 
     }
-
-
-
-
-
 }
 
 #pragma warning restore 1591

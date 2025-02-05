@@ -3,6 +3,7 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using static Checkmarx.API.AST.ASTClient;
 
 namespace Checkmarx.API.AST.Services
 {
@@ -36,8 +37,7 @@ namespace Checkmarx.API.AST.Services
                 "application/json"
             );
 
-            var response = await _httpClient.PostAsync(_endpointUri, jsonContent);
-
+            var response = await _retryPolicy.ExecuteAsync(() => _httpClient.PostAsync(_endpointUri, jsonContent)).ConfigureAwait(false);
             if (!response.IsSuccessStatusCode)
             {
                 var errorContent = await response.Content.ReadAsStringAsync();

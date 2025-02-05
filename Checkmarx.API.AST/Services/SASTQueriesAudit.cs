@@ -19,7 +19,6 @@
 
 namespace Checkmarx.API.AST.Services.SASTQueriesAudit
 {
-    using Checkmarx.API.AST.Errors;
     using Checkmarx.API.AST.Exceptions;
     using System;
     using System = global::System;
@@ -34,7 +33,7 @@ namespace Checkmarx.API.AST.Services.SASTQueriesAudit
 
         public SASTQueriesAudit(string baseUrl, System.Net.Http.HttpClient httpClient)
         {
-            _baseUrl = baseUrl; 
+            _baseUrl = baseUrl;
             _httpClient = httpClient;
             _settings = new System.Lazy<Newtonsoft.Json.JsonSerializerSettings>(CreateSerializerSettings, true);
         }
@@ -66,7 +65,7 @@ namespace Checkmarx.API.AST.Services.SASTQueriesAudit
         /// </summary>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<System.Collections.Generic.ICollection<Queries>> QueriesAllAsync(string? projectId = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        public virtual async System.Threading.Tasks.Task<System.Collections.Generic.ICollection<Queries>> QueriesAllAsync(Guid? projectId = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
         {
             var urlBuilder_ = new System.Text.StringBuilder();
             urlBuilder_.Append(BaseUrl != null ? BaseUrl.TrimEnd('/') : "").Append("/queries?");
@@ -163,6 +162,7 @@ namespace Checkmarx.API.AST.Services.SASTQueriesAudit
         /// </summary>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
+        [System.Obsolete]
         public virtual async System.Threading.Tasks.Task QueriesPOSTAsync(QueryRequest? body = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
         {
             var urlBuilder_ = new System.Text.StringBuilder();
@@ -264,6 +264,7 @@ namespace Checkmarx.API.AST.Services.SASTQueriesAudit
         /// <param name="session_id">The session ID</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
+        [System.Obsolete]
         public virtual async System.Threading.Tasks.Task<System.Collections.Generic.ICollection<QuerySearch>> SearchAsync(string session_id, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
         {
             if (session_id == null)
@@ -556,6 +557,7 @@ namespace Checkmarx.API.AST.Services.SASTQueriesAudit
         /// </summary>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
+        [System.Obsolete]
         public virtual async System.Threading.Tasks.Task<Query> QueriesGETAsync(string level, string path, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
         {
             if (level == null)
@@ -656,6 +658,7 @@ namespace Checkmarx.API.AST.Services.SASTQueriesAudit
         /// </summary>
         /// <returns>The resource was deleted successfully.</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
+        [System.Obsolete]
         public virtual async System.Threading.Tasks.Task QueriesDELETEAsync(string level, string path, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
         {
             if (level == null)
@@ -760,6 +763,7 @@ namespace Checkmarx.API.AST.Services.SASTQueriesAudit
         /// </summary>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
+        [System.Obsolete]
         public virtual async System.Threading.Tasks.Task QueriesPUTAsync(string level, System.Collections.Generic.IEnumerable<WorkspaceQuery>? body = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
         {
             if (level == null)
@@ -3763,11 +3767,6 @@ namespace Checkmarx.API.AST.Services.SASTQueriesAudit
         }
 
     }
-
-
-
-
-
 }
 
 #pragma warning restore 108

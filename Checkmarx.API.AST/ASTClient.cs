@@ -5,7 +5,6 @@ using Checkmarx.API.AST.Services;
 using Checkmarx.API.AST.Services.Applications;
 using Checkmarx.API.AST.Services.Configuration;
 using Checkmarx.API.AST.Services.KicsResults;
-using Checkmarx.API.AST.Services.Logs;
 using Checkmarx.API.AST.Services.Projects;
 using Checkmarx.API.AST.Services.Reports;
 using Checkmarx.API.AST.Services.Repostore;
@@ -33,6 +32,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using Checkmarx.API.AST.Services.QueryEditor;
 using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace Checkmarx.API.AST
 {
@@ -128,12 +128,9 @@ namespace Checkmarx.API.AST
                                 (exception, timeSpan, retryCount, context) =>
                                 {
                                     // Optional: Log the retry attempt
-                                    Console.WriteLine($"Retry {retryCount} after {timeSpan.TotalSeconds} seconds due to: {exception.Exception.Message}");
+                                    Console.WriteLine($"Retry {retryCount} after {timeSpan.TotalSeconds} seconds due to: " +
+                                        $"{(exception.Exception != null ? exception.Exception.Message : $"{(int?)exception.Result?.StatusCode} {exception.Result?.ReasonPhrase}")}");
                                 });
-
-        internal static readonly Policy _genericRetryPolicy = Policy
-                                .Handle<Exception>()
-                                .WaitAndRetry(10, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
 
         public const string SettingsAPISecuritySwaggerFolderFileFilter = "scan.config.apisec.swaggerFilter";
         public const string SettingsProjectRepoUrl = "scan.handler.git.repository";
@@ -491,20 +488,6 @@ namespace Checkmarx.API.AST
             }
         }
 
-        private SASTQuery _sastQuery;
-
-        public SASTQuery SASTQuery
-        {
-            get
-            {
-                if (Connected && _sastQuery == null)
-                    _sastQuery = new SASTQuery(ASTServer.AbsoluteUri, _httpClient);
-
-                return _sastQuery;
-            }
-        }
-
-
         private SASTQueriesAudit _sastQueriesAudit;
 
         public SASTQueriesAudit SASTQueriesAudit
@@ -531,22 +514,6 @@ namespace Checkmarx.API.AST
             }
         }
 
-        private Logs _logs;
-
-        /// <summary>
-        /// Log Services
-        /// </summary>
-        public Logs Logs
-        {
-            get
-            {
-                if (Connected && _logs == null)
-                    _logs = new Logs(ASTServer, _httpClient);
-
-                return _logs;
-            }
-        }
-
         #endregion
 
         #region Connection
@@ -567,12 +534,6 @@ namespace Checkmarx.API.AST
                 }
                 return true;
             }
-        }
-
-        private void checkConnection()
-        {
-            if (!Connected)
-                throw new NotSupportedException();
         }
 
         public string authenticate()
@@ -1765,6 +1726,46 @@ namespace Checkmarx.API.AST
             Configuration.UpdateProjectConfigurationAsync(projectId.ToString(), body).Wait();
         }
 
+        public async Task<Dictionary<Guid, string>> GetScanEngineVersionAsync(IEnumerable<Guid> scans)
+        {
+            if (scans == null || !scans.Any())
+                throw new ArgumentNullException(nameof(scans));
+
+            Dictionary<Guid, string> engineVersions = scans.ToDictionary(x => x, x => (string)null);
+
+            int batchSize = 10;
+            List<Task<IEnumerable<ScanEngineVersionInfo>>> tasks = new List<Task<IEnumerable<ScanEngineVersionInfo>>>();
+
+            foreach (var batch in scans.Chunk(batchSize))
+            {
+                tasks.Add(Task.Run(async () =>
+                {
+                    try
+                    {
+                        return await SASTMetadata.EngineVersionAsync(batch);
+                    }
+                    catch (Exceptions.ApiException apiEx)
+                    {
+                        if (apiEx.StatusCode == 404)
+                            return Enumerable.Empty<ScanEngineVersionInfo>();
+                        else
+                            throw;
+                    }
+                }));
+            }
+
+            var results = await Task.WhenAll(tasks);
+
+            foreach (var engineVersionsResult in results)
+            {
+                foreach (var result in engineVersionsResult)
+                    engineVersions[result.ScanId] = result.EngineVersion;
+            }
+
+            return engineVersions;
+        }
+
+
         #endregion
 
         #region Queries and Presets
@@ -1806,20 +1807,20 @@ namespace Checkmarx.API.AST
             return listPresets.Presets;
         }
 
-        public IEnumerable<Services.SASTQuery.Query> GetTenantQueries()
+        public IEnumerable<Services.SASTQueriesAudit.Queries> GetTenantQueries()
         {
-            return SASTQuery.GetQueries();
+            return SASTQueriesAudit.QueriesAllAsync().Result;
         }
 
-        public Dictionary<string, Services.SASTQuery.Query> GetProjectQueries(Guid projectId)
+        public Dictionary<string, Services.SASTQueriesAudit.Queries> GetProjectQueries(Guid projectId)
         {
             // The Distinct is a workaround... not the solution.
-            return SASTQuery.GetQueriesForProject(projectId).DistinctBy(x => x.Id).ToDictionary(x => x.Id, StringComparer.InvariantCultureIgnoreCase);
+            return SASTQueriesAudit.QueriesAllAsync(projectId).Result.DistinctBy(x => x.Id).ToDictionary(x => x.Id, StringComparer.InvariantCultureIgnoreCase);
         }
 
-        public IEnumerable<Services.SASTQuery.Query> GetTeamCorpLevelQueries(Guid projectId)
+        public IEnumerable<Services.SASTQueriesAudit.Queries> GetTeamCorpLevelQueries(Guid projectId)
         {
-            return SASTQuery.GetQueriesForProject(projectId).Where(x => x.IsExecutable);
+            return SASTQueriesAudit.QueriesAllAsync(projectId).Result.Where(x => x.IsExecutable);
         }
 
         #region QueryEditor
@@ -1927,11 +1928,6 @@ namespace Checkmarx.API.AST
 
         public string CreateProjectQueryByEditorQuery(Guid projectId, Guid scanId, string editorQueryId, string name, string path, long cwe, string language, string group, string severity, bool executable, long description, long sastId, List<string> presets, string source)
         {
-            return _genericRetryPolicy.Execute(() => createProjectQueryByEditorQuery(projectId, scanId, editorQueryId, name, path, cwe, language, group, severity, executable, description, sastId, presets, source));
-        }
-
-        private string createProjectQueryByEditorQuery(Guid projectId, Guid scanId, string editorQueryId, string name, string path, long cwe, string language, string group, string severity, bool executable, long description, long sastId, List<string> presets, string source)
-        {
             var session = getQueryEditorSessionId(projectId, scanId);
 
             CreateQueryRequest createBody = new CreateQueryRequest()
@@ -1980,11 +1976,6 @@ namespace Checkmarx.API.AST
         }
 
         public bool DeleteProjectQueryByEditorQuery(Guid projectId, Guid scanId, string editorQueryId)
-        {
-            return _genericRetryPolicy.Execute(() => deleteProjectQueryByEditorQuery(projectId, scanId, editorQueryId));
-        }
-
-        private bool deleteProjectQueryByEditorQuery(Guid projectId, Guid scanId, string editorQueryId)
         {
             var session = getQueryEditorSessionId(projectId, scanId);
 
@@ -2063,50 +2054,61 @@ namespace Checkmarx.API.AST
 
         public string GetSASTScanLog(Guid scanId)
         {
-            return GetScanLogs(scanId, SAST_Engine);
+            return GetScanLogs(scanId, SAST_Engine).Result;
         }
 
         public string GetScanLog(Guid scanId, string engine)
         {
-            return GetScanLogs(scanId, engine);
+            return GetScanLogs(scanId, engine).Result;
         }
 
-        private string GetScanLogs(Guid scanId, string engine)
+        private async Task<string> GetScanLogs(Guid scanId, string engine)
         {
             if (string.IsNullOrEmpty(engine))
                 throw new ArgumentNullException(nameof(engine));
 
-            // return Logs.GetEngineLogsAsync(scanId, engine).Result;
-
+            string token = authenticate();
             string serverRestEndpoint = $"{ASTServer.AbsoluteUri}api/logs/{scanId}/{engine}";
-            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(serverRestEndpoint);
-            request.Method = "GET";
-            request.Headers.Add("Authorization", authenticate());
-            request.AllowAutoRedirect = false;
 
-            using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+            using (var handler = new HttpClientHandler { AllowAutoRedirect = false })
+            using (var client = new HttpClient(handler))
             {
-                if (response.StatusCode == HttpStatusCode.TemporaryRedirect || response.StatusCode == HttpStatusCode.Redirect)
+                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+                using (var requestMessage = new HttpRequestMessage(HttpMethod.Get, serverRestEndpoint))
                 {
-                    string serverRestEndpoint2 = response.Headers.Get("location");
-                    HttpWebRequest request2 = (HttpWebRequest)WebRequest.Create(serverRestEndpoint2);
-                    request2.Method = "GET";
-                    request2.Headers.Add("Authorization", authenticate());
-                    request2.AllowAutoRedirect = false;
-                    using (HttpWebResponse response2 = (HttpWebResponse)request2.GetResponse())
+                    var response = await _retryPolicy.ExecuteAsync(() => client.SendAsync(CloneHttpRequestMessage(requestMessage), HttpCompletionOption.ResponseHeadersRead)).ConfigureAwait(false);
+
+                    try
                     {
-                        using (Stream dataStream2 = response2.GetResponseStream())
+                        if (response.StatusCode == HttpStatusCode.TemporaryRedirect || response.StatusCode == HttpStatusCode.Redirect)
                         {
-                            using (StreamReader reader = new(dataStream2))
+                            string redirectUrl = response.Headers.Location?.ToString();
+                            if (!string.IsNullOrEmpty(redirectUrl))
                             {
-                                return reader.ReadToEnd();
+                                var redirectRequest = new HttpRequestMessage(HttpMethod.Get, redirectUrl);
+
+                                var redirectResponse = await _retryPolicy.ExecuteAsync(() => client.SendAsync(CloneHttpRequestMessage(redirectRequest), HttpCompletionOption.ResponseHeadersRead)).ConfigureAwait(false);
+
+                                try
+                                {
+                                    return redirectResponse.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                                }
+                                finally
+                                {
+                                    redirectResponse.Dispose();
+                                }
                             }
                         }
+
+                        return response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                    }
+                    finally
+                    {
+                        response.Dispose();
                     }
                 }
             }
-
-            return null;
         }
 
         /// <summary>

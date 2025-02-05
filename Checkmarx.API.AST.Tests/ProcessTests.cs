@@ -1,26 +1,11 @@
-using Checkmarx.API.AST.Models;
-using Checkmarx.API.AST.Models.Report;
 using Checkmarx.API.AST.Services;
-using Checkmarx.API.AST.Services.Applications;
-using Checkmarx.API.AST.Services.Reports;
-using Checkmarx.API.AST.Services.SASTMetadata;
-using Checkmarx.API.AST.Services.SASTQueriesAudit;
-using Checkmarx.API.AST.Services.Scans;
-using Keycloak.Net.Models.Root;
 using Microsoft.Extensions.Configuration;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Net;
 using System.Reflection;
-using System.Text.RegularExpressions;
-using System.Xml.Xsl;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace Checkmarx.API.AST.Tests
 {
@@ -73,7 +58,7 @@ namespace Checkmarx.API.AST.Tests
         [TestMethod]
         public void GetQueriesTest()
         {
-            var properties = typeof(Queries).GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty);
+            var properties = typeof(Services.SASTQueriesAudit.Queries).GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty);
 
             foreach (var item in astclient.SASTQueriesAudit.QueriesAllAsync().Result)
             {
@@ -89,21 +74,21 @@ namespace Checkmarx.API.AST.Tests
         [TestMethod]
         public void QueriesForProjectTest()
         {
-            var listOfQueries = astclient.SASTQuery.GetQueriesForProject(astclient.Projects.GetListOfProjectsAsync().Result.Projects.First().Id);
+            var listOfQueries = astclient.GetProjectQueries(astclient.Projects.GetListOfProjectsAsync().Result.Projects.First().Id);
 
-            Dictionary<string, SASTQuery.Query> keys = new Dictionary<string, SASTQuery.Query>();
+            Dictionary<string, Services.SASTQueriesAudit.Queries> keys = new Dictionary<string, Services.SASTQueriesAudit.Queries>();
 
-            var properties = typeof(SASTQuery.Query).GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty);
+            var properties = typeof(Services.SASTQueriesAudit.Queries).GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty);
 
             foreach (var query in listOfQueries)
             {
-                if (!keys.ContainsKey(query.Id))
-                    keys.Add(query.Id, query);
+                if (!keys.ContainsKey(query.Key))
+                    keys.Add(query.Key, query.Value);
                 else
                 {
                     foreach (var property in properties)
                     {
-                        Trace.WriteLine($"{property.Name} = {property.GetValue(keys[query.Id])?.ToString()}");
+                        Trace.WriteLine($"{property.Name} = {property.GetValue(keys[query.Key])?.ToString()}");
                     }
                     Trace.WriteLine("---");
 
@@ -172,7 +157,5 @@ namespace Checkmarx.API.AST.Tests
 
             Assert.IsTrue(singleHistoryPerProject.SingleOrDefault() != null);
         }
-
     }
-
 }
