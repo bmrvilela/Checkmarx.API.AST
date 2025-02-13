@@ -1381,7 +1381,7 @@ namespace Checkmarx.API.AST
 
         #region Results
 
-        public bool MarkSASTResult(Guid projectId, SASTResult result, IEnumerable<PredicateWithCommentJSON> history, bool updateSeverity = true, bool updateState = true, bool updateComment = true)
+        public bool MarkSASTResult(Guid projectId, SASTResult result, IEnumerable<PredicateWithCommentJSON> history, bool updateSeverity = true, bool updateState = true, bool updateComment = true, Guid? scanId = null)
         {
             if (projectId == Guid.Empty)
                 throw new ArgumentException(nameof(projectId));
@@ -1400,6 +1400,7 @@ namespace Checkmarx.API.AST
                 {
                     SimilarityId = predicate.SimilarityId.ToString(),
                     ProjectId = projectId,
+                    ScanId = scanId,
                     Severity = updateSeverity ? predicate.Severity : result.Severity,
                     State = updateState ? predicate.State : result.State,
                     Comment = updateComment ? predicate.Comment : null
@@ -1417,7 +1418,7 @@ namespace Checkmarx.API.AST
             return false;
         }
 
-        public void MarkSASTResult(Guid projectId, string similarityId, ResultsSeverity severity, ResultsState state, string comment = null)
+        public void MarkSASTResult(Guid projectId, string similarityId, ResultsSeverity severity, ResultsState state, string comment = null, Guid? scanId = null)
         {
             if (projectId == Guid.Empty)
                 throw new ArgumentException(nameof(projectId));
@@ -1426,6 +1427,7 @@ namespace Checkmarx.API.AST
             {
                 SimilarityId = similarityId,
                 ProjectId = projectId,
+                ScanId = scanId,
                 Severity = severity,
                 State = state
             };
