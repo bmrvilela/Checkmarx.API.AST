@@ -47,6 +47,7 @@ namespace Checkmarx.API.AST.Models
         }
 
         public Guid Id => _scan.Id;
+        public Guid ProjectId => _scan.ProjectId;
         public Status Status => _scan.Status;
         public bool Successful => Status == Status.Completed || Status == Status.Partial;
         public string InitiatorName => _scan.Initiator;

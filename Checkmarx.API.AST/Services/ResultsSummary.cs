@@ -183,6 +183,112 @@ namespace Checkmarx.API.AST.Services.ResultsSummary
             }
         }
 
+        public virtual async System.Threading.Tasks.Task<string> SummaryByScansIdsJsonAsync(System.Collections.Generic.IEnumerable<Guid> scan_ids, string authorization = null, System.Guid? correlationId = null, string accept = null, bool? include_severity_status = null, bool? include_status_counters = null, bool? include_queries = null, bool? include_files = null, bool? apply_predicates = null, string language = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        {
+            if (scan_ids == null)
+                throw new System.ArgumentNullException("scan_ids");
+
+            var urlBuilder_ = new System.Text.StringBuilder();
+            urlBuilder_.Append(BaseUrl != null ? BaseUrl.TrimEnd('/') : "").Append("/?");
+            foreach (var item_ in scan_ids) { urlBuilder_.Append(System.Uri.EscapeDataString("scan-ids") + "=").Append(System.Uri.EscapeDataString(ConvertToString(item_, System.Globalization.CultureInfo.InvariantCulture))).Append("&"); }
+            if (include_severity_status != null)
+            {
+                urlBuilder_.Append(System.Uri.EscapeDataString("include-severity-status") + "=").Append(System.Uri.EscapeDataString(ConvertToString(include_severity_status, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
+            }
+            if (include_status_counters != null)
+            {
+                urlBuilder_.Append(System.Uri.EscapeDataString("include-status-counters") + "=").Append(System.Uri.EscapeDataString(ConvertToString(include_status_counters, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
+            }
+            if (include_queries != null)
+            {
+                urlBuilder_.Append(System.Uri.EscapeDataString("include-queries") + "=").Append(System.Uri.EscapeDataString(ConvertToString(include_queries, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
+            }
+            if (include_files != null)
+            {
+                urlBuilder_.Append(System.Uri.EscapeDataString("include-files") + "=").Append(System.Uri.EscapeDataString(ConvertToString(include_files, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
+            }
+            if (apply_predicates != null)
+            {
+                urlBuilder_.Append(System.Uri.EscapeDataString("apply-predicates") + "=").Append(System.Uri.EscapeDataString(ConvertToString(apply_predicates, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
+            }
+            if (language != null)
+            {
+                urlBuilder_.Append(System.Uri.EscapeDataString("language") + "=").Append(System.Uri.EscapeDataString(ConvertToString(language, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
+            }
+            urlBuilder_.Length--;
+
+            var client_ = _httpClient;
+            var disposeClient_ = false;
+            try
+            {
+                using (var request_ = new System.Net.Http.HttpRequestMessage())
+                {
+
+                    if (authorization != null)
+                        request_.Headers.TryAddWithoutValidation("Authorization", ConvertToString(authorization, System.Globalization.CultureInfo.InvariantCulture));
+
+                    if (correlationId != null)
+                        request_.Headers.TryAddWithoutValidation("CorrelationId", ConvertToString(correlationId, System.Globalization.CultureInfo.InvariantCulture));
+
+                    if (accept != null)
+                        request_.Headers.TryAddWithoutValidation("Accept", ConvertToString(accept, System.Globalization.CultureInfo.InvariantCulture));
+                    request_.Method = new System.Net.Http.HttpMethod("GET");
+
+                    PrepareRequest(client_, request_, urlBuilder_);
+
+                    var url_ = urlBuilder_.ToString();
+                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                    PrepareRequest(client_, request_, url_);
+
+                    var response_ = await _retryPolicy.ExecuteAsync(() => client_.SendAsync(CloneHttpRequestMessage(request_), System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken)).ConfigureAwait(false);
+                    var disposeResponse_ = true;
+                    try
+                    {
+                        var headers_ = System.Linq.Enumerable.ToDictionary(response_.Headers, h_ => h_.Key, h_ => h_.Value);
+                        if (response_.Content != null && response_.Content.Headers != null)
+                        {
+                            foreach (var item_ in response_.Content.Headers)
+                                headers_[item_.Key] = item_.Value;
+                        }
+
+                        ProcessResponse(client_, response_);
+
+                        var status_ = (int)response_.StatusCode;
+                        if (status_ == 200)
+                        {
+                            return await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                        }
+                        else
+                        if (status_ == 400)
+                        {
+                            var objectResponse_ = await ReadObjectResponseAsync<WebError>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                            if (objectResponse_.Object == null)
+                            {
+                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            }
+                            throw new ApiException<WebError>("Invalid request supplied", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        }
+                        else
+                        {
+                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        }
+                    }
+                    finally
+                    {
+                        if (disposeResponse_)
+                            response_.Dispose();
+                    }
+                }
+            }
+            finally
+            {
+                if (disposeClient_)
+                    client_.Dispose();
+            }
+        }
+
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <summary>
         /// Get aggregated summary of SAST results

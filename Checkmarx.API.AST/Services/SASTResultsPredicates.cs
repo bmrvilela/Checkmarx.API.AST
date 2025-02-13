@@ -1157,6 +1157,12 @@ namespace Checkmarx.API.AST.Services.SASTResultsPredicates
         [Newtonsoft.Json.JsonProperty("projectId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Include)]
         public Guid ProjectId { get; set; }
 
+        /// <summary>
+        /// ID of the related scan ID
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty("scanId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Include)]
+        public Guid? ScanId { get; set; }
+
         [Newtonsoft.Json.JsonProperty("severity", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Include)]
         [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
         public Checkmarx.API.AST.Services.SASTResults.ResultsSeverity Severity { get; set; }
