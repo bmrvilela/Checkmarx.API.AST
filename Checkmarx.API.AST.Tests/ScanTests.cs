@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 
 namespace Checkmarx.API.AST.Tests
 {
@@ -49,6 +50,14 @@ namespace Checkmarx.API.AST.Tests
                 Configuration["ClientSecret"]);
             }
 
+        }
+
+        [TestMethod]
+        public async Task GetScanSourceCodeTest()
+        {
+            Guid scanId = new Guid("e89e5562-1f92-408a-bf96-60fc91aee856");
+
+            var fileResponse = astclient.GetSourceCode(scanId);
         }
 
         [TestMethod]
