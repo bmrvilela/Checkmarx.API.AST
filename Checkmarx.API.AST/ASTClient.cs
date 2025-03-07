@@ -450,9 +450,7 @@ namespace Checkmarx.API.AST
             get
             {
                 if (Connected && _repostore == null)
-                    _repostore = new Repostore($"{ASTServer.AbsoluteUri}api/repostore/code", _httpClient);
-
-
+                    _repostore = new Repostore($"{ASTServer.AbsoluteUri}api/repostore", _httpClient);
 
                 return _repostore;
             }
@@ -863,7 +861,26 @@ namespace Checkmarx.API.AST
             if (scanId == Guid.Empty)
                 throw new ArgumentNullException(nameof(scanId));
 
-            return Repostore.GetSourceCode(scanId).Result;
+            var fileResponse = Repostore.CodeAsync(scanId).Result;
+
+            byte[] result = null;
+            byte[] buffer = new byte[4096];
+
+            using (Stream dataStream = fileResponse.Stream)
+            {
+                using (MemoryStream memoryStream = new MemoryStream())
+                {
+                    int count = 0;
+                    do
+                    {
+                        count = dataStream.Read(buffer, 0, buffer.Length);
+                        memoryStream.Write(buffer, 0, count);
+                    } while (count != 0);
+                    result = memoryStream.ToArray();
+                }
+            }
+
+            return result;
         }
 
         /// <summary>
@@ -1243,7 +1260,7 @@ namespace Checkmarx.API.AST
             if (lastScanId == Guid.Empty)
                 throw new ArgumentNullException(nameof(lastScanId));
 
-            byte[] source = Repostore.GetSourceCode(lastScanId).Result;
+            byte[] source = GetSourceCode(lastScanId);
 
             return RunUploadScan(projectId, source, scanTypes, branch, preset, configuration, tags: tags, enableFastScan: enableFastScan);
         }
