@@ -1,4 +1,5 @@
 ﻿using Checkmarx.API.AST.Enums;
+using Checkmarx.API.AST.Services;
 using Checkmarx.API.AST.Services.Configuration;
 using Checkmarx.API.AST.Services.KicsResults;
 using Checkmarx.API.AST.Services.ResultsOverview;
@@ -70,7 +71,7 @@ namespace Checkmarx.API.AST.Models
             {
                 if (_metrics == null)
                     _metrics = _client.SASTMetadata.MetricsAsync(Id).Result;
-                
+
                 return _metrics;
             }
         }
@@ -149,9 +150,20 @@ namespace Checkmarx.API.AST.Models
         {
             get
             {
-                return ScanConfigurations.ContainsKey(ASTClient.FastScanConfiguration) ? string.Compare(ScanConfigurations[ASTClient.FastScanConfiguration].Value, "true", true) == 0 : false;
+                return ScanConfigurations.ContainsKey(ASTClient.FastScanConfiguration) ? 
+                    string.Compare(ScanConfigurations[ASTClient.FastScanConfiguration].Value, "true", true) == 0 : false;
             }
         }
+
+        public bool RecommendedExclusionsEnabled
+        {
+            get
+            {
+                return ScanConfigurations.ContainsKey(ASTClient.RecommendedExclusionsConfiguration) ?
+                 string.Compare(ScanConfigurations[ASTClient.RecommendedExclusionsConfiguration].Value, "true", true) == 0 : false;
+            }
+        }
+
 
         private void loadPresetAndLoc()
         {
@@ -355,6 +367,25 @@ namespace Checkmarx.API.AST.Models
             }
         }
 
+
+        private List<Vulnerability> _scaVulnerabilities;
+
+        public List<Vulnerability> SCAVulnerabilities
+        {
+            get
+            {
+                if (_scaVulnerabilities == null)
+                {
+                    ScanReportJson lastScanReport = this._client.Requests.GetScanReport(Id);
+                    _scaVulnerabilities = lastScanReport.Vulnerabilities;
+                }
+
+                return _scaVulnerabilities;
+            }
+
+        }
+
+
         private void updateSCAScanResultDetailsBasedOnSCAVulnerabilities(ScanResultDetails model, Guid projId, Guid scanId)
         {
             // When it is a scan with only SCA engine and 0 results, for some reason other APIs returns null in the sca scan status and results
@@ -453,6 +484,8 @@ namespace Checkmarx.API.AST.Models
                 return _kicsResults;
             }
         }
+
+     
 
         private void updateKicsScanResultDetailsBasedOnKicsVulnerabilities(ScanResultDetails model, Guid scanId)
         {

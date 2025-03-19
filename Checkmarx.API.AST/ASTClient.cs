@@ -138,6 +138,7 @@ namespace Checkmarx.API.AST
         public const string SettingsProjectConfiguration = "scan.config.sast.languageMode";
         public const string SettingsProjectPreset = "scan.config.sast.presetName";
         public const string FastScanConfiguration = "scan.config.sast.fastScanMode";
+        public const string RecommendedExclusionsConfiguration = "scan.config.sast.recommendedExclusions";
         public const string IsIncrementalConfiguration = "scan.config.sast.incremental";
 
         public const string SAST_Engine = "sast";

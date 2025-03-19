@@ -692,6 +692,22 @@ namespace Checkmarx.API.AST.Tests
 
 
         [TestMethod]
+        public void ListScanParametersTest()
+        {
+
+            Guid scanId = new Guid("f2b86b8e-59ee-4f14-a56a-8892b42bc862");
+
+            var scanDetails = astclient.GetScanDetails(astclient.Scans.GetScanAsync(scanId).Result);
+
+            foreach (var conf in scanDetails.ScanConfigurations)
+            {
+                Trace.WriteLine(conf.Key + "=" + conf.Value?.Value);
+            }
+
+        }
+
+
+        [TestMethod]
         public void ScanParametersCompareTest()
         {
             Guid previousScanId = new Guid("c8b49478-f580-4ecb-9277-0a97fb71ab3c");
