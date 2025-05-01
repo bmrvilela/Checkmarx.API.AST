@@ -1436,7 +1436,7 @@ namespace Checkmarx.API.AST
             return false;
         }
 
-        public void MarkSASTResult(Guid projectId, string similarityId, ResultsSeverity severity, ResultsState state, string comment = null, Guid? scanId = null)
+        public void MarkSASTResult(Guid projectId, string similarityId, ResultsSeverity severity, ResultsState state, Guid scanId, string comment = null)
         {
             if (projectId == Guid.Empty)
                 throw new ArgumentException(nameof(projectId));
