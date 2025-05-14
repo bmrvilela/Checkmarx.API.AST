@@ -152,7 +152,9 @@ namespace Checkmarx.API.AST.Tests
                                      "-203301157",
                                      ResultsSeverity.HIGH,
                                      ResultsState.CONFIRMED,
+                                     Guid.Empty,
                                      null);
+
         }
 
 
@@ -172,7 +174,7 @@ namespace Checkmarx.API.AST.Tests
                 astClient.MarkSASTResult(ProjectId,
                     vuln.SimilarityID,
                     vuln.Severity,
-                    GetRandomEnumMember<ResultsState>(),
+                    GetRandomEnumMember<ResultsState>(), lastScan.Id,
                     null);
             }
         }
