@@ -218,7 +218,7 @@ namespace Checkmarx.API.AST.Models
         {
             get
             {
-                if (_sastResults != null && _sastResults.HasValidResults())
+                if (_sastResults != null)
                     return _sastResults;
 
                 if (!Successful)
