@@ -26,6 +26,11 @@ namespace Checkmarx.API.AST.Models
         public int? Info { get; set; }
 
         public int? ToVerify { get; set; }
+
+        public bool HasValidResults()
+        {
+            return Critical.HasValue && High.HasValue && Medium.HasValue && Low.HasValue;
+        }
     }
 
     public class SASTScanResultDetails : ScanResultDetails

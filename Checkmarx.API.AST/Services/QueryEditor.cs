@@ -763,7 +763,7 @@ namespace Checkmarx.API.AST.Services.QueryEditor
         /// <param name="filters">Parameter to define the filters of queries. Language on SAST or Technology on IaC.</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<System.Collections.Generic.ICollection<QueriesTree>> GetQueriesAsync(System.Guid sessionId, string level = null, System.Collections.Generic.IEnumerable<string> ids = null, System.Collections.Generic.IEnumerable<string> filters = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        public virtual async System.Threading.Tasks.Task<System.Collections.Generic.ICollection<QueriesTree>> GetQueriesAsync(System.Guid sessionId, string level = null, bool? includeMetadata = null, System.Collections.Generic.IEnumerable<string> ids = null, System.Collections.Generic.IEnumerable<string> filters = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
         {
             if (sessionId == null)
                 throw new System.ArgumentNullException("sessionId");
@@ -787,6 +787,10 @@ namespace Checkmarx.API.AST.Services.QueryEditor
                     if (level != null)
                     {
                         urlBuilder_.Append(System.Uri.EscapeDataString("level")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(level, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
+                    }
+                    if (includeMetadata != null)
+                    {
+                        urlBuilder_.Append(System.Uri.EscapeDataString("includeMetadata")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(includeMetadata, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
                     }
                     if (ids != null)
                     {
@@ -3213,13 +3217,13 @@ namespace Checkmarx.API.AST.Services.QueryEditor
     public partial class CreateQueryRequest
     {
         [JsonProperty("cwe")]
-        public long Cwe { get; set; }
+        public long? Cwe { get; set; }
 
         [JsonProperty("executable")]
         public bool Executable { get; set; }
 
         [JsonProperty("description")]
-        public long Description { get; set; }
+        public long? Description { get; set; }
 
         [JsonProperty("language")]
         public string Language { get; set; }
@@ -3231,7 +3235,7 @@ namespace Checkmarx.API.AST.Services.QueryEditor
         public string Severity { get; set; }
 
         [JsonProperty("sastId")]
-        public long SastId { get; set; }
+        public long? SastId { get; set; }
 
         [JsonProperty("presets")]
         public List<string> Presets { get; set; }
@@ -3286,6 +3290,12 @@ namespace Checkmarx.API.AST.Services.QueryEditor
         /// </summary>
         [Newtonsoft.Json.JsonProperty("scanner", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string Scanner { get; set; }
+
+        /// <summary>
+        /// This value indicated the scanner that started the Audit session
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty("filter", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string Filter { get; set; }
 
         /// <summary>
         /// The custom timeout, in seconds, for this session

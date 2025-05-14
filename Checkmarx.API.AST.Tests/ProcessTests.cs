@@ -74,7 +74,7 @@ namespace Checkmarx.API.AST.Tests
         [TestMethod]
         public void QueriesForProjectTest()
         {
-            var listOfQueries = astclient.GetProjectQueries(astclient.Projects.GetListOfProjectsAsync().Result.Projects.First().Id);
+            var listOfQueries = astclient.GetQueries(astclient.Projects.GetListOfProjectsAsync().Result.Projects.First().Id);
 
             Dictionary<string, Services.SASTQueriesAudit.Queries> keys = new Dictionary<string, Services.SASTQueriesAudit.Queries>();
 
