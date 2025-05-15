@@ -31,7 +31,6 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using Checkmarx.API.AST.Services.QueryEditor;
-using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace Checkmarx.API.AST
@@ -146,6 +145,10 @@ namespace Checkmarx.API.AST
         public const string KICS_Engine = "kics";
         public const string API_Security_Engine = "apisec";
         public const string SCA_Container_Engine = "sca-container";
+
+        public const string Query_Level_Cx = "Cx";
+        public const string Query_Level_Tenant = "Tenant";
+        public const string Query_Level_Project = "Project";
 
         private readonly static string CompletedStage = Checkmarx.API.AST.Services.Scans.Status.Completed.ToString();
 
@@ -827,7 +830,7 @@ namespace Checkmarx.API.AST
         {
             return ResultsSummary.SummaryByScansIdsAsync(new Guid[] { scanId }, include_files: false,
                include_queries: false,
-               include_severity_status: false,
+               include_severity_status: true,
                include_status_counters: false).Result.ScansSummaries;
         }
 
@@ -1788,7 +1791,7 @@ namespace Checkmarx.API.AST
 
         #endregion
 
-        #region Queries and Presets
+        #region Presets
 
         public IEnumerable<PresetDetails> GetAllPresetsDetails()
         {
@@ -1827,66 +1830,551 @@ namespace Checkmarx.API.AST
             return listPresets.Presets;
         }
 
-        public IEnumerable<Services.SASTQueriesAudit.Queries> GetTenantQueries()
+        #endregion
+
+        #region Queries
+
+        /// <summary>
+        /// Retrieves all queries
+        /// </summary>
+        /// <returns>
+        /// An enumerable collection of all the queries from all levels
+        /// </returns>
+        public IEnumerable<Services.SASTQueriesAudit.Queries> GetAllQueries()
         {
-            return SASTQueriesAudit.QueriesAllAsync().Result;
+            var queries = getQueries().ToList();
+            foreach (var project in GetAllProjectsDetails())
+            {
+                var projectQueries = GetProjectLevelQueries(project.Id).Values;
+                if (projectQueries.Any())
+                    queries.AddRange(projectQueries);
+            }
+
+            return queries;
         }
 
-        public Dictionary<string, Services.SASTQueriesAudit.Queries> GetProjectQueries(Guid projectId)
+        /// <summary>
+        /// Retrieves a dictionary of queries scoped by priority: Project → Tenant → Cx. Project level is only included with the projectId parameter.
+        /// </summary>
+        /// <param name="projectId">The ID of the project to retrieve queries for. Project-level queries override Tenant/Cx level queries with the same ID</param>
+        /// <returns>
+        /// A dictionary mapping query IDs to queries. Queries defined at the Project level override queries with the same ID defined at the Tenant/Cx level.
+        /// </returns>
+        public Dictionary<string, Services.SASTQueriesAudit.Queries> GetQueries(Guid? projectId = null)
         {
-            // The Distinct is a workaround... not the solution.
-            return SASTQueriesAudit.QueriesAllAsync(projectId).Result.DistinctBy(x => x.Id).ToDictionary(x => x.Id, StringComparer.InvariantCultureIgnoreCase);
+            return getQueriesDictionary(getQueries(projectId));
         }
 
-        public IEnumerable<Services.SASTQueriesAudit.Queries> GetTeamCorpLevelQueries(Guid projectId)
+        /// <summary>
+        /// Retrieves a dictionary of Cx Level queries.
+        /// </summary>
+        /// <returns>
+        /// A dictionary mapping query IDs to queries at a Cx level.
+        /// </returns>
+        public Dictionary<string, Services.SASTQueriesAudit.Queries> GetCxLevelQueries()
         {
-            return SASTQueriesAudit.QueriesAllAsync(projectId).Result.Where(x => x.IsExecutable);
+            return getQueriesDictionary(getQueries(predicate: x => x.Level == ASTClient.Query_Level_Cx));
+        }
+
+        /// <summary>
+        /// Retrieves a dictionary of Tenant Level queries.
+        /// </summary>
+        /// <returns>
+        /// A dictionary mapping query IDs to queries at a Tenant level.
+        /// </returns>
+        public Dictionary<string, Services.SASTQueriesAudit.Queries> GetTenantLevelQueries()
+        {
+            return getQueriesDictionary(getQueries(predicate: x => x.Level == ASTClient.Query_Level_Tenant));
+        }
+
+        /// <summary>
+        /// Retrieves a dictionary of Project Level queries.
+        /// </summary>
+        /// <param name="projectId">The ID of the project to retrieve queries for.</param>
+        /// <returns>
+        /// A dictionary mapping query IDs to queries at a Project level.
+        /// </returns>
+        public Dictionary<string, Services.SASTQueriesAudit.Queries> GetProjectLevelQueries(Guid projectId)
+        {
+            if (projectId == Guid.Empty)
+                throw new ArgumentException(nameof(projectId));
+
+            return getQueriesDictionary(getQueries(projectId, x => x.Level == ASTClient.Query_Level_Project));
+        }
+
+        /// <summary>
+        /// Get the Query Source by language and name
+        /// </summary>
+        /// <param name="language">The query language</param>
+        /// <param name="queryName">The query name</param>
+        /// <param name="projectId">The ID of the project to retrieve queries for.</param>
+        /// <param name="scanId">The ID of the scan to create a session</param>
+        /// <returns>The query source</returns>
+        /// <exception cref="ArgumentException"></exception>
+        /// <exception cref="Exception"></exception>
+        public string GetQuerySource(string language, string queryName, Guid? projectId = null, Guid? scanId = null)
+        {
+            if (string.IsNullOrWhiteSpace(language))
+                throw new ArgumentException(nameof(language));
+
+            if (string.IsNullOrWhiteSpace(queryName))
+                throw new ArgumentException(nameof(queryName));
+
+            string level = Query_Level_Tenant;
+            if (projectId.HasValue)
+                level = Query_Level_Project;
+
+            var session = getQueryEditorSessionKey(level, language, projectId, scanId);
+
+            try
+            {
+                var query = getQueryByLanguageAndName(session, language, queryName);
+
+                if (query == null)
+                    throw new Exception($"No query found for language {language} with the name {queryName}");
+
+                return query.Source;
+            }
+            finally { endQueryEditorSession(session); }
+        }
+
+        /// <summary>
+        /// Overrides a query at a project level
+        /// </summary>
+        /// <param name="projectId">The ID of the project to overwrite the query for.</param>
+        /// <param name="language">Query language (case insensitive)</param>
+        /// <param name="queryName">Query Name (case insensitive)</param>
+        /// <param name="querySource">Query Source</param>
+        /// <param name="scanId">The ID of the scan to create a session</param>
+        /// <returns>Returns the query editor key</returns>
+        /// <exception cref="Exception"></exception>
+        public void OverrideProjectQuerySource(Guid projectId, string language, string queryName, string querySource, Guid? scanId = null)
+        {
+            if (projectId == Guid.Empty)
+                throw new ArgumentNullException(nameof(projectId));
+
+            if (string.IsNullOrWhiteSpace(language))
+                throw new ArgumentException(nameof(language));
+
+            if (string.IsNullOrWhiteSpace(queryName))
+                throw new ArgumentException(nameof(queryName));
+
+            if (string.IsNullOrWhiteSpace(querySource))
+                throw new ArgumentException(nameof(querySource));
+
+            var session = getQueryEditorSessionKey(Query_Level_Project, language, projectId, scanId);
+
+            try
+            {
+                var query = getQueryByLanguageAndName(session, language, queryName);
+
+                if (query == null)
+                    throw new Exception($"No query found for language {language} with the name {queryName} for project {projectId}");
+
+                // If there is an existing query at the project level already, call the method to update the source code
+                // If not, create the new query
+                if (query.Level == Query_Level_Project)
+                {
+                    // Do not update the source code if there is no differences. API will throw an error "error modifying query environment"
+                    if (query.Source != querySource)
+                        updateQuerySourceByEditorQuery(session, query.Id, querySource);
+                }
+                else
+                {
+                    createQuery(session, query, Query_Level_Project, querySource);
+                }
+            }
+            finally { endQueryEditorSession(session); }
+        }
+
+        /// <summary>
+        /// Overrides a query at a tenant level
+        /// </summary>
+        /// <param name="language">Query language (case insensitive)</param>
+        /// <param name="queryName">Query Name (case insensitive)</param>
+        /// <param name="querySource">Query Source</param>
+        /// <returns>Returns the query editor key</returns>
+        /// <exception cref="Exception"></exception>
+        public void OverrideTenantQuerySource(string language, string queryName, string querySource)
+        {
+            if (string.IsNullOrWhiteSpace(language))
+                throw new ArgumentException(nameof(language));
+
+            if (string.IsNullOrWhiteSpace(queryName))
+                throw new ArgumentException(nameof(queryName));
+
+            if (string.IsNullOrWhiteSpace(querySource))
+                throw new ArgumentException(nameof(querySource));
+
+            var session = getQueryEditorSessionKey(Query_Level_Tenant, language);
+
+            try
+            {
+                var query = getQueryByLanguageAndName(session, language, queryName);
+
+                if (query == null)
+                    throw new Exception($"No query found for language {language} with the name {queryName}");
+
+                // If there is an existing query at the tenant level already, call the method to update the source code
+                // If not, create the new query
+                if (query.Level == Query_Level_Tenant)
+                {
+                    // Do not update the source code if there is no differences. API will throw an error "error modifying query environment"
+                    if (query.Source != querySource)
+                        updateQuerySourceByEditorQuery(session, query.Id, querySource);
+                }
+                else
+                {
+                    // For some reason, in the current API version (and for tenant queries), you cannot send the query source in the creation body
+                    // You need to create the query and update the source code after
+                    CreateQueryRequest createBody = new CreateQueryRequest()
+                    {
+                        Name = query.Name,
+                        Language = query.Metadata.Language,
+                        Group = query.Metadata.Group,
+                        Severity = query.Metadata.Severity,
+                        Executable = query.Metadata.Executable
+                    };
+
+                    var queryId = requestQueryCreation(session, createBody);
+
+                    updateQuerySourceByEditorQuery(session, queryId, querySource);
+                }
+            }
+            finally { endQueryEditorSession(session); }
+        }
+
+        /// <summary>
+        /// Create a query at a tenant level
+        /// </summary>
+        /// <param name="language">Query language</param>
+        /// <param name="queryName">Query Name</param>
+        /// <param name="group">Query Group</param>
+        /// <param name="severity">Query Severity</param>
+        /// <param name="source">Query Source</param>
+        /// <param name="isExecutable">Is the query executable</param>
+        /// <returns>Returns the query editor key</returns>
+        /// <exception cref="Exception"></exception>
+        public void CreateTenantQuery(string language, string queryName, string group, string severity, string source, bool isExecutable)
+        {
+            if (string.IsNullOrWhiteSpace(language))
+                throw new ArgumentException(nameof(language));
+
+            if (string.IsNullOrWhiteSpace(queryName))
+                throw new ArgumentException(nameof(queryName));
+
+            if (string.IsNullOrWhiteSpace(group))
+                throw new ArgumentException(nameof(group));
+
+            if (string.IsNullOrWhiteSpace(severity))
+                throw new ArgumentException(nameof(severity));
+
+            if (string.IsNullOrWhiteSpace(source))
+                throw new ArgumentException(nameof(source));
+
+            var session = getQueryEditorSessionKey(Query_Level_Tenant, language);
+
+            try
+            {
+                CreateQueryRequest createBody = new CreateQueryRequest()
+                {
+                    Name = queryName,
+                    Language = language,
+                    Group = group,
+                    Severity = severity,
+                    Executable = isExecutable
+                };
+
+                var queryId = requestQueryCreation(session, createBody);
+
+                updateQuerySourceByEditorQuery(session, queryId, source);
+            }
+            finally { endQueryEditorSession(session); }
+        }
+
+        /// <summary>
+        /// Deletes a query at a Project level
+        /// </summary>
+        /// <param name="projectId">The ID of the project to delete the query for</param>
+        /// <param name="language">Query language (case insensitive)</param>
+        /// <param name="queryName">Query Name (case insensitive)</param>
+        /// <param name="withQueryDescription">Only deletes query, if the query source contains the description (case insensitive)</param>
+        /// <param name="scanId">The ID of the scan to create a session</param>
+        /// <exception cref="Exception"></exception>
+        public bool DeleteProjectQuery(Guid projectId, string language, string queryName, string withQueryDescription = null, Guid? scanId = null)
+        {
+            if (projectId == Guid.Empty)
+                throw new ArgumentNullException(nameof(projectId));
+
+            if (string.IsNullOrWhiteSpace(language))
+                throw new ArgumentException(nameof(language));
+
+            if (string.IsNullOrWhiteSpace(queryName))
+                throw new ArgumentException(nameof(queryName));
+
+            var session = getQueryEditorSessionKey(Query_Level_Project, language, projectId, scanId);
+
+            try
+            {
+                var query = getQueryByLanguageAndName(session, language, queryName);
+
+                if (query == null)
+                    throw new Exception($"No query found for language {language} with the name {queryName}");
+
+                if (query.Level != Query_Level_Project)
+                    throw new Exception($"The detected query is at {query.Level} level, and not at {Query_Level_Project} level.");
+
+                // In cases were we just want to delete queries with a certain description added in the source
+                if (!string.IsNullOrWhiteSpace(withQueryDescription))
+                {
+                    if (!query.Source.ToLower().Contains(withQueryDescription.ToLower()))
+                        throw new Exception($"The detected query does not contain the description provided.");
+                }
+
+                return deleteQueryWithSessionId(session, query.Id);
+            }
+            finally { endQueryEditorSession(session); }
+        }
+
+        /// <summary>
+        /// Deletes a query at a Tenant level
+        /// </summary>
+        /// <param name="language">Query language (case insensitive)</param>
+        /// <param name="queryName">Query Name (case insensitive)</param>
+        /// <param name="withQueryDescription">Only deletes query, if the query source contains the description (case insensitive)</param>
+        /// <exception cref="Exception"></exception>
+        public bool DeleteTenantQuery(string language, string queryName, string withQueryDescription = null)
+        {
+            if (string.IsNullOrWhiteSpace(language))
+                throw new ArgumentException(nameof(language));
+
+            if (string.IsNullOrWhiteSpace(queryName))
+                throw new ArgumentException(nameof(queryName));
+
+            var session = getQueryEditorSessionKey(Query_Level_Tenant, language);
+
+            try
+            {
+                var query = getQueryByLanguageAndName(session, language, queryName);
+
+                if (query == null)
+                    throw new Exception($"No query found for language {language} with the name {queryName}");
+
+                if (query.Level != Query_Level_Tenant)
+                    throw new Exception($"The detected query is at {query.Level} level, and not at {Query_Level_Tenant} level.");
+
+                // In cases were we just want to delete queries with a certain description added in the source
+                if (!string.IsNullOrWhiteSpace(withQueryDescription))
+                {
+                    if (!query.Source.ToLower().Contains(withQueryDescription.ToLower()))
+                        throw new Exception($"The detected query does not contain the description provided.");
+                }
+
+                return deleteQueryWithSessionId(session, query.Id);
+            }
+            finally { endQueryEditorSession(session); }
+        }
+
+        /// <summary>
+        /// Deletes a query at a Project or Tenant level through the query editor key
+        /// </summary>
+        /// <param name="queryKey">Query Editor Key</param>
+        /// <param name="language">Query language (case insensitive)</param>
+        /// <param name="projectId">The ID of the project to create a session. Mandatory if it is a project level query</param>
+        /// <param name="scanId">The ID of the scan to create a session</param>
+        /// <exception cref="Exception"></exception>
+        public bool DeleteQueryByKey(string queryKey, string language, Guid? projectId = null, Guid? scanId = null)
+        {
+            if (string.IsNullOrWhiteSpace(queryKey))
+                throw new ArgumentException(nameof(queryKey));
+
+            if (string.IsNullOrWhiteSpace(language))
+                throw new ArgumentException(nameof(language));
+
+            string level = Query_Level_Project;
+            if (!projectId.HasValue)
+                level = Query_Level_Tenant;
+
+            var session = getQueryEditorSessionKey(level, language, projectId, scanId);
+
+            try
+            {
+                return deleteQueryWithSessionId(session, queryKey);
+            }
+            finally { endQueryEditorSession(session); }
+        }
+
+        /// <summary>
+        /// Query details by language and name
+        /// </summary>
+        /// <param name="language">Query language (case insensitive)</param>
+        /// <param name="queryName">Query Name (case insensitive)</param>
+        /// <param name="level">The query level (Cx, Tenant or Project)</param>
+        /// <param name="projectId">The ID of the project to fetch the query for. Mandatory if the level is Project</param>
+        /// <param name="scanId">The ID of the scan to create a session</param>
+        /// <returns>Returns the query editor key</returns>
+        /// <exception cref="Exception"></exception>
+        public QueryResponse GetQueryByLanguageAndName(string language, string queryName, string level, Guid? projectId = null, Guid? scanId = null)
+        {
+            if (string.IsNullOrWhiteSpace(language))
+                throw new ArgumentNullException(nameof(language));
+
+            if (string.IsNullOrWhiteSpace(queryName))
+                throw new ArgumentNullException(nameof(queryName));
+
+            if (string.IsNullOrWhiteSpace(level))
+                throw new ArgumentNullException(nameof(level));
+
+            if (level == Query_Level_Project && !projectId.HasValue)
+                throw new Exception($"In order to fetch information of query level \"{Query_Level_Project}\", you must provide a project id.");
+
+            var session = getQueryEditorSessionKey(level, language, projectId, scanId);
+
+            try
+            {
+                return getQueryByLanguageAndName(session, language, queryName);
+            }
+            finally { endQueryEditorSession(session); }
+        }
+
+        /// <summary>
+        /// Scan Query Nodes
+        /// </summary>
+        /// <param name="projectId">Project Id</param>
+        /// <param name="scanId">Scan Id</param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        public IEnumerable<QueriesTree> GetProjectScanQueryNodes(Guid projectId, Guid scanId)
+        {
+            if (projectId == Guid.Empty)
+                throw new ArgumentNullException(nameof(projectId));
+
+            if (scanId == Guid.Empty)
+                throw new ArgumentNullException(nameof(scanId));
+
+            var session = getQueryEditorSessionKey(Query_Level_Project, null, projectId, scanId);
+
+            try
+            {
+                return QueryEditor.GetQueriesAsync(session, includeMetadata: true).Result;
+            }
+            finally { endQueryEditorSession(session); }
+        }
+
+        #region Private Methods
+
+        private IEnumerable<Services.SASTQueriesAudit.Queries> getQueries(Guid? projectId = null, Predicate<Services.SASTQueriesAudit.Queries> predicate = null)
+        {
+            IEnumerable<Services.SASTQueriesAudit.Queries> queries = SASTQueriesAudit.QueriesAllAsync(projectId).Result;
+
+            if (predicate != null)
+                queries = queries.Where(q => predicate(q));
+
+            return queries;
+        }
+
+        private Dictionary<string, Services.SASTQueriesAudit.Queries> getQueriesDictionary(IEnumerable<Services.SASTQueriesAudit.Queries> queries)
+        {
+            Dictionary<string, Services.SASTQueriesAudit.Queries> dictionary = new Dictionary<string, Services.SASTQueriesAudit.Queries>();
+
+            foreach (var query in queries)
+            {
+                if (!dictionary.ContainsKey(query.Id))
+                {
+                    dictionary.Add(query.Id, query);
+                }
+                else
+                {
+                    if (query.Level == Query_Level_Project)
+                        dictionary[query.Id] = query;
+                    else if (query.Level == Query_Level_Tenant && dictionary[query.Id].Level != Query_Level_Project)
+                        dictionary[query.Id] = query;
+                }
+            }
+
+            return dictionary;
+        }
+
+        private string createQuery(Guid session, QueryResponse query, string level, string source)
+        {
+            if (query == null)
+                throw new ArgumentNullException(nameof(query));
+
+            if (string.IsNullOrWhiteSpace(level))
+                throw new ArgumentNullException(nameof(level));
+
+            if (string.IsNullOrWhiteSpace(source))
+                throw new ArgumentNullException(nameof(source));
+
+            if (level != Query_Level_Tenant && level != Query_Level_Project)
+                throw new Exception($"You can only create a query editor session for {Query_Level_Tenant} and {Query_Level_Project} levels.");
+
+            return createQueryByEditorQuery(session, query.Id, query.Name, query.Path, query.Metadata.Cwe, query.Metadata.Language, query.Metadata.Group, query.Metadata.Severity, query.Metadata.Executable, query.Metadata.Description, query.Metadata.SastId, query.Metadata.Presets?.ToList(), level, source);
+        }
+
+        private Guid getProjectScanIdForQueryEditorSession(Guid projectId)
+        {
+            if (projectId == Guid.Empty)
+                throw new ArgumentNullException(nameof(projectId));
+
+            var lastScan = GetLastScan(projectId, completed: false);
+
+            if (lastScan == null)
+                throw new InvalidOperationException($"No scan found for project id {projectId}");
+
+            return lastScan.Id;
         }
 
         #region QueryEditor
 
-        Dictionary<Guid, Dictionary<Guid, Guid>> _queryEditorSessionCache = new Dictionary<Guid, Dictionary<Guid, Guid>>();
-        private Guid getQueryEditorSessionId(Guid projectId, Guid scanId)
+        private Guid getQueryEditorSessionKey(string level, string language = null, Guid? projectId = null, Guid? scanId = null)
         {
-            if (_queryEditorSessionCache.ContainsKey(projectId))
-            {
-                if (!_queryEditorSessionCache[projectId].ContainsKey(scanId))
-                {
-                    var sessionId = createNewSessionId(projectId, scanId);
-                    _queryEditorSessionCache[projectId].Add(scanId, sessionId);
-                }
-                else
-                {
-                    bool errorSession = false;
-                    try
-                    {
-                        QueryEditor.PingSessionAsync(_queryEditorSessionCache[projectId][scanId]).ConfigureAwait(false);
-                    }
-                    catch
-                    {
-                        errorSession = true;
-                    }
+            if (level != Query_Level_Tenant && level != Query_Level_Project)
+                throw new Exception($"You can only create a query editor session for {Query_Level_Tenant} and {Query_Level_Project} levels.");
 
-                    if (errorSession)
-                    {
-                        var sessionId = createNewSessionId(projectId, scanId);
-                        _queryEditorSessionCache[projectId][scanId] = sessionId;
-                    }
-                }
+            if (level == Query_Level_Tenant)
+            {
+                if (string.IsNullOrWhiteSpace(language))
+                    throw new ArgumentNullException(nameof(language));
+
+                return createQueryEditorNewSessionId(language);
             }
             else
             {
-                var sessionId = createNewSessionId(projectId, scanId);
-                _queryEditorSessionCache[projectId] = new Dictionary<Guid, Guid>() { { scanId, sessionId } };
+                if (!projectId.HasValue || projectId == Guid.Empty)
+                    throw new ArgumentNullException(nameof(projectId));
+
+                if (!scanId.HasValue)
+                    scanId = getProjectScanIdForQueryEditorSession(projectId.Value);
+
+                return createQueryEditorNewSessionId(projectId.Value, scanId.Value);
             }
-
-            return _queryEditorSessionCache[projectId][scanId];
         }
-
-        public Guid createNewSessionId(Guid projectId, Guid scanId)
+        private Guid createQueryEditorNewSessionId(Guid projectId, Guid scanId)
         {
-            var session = QueryEditor.CreateSessionAsync(new Services.QueryEditor.SessionRequest() { ProjectId = projectId, ScanId = scanId, Scanner = "sast", Timeout = 3000 }).Result;
+            if (projectId == Guid.Empty)
+                throw new ArgumentNullException(nameof(projectId));
 
+            if (scanId == Guid.Empty)
+                throw new ArgumentNullException(nameof(scanId));
+
+            var session = QueryEditor.CreateSessionAsync(new Services.QueryEditor.SessionRequest() { ProjectId = projectId, ScanId = scanId, Scanner = "sast", Timeout = 120 }).Result;
+
+            return checkSessionStatusAndGetId(session, projectId: projectId);
+        }
+        private Guid createQueryEditorNewSessionId(string language)
+        {
+            if (string.IsNullOrWhiteSpace(language))
+                throw new ArgumentNullException(nameof(language));
+
+            language = language.Trim().ToLower();
+
+            var session = QueryEditor.CreateSessionAsync(new Services.QueryEditor.SessionRequest() { Filter = language, Scanner = "sast", Timeout = 120 }).Result;
+
+            return checkSessionStatusAndGetId(session, language: language);
+        }
+        private Guid checkSessionStatusAndGetId(Services.QueryEditor.SessionResponse session, Guid? projectId = null, string language = null)
+        {
             bool completed = false;
             Guid? id = null;
             while (!completed)
@@ -1901,54 +2389,64 @@ namespace Checkmarx.API.AST
                     if (status.Status == RequestStatusStatus.Finished)
                         id = session.Id;
                     else
-                        throw new Exception($"Error creating session for project {projectId} with status \"{status.Status.ToString()}\".");
+                    {
+                        string errorMessage = $"Error creating query session with status \"{status.Status.ToString()}\".";
+                        if (projectId.HasValue)
+                            errorMessage = $"Error creating query session for project {projectId} with status \"{status.Status.ToString()}\".";
+                        else if (!string.IsNullOrWhiteSpace(language))
+                            errorMessage = $"Error creating session for language {language} with status \"{status.Status.ToString()}\".";
+
+                        throw new Exception($"Error creating query session with status \"{status.Status.ToString()}\".");
+                    }
                 }
             }
 
             if (id == null)
-                throw new Exception($"Unknown error creating session for project {projectId}");
+            {
+                string errorMessage = $"Unknown error creating session";
+                if (projectId.HasValue)
+                    errorMessage = $"Unknown error creating session for project {projectId}";
+                else if (!string.IsNullOrWhiteSpace(language))
+                    errorMessage = $"Unknown error creating session for language {language}";
 
+                throw new Exception(errorMessage);
+            }
 
             return id.Value;
         }
-
-        private void endQueryEditorSessions()
+        private void endQueryEditorSession(Guid session)
         {
-            foreach (var project in _queryEditorSessionCache)
-            {
-                foreach (var session in project.Value)
-                {
-                    try
-                    {
-                        QueryEditor.DeleteSessionAsync(session.Value).ConfigureAwait(false);
-                    }
-                    catch (Exception ex)
-                    {
-                        Trace.WriteLine($"Error ending queryEditor session for project {project.Key}");
-                    }
-                }
-            }
-
-            _queryEditorSessionCache.Clear();
+            QueryEditor.DeleteSessionAsync(session).ConfigureAwait(false);
         }
 
-        public IEnumerable<Services.QueryEditor.QueriesTree> GetProjectScanQueryNodes(Guid projectId, Guid scanId)
+        private QueryResponse getQueryByLanguageAndName(Guid session, string language, string queryName)
         {
-            var session = getQueryEditorSessionId(projectId, scanId);
+            var projectQueries = QueryEditor.GetQueriesAsync(session, includeMetadata: true).Result;
+            var possibleQueriyToOverride = QueriesTree.FilterTreeByQueryName(projectQueries, queryName)
+                                                .SingleOrDefault(x => x.Title.ToLower() == language.ToLower());
 
-            return QueryEditor.GetQueriesAsync(session).Result;
+            if (possibleQueriyToOverride == null)
+                return null;
+
+            QueriesTree selectedNode = null;
+            if (possibleQueriyToOverride.Children.Any(x => x.Title == Query_Level_Project))
+                selectedNode = possibleQueriyToOverride.Children.Single(x => x.Title == Query_Level_Project);
+            else if (possibleQueriyToOverride.Children.Any(x => x.Title == Query_Level_Tenant))
+                selectedNode = possibleQueriyToOverride.Children.Single(x => x.Title == Query_Level_Tenant);
+            else if (possibleQueriyToOverride.Children.Any(x => x.Title == Query_Level_Cx))
+                selectedNode = possibleQueriyToOverride.Children.Single(x => x.Title == Query_Level_Cx);
+            else
+                throw new Exception($"Query {queryName} has an unknown Level ");
+
+            var queryDetected = selectedNode.GetLastChildrenByTitle(queryName).Single();
+
+            return QueryEditor.GetQueryAsync(session, queryDetected.Key, true, true).Result;
         }
 
-        public Services.QueryEditor.QueryResponse GetProjectQueryByEditorQuery(Guid projectId, Guid scanId, string editorQueryId, bool includeMetadata = false, bool includeSource = false)
+        private string createQueryByEditorQuery(Guid session, string editorQueryId, string name, string path, long cwe, string language, string group, string severity, bool executable, long description, long sastId, List<string> presets, string level, string source)
         {
-            var session = getQueryEditorSessionId(projectId, scanId);
-
-            return QueryEditor.GetQueryAsync(session, editorQueryId, includeMetadata, includeSource).Result;
-        }
-
-        public string CreateProjectQueryByEditorQuery(Guid projectId, Guid scanId, string editorQueryId, string name, string path, long cwe, string language, string group, string severity, bool executable, long description, long sastId, List<string> presets, string source)
-        {
-            var session = getQueryEditorSessionId(projectId, scanId);
+            if (session == Guid.Empty)
+                throw new ArgumentNullException(nameof(session));
 
             CreateQueryRequest createBody = new CreateQueryRequest()
             {
@@ -1961,7 +2459,7 @@ namespace Checkmarx.API.AST
                 Description = description,
 
                 Id = editorQueryId,
-                Level = "project",
+                Level = level,
                 Path = path,
                 Presets = presets,
                 SastId = sastId,
@@ -1969,6 +2467,39 @@ namespace Checkmarx.API.AST
                 Source = source
             };
 
+            return requestQueryCreation(session, createBody);
+        }
+
+        private string updateQuerySourceByEditorQuery(Guid session, string editorQueryId, string source)
+        {
+            var createQueryResult = QueryEditor.PutQuerySourceAsync(session, new List<Services.QueryEditor.AuditQuery>() { new Services.QueryEditor.AuditQuery() { Id = editorQueryId, Source = source } }).Result;
+
+            bool completed = false;
+            string id = null;
+            while (!completed)
+            {
+                System.Threading.Thread.Sleep(5 * 1000);
+
+                var status = QueryEditor.CheckRequestStatusAsync(session, createQueryResult.Id).Result;
+
+                if (status.Completed)
+                {
+                    completed = true;
+                    if (status.Status == RequestStatusStatus.Finished)
+                        id = status.Value?.Id;
+                    else
+                        throw new Exception($"Error updating query source with key {editorQueryId}. Message: \"{status.Value.Message}\"");
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(id))
+                throw new Exception($"Unknown error updating query source with key {editorQueryId}");
+
+            return id;
+        }
+
+        private string requestQueryCreation(Guid session, CreateQueryRequest createBody)
+        {
             var createQueryResult = QueryEditor.CreateQueryAsync(createBody, session).Result;
 
             bool completed = false;
@@ -1985,19 +2516,23 @@ namespace Checkmarx.API.AST
                     if (status.Status == RequestStatusStatus.Finished)
                         id = status.Value?.Id;
                     else
-                        throw new Exception($"Error creating query for project {projectId} with status \"{status.Status.ToString()}\". Message: \"{status.Value.Message}\"");
+                        throw new Exception($"Error creating query {createBody.Language} {createBody.Name} with status \"{status.Status.ToString()}\". Message: \"{status.Value.Message}\"");
                 }
             }
 
             if (string.IsNullOrWhiteSpace(id))
-                throw new Exception($"Unknown error creating query for project {projectId}");
+                throw new Exception($"Unknown error creating query {createBody.Language} {createBody.Name}");
 
             return id;
         }
 
-        public bool DeleteProjectQueryByEditorQuery(Guid projectId, Guid scanId, string editorQueryId)
+        private bool deleteQueryWithSessionId(Guid session, string editorQueryId)
         {
-            var session = getQueryEditorSessionId(projectId, scanId);
+            if (session == Guid.Empty)
+                throw new ArgumentNullException(nameof(session));
+
+            if (string.IsNullOrWhiteSpace(editorQueryId))
+                throw new ArgumentNullException(nameof(editorQueryId));
 
             var deleteQueryResult = QueryEditor.DeleteQueryAsync(session, editorQueryId).Result;
 
@@ -2012,12 +2547,14 @@ namespace Checkmarx.API.AST
                 {
                     completed = true;
                     if (status.Status != RequestStatusStatus.Finished)
-                        throw new Exception($"Error deleting query for project {projectId} with status \"{status.Status.ToString()}\". Message: \"{status.Value.Message}\"");
+                        throw new Exception($"Error deleting query with status \"{status.Status.ToString()}\". Message: \"{status.Value.Message}\"");
                 }
             }
 
             return true;
         }
+
+        #endregion
 
         #endregion
 
@@ -2229,15 +2766,5 @@ namespace Checkmarx.API.AST
         }
 
         #endregion
-
-        private bool _disposed = false;
-        public void Dispose()
-        {
-            if (!_disposed)
-            {
-                endQueryEditorSessions();
-                _disposed = true;
-            }
-        }
     }
 }

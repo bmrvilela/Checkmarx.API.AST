@@ -2572,6 +2572,9 @@ namespace Checkmarx.API.AST.Services.SASTQueriesAudit
         [Newtonsoft.Json.JsonProperty("path", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string Path { get; set; } = default!;
 
+        [Newtonsoft.Json.JsonProperty("severity", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string Severity { get; set; } = default!;
+
         [Newtonsoft.Json.JsonProperty("isExecutable", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public bool IsExecutable { get; set; } = default!;
 

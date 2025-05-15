@@ -150,7 +150,7 @@ namespace Checkmarx.API.AST.Models
         {
             get
             {
-                return ScanConfigurations.ContainsKey(ASTClient.FastScanConfiguration) ? 
+                return ScanConfigurations.ContainsKey(ASTClient.FastScanConfiguration) ?
                     string.Compare(ScanConfigurations[ASTClient.FastScanConfiguration].Value, "true", true) == 0 : false;
             }
         }
@@ -485,7 +485,7 @@ namespace Checkmarx.API.AST.Models
             }
         }
 
-     
+
 
         private void updateKicsScanResultDetailsBasedOnKicsVulnerabilities(ScanResultDetails model, Guid scanId)
         {
