@@ -1280,6 +1280,12 @@ namespace Checkmarx.API.AST.Services.Projects
         public System.DateTimeOffset UpdatedAt { get; set; }
 
         /// <summary>
+        /// The origin of project
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty("criticality", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public int Criticality { get; set; } 
+
+        /// <summary>
         /// Project tags
         /// </summary>
         [Newtonsoft.Json.JsonProperty("tags", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]

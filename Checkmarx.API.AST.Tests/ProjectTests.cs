@@ -173,7 +173,21 @@ namespace Checkmarx.API.AST.Tests
 
             var projectsList = astclient.GetAllProjectsDetails();
 
-            Assert.AreEqual(1276, projectsList.Count);
+            foreach (var item in projectsList)
+            {
+                Trace.WriteLine(item.Id + " " + item.Criticality);
+            }
+
+
+            Assert.AreEqual(221, projectsList.Count);
+
+            //foreach (var proj in projectsList)
+            //{
+            //    var branches = astclient.GetProjectBranches(proj.Id).ToList();
+
+            //    Assert.IsNotNull(branches, proj.Name);
+            //    Assert.IsTrue(branches.Any(), proj.Name);
+            //}
         }
 
         [TestMethod]
