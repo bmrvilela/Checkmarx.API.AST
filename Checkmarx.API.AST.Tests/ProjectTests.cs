@@ -1,6 +1,8 @@
 using Checkmarx.API.AST.Models;
 using Checkmarx.API.AST.Models.Report;
+using Checkmarx.API.AST.Services;
 using Checkmarx.API.AST.Services.Applications;
+using Checkmarx.API.AST.Services.Configuration;
 using Checkmarx.API.AST.Services.Reports;
 using Checkmarx.API.AST.Services.SASTMetadata;
 using Checkmarx.API.AST.Services.Scans;
@@ -9,16 +11,15 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Dynamic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Net.Http.Headers;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Xml.Xsl;
-using System.Dynamic;
-using System.Collections.Immutable;
-using Checkmarx.API.AST.Services.Configuration;
 
 namespace Checkmarx.API.AST.Tests
 {
@@ -58,10 +59,68 @@ namespace Checkmarx.API.AST.Tests
         [TestMethod]
         public void GetPresetsTest()
         {
-            var presets = astclient.GetAllPresets();
+            var presets = astclient.GetAllPresetsDetails();
 
             foreach (var preset in presets)
-                Trace.WriteLine(preset.Name);
+            {
+                Trace.WriteLine($"{preset.Name} {preset.Custom} {preset.Description}");
+            }
+        }
+
+        [TestMethod]
+        public void OverridePresetTest()
+        {
+            var presets = astclient.GetAllPresetsDetails();
+
+            var originalPreset = presets.Single(x => x.Name == "Base Preset");
+            var targetPreset = presets.Single(x => x.Name == "ASA-Mobile-Express22");
+
+            Assert.IsNotNull(originalPreset);
+            Assert.IsNotNull(targetPreset);
+
+            astclient.PresetManagement.UpdatePresetAsync(targetPreset.Id, new Preset
+            {
+                Name = targetPreset.Name,
+                Description = originalPreset.Description?.Substring(0, 60),
+                QueryIds = originalPreset.QueryIds // Example query ID
+            }).Wait();
+        }
+
+
+        [TestMethod]
+        public void ComparePresetTest()
+        {
+            var presets = astclient.GetAllPresetsDetails();
+
+            var originalPreset = presets.Single(x => x.Name == "Base Preset");
+            var targetPreset = presets.Single(x => x.Name == "ASA-Mobile-Express22");
+
+            Assert.IsTrue(PresetManagement.PresetContainsTheSameQueries(originalPreset, targetPreset));
+        }
+
+        [TestMethod]
+        public void DuplicatePresetTest()
+        {
+            var presets = astclient.GetAllPresetsDetails();
+
+            foreach (var preset in presets.Where(x => x.Name == "Base Preset"))
+            {
+                Trace.WriteLine($"{preset.Name} {preset.Custom} {preset.Description}");
+
+                var name = preset.Name + "2";
+
+                if (!presets.Any(x => x.Name == name))
+                {
+                    astclient.PresetManagement.CreatePresetAsync(new Preset
+                    {
+                        Name = name,
+                        Description = preset.Description?.Substring(0, 60),
+                        QueryIds = preset.QueryIds
+                    }).Wait();
+                    break;
+                }
+
+            }
         }
 
         [TestMethod]

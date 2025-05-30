@@ -17,9 +17,11 @@
 
 namespace Checkmarx.API.AST.Services
 {
-    using System = global::System;
-    using static Checkmarx.API.AST.ASTClient;
     using Checkmarx.API.AST.Exceptions;
+    using System;
+    using System.Linq;
+    using static Checkmarx.API.AST.ASTClient;
+    using System = global::System;
 
     [System.CodeDom.Compiler.GeneratedCode("NSwag", "13.20.0.0 (NJsonSchema v10.9.0.0 (Newtonsoft.Json v11.0.0.0))")]
     public partial class PresetManagement
@@ -1104,6 +1106,22 @@ namespace Checkmarx.API.AST.Services
             var result = System.Convert.ToString(value, cultureInfo);
             return result == null ? "" : result;
         }
+
+        public static bool PresetContainsTheSameQueries(PresetDetails originalPreset, PresetDetails targetPreset)
+        {
+            if(originalPreset ==null)
+                throw new System.ArgumentNullException(nameof(originalPreset), "Original preset cannot be null.");
+
+            if (targetPreset ==null)
+                throw new System.ArgumentNullException(nameof(targetPreset), "Target preset cannot be null.");
+
+            //  "Query count should match between presets."
+            if (originalPreset.QueryIds.Count != targetPreset.QueryIds.Count)
+                return false;
+
+            // "All queries in the original preset should be present in the target preset."
+            return originalPreset.QueryIds.All(q => targetPreset.QueryIds.Contains(q)); 
+        }
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "13.20.0.0 (NJsonSchema v10.9.0.0 (Newtonsoft.Json v11.0.0.0))")]
@@ -1291,7 +1309,7 @@ namespace Checkmarx.API.AST.Services
     public partial class PresetDetails
     {
         [Newtonsoft.Json.JsonProperty("id", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public long Id { get; set; }
+        public int Id { get; set; }
 
         [Newtonsoft.Json.JsonProperty("name", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string Name { get; set; }

@@ -199,7 +199,7 @@ namespace Checkmarx.API.AST.Tests
             var newScanDetails2 = astclient.GetSASTScanResultsById(lastSASTScan.Id).ToList();
         }
 
-        Guid _projectId = new Guid("6f6579f4-f441-4e8e-8241-f0b4174391d1");
+        Guid _projectId = new Guid("3fb4c42c-88ab-4be4-9f15-7ffa88908040");
 
         [TestMethod]
         public void ListScansTest()
@@ -208,9 +208,9 @@ namespace Checkmarx.API.AST.Tests
 
             var projects = astclient.GetAllProjectsDetails();
 
-            var proj = projects.Single(x => x.Name == "EM-AMD/bcait-bcaresearch");
+            //var proj = projects.Single(x => x.Id == _projectId);
 
-            var lastSASTScan = astclient.GetLastScan(proj.Id, true);
+            var lastSASTScan = astclient.GetLastScan(_projectId, true);
 
             var newScanDetails = astclient.GetScanDetails(lastSASTScan.Id);
 
