@@ -157,5 +157,11 @@ namespace Checkmarx.API.AST.Tests
 
             Assert.IsTrue(singleHistoryPerProject.SingleOrDefault() != null);
         }
+
+        [TestMethod]
+        public void RecalculateSummaryCountersTest()
+        {
+            astclient.RecalculateSummaryCounters(new Guid("c6b124a3-8aa0-4cd1-8b40-b1a847759547"), new Guid("6b11cd1a-b85e-46e9-96ef-341ecea45f04"));
+        }
     }
 }
