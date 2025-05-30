@@ -74,5 +74,17 @@ namespace Checkmarx.API.AST.Tests
             }
         }
 
+        [TestMethod]
+        public void ListEngineVersionsTest()
+        {
+            var engineVersions = astclient.EngineVersions.GetVersionsAsync().Result;
+
+            // Display the engine versions
+
+            Trace.WriteLine("CxOne:" + engineVersions.CxOne);
+            Trace.WriteLine("SAST:" + engineVersions.SAST);
+            Trace.WriteLine("IaC:" + engineVersions.KICS);
+        }
+
     }
 }

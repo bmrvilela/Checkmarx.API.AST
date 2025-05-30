@@ -276,6 +276,18 @@ namespace Checkmarx.API.AST
             }
         }
 
+        private Versions _engineVersions;
+        public Versions EngineVersions
+        {
+            get
+            {
+                if (Connected && _engineVersions == null)
+                    _engineVersions = new Versions(ASTServer, _httpClient);
+
+                return _engineVersions;
+            }
+        }
+
 
         private SASTResults _SASTResults;
 
