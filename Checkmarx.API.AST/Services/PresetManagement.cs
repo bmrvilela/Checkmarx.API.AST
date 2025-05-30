@@ -64,7 +64,7 @@ namespace Checkmarx.API.AST.Services
         /// </summary>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<PresetPaged> GetPresetsAsync(int? limit = null, int? offset = null, string name = null, bool? exact_match = false, bool? include_details = false, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        public virtual async System.Threading.Tasks.Task<PresetPaged> GetPresetsAsync(int? limit = null, int? offset = null, string name = null, bool? exact_match = false, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
         {
             var urlBuilder_ = new System.Text.StringBuilder();
             urlBuilder_.Append(BaseUrl != null ? BaseUrl.TrimEnd('/') : "").Append("/?");
@@ -80,10 +80,9 @@ namespace Checkmarx.API.AST.Services
             {
                 urlBuilder_.Append(System.Uri.EscapeDataString("exact_match") + "=").Append(System.Uri.EscapeDataString(ConvertToString(exact_match, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
             }
-            if (include_details != null)
-            {
-                urlBuilder_.Append(System.Uri.EscapeDataString("include_details") + "=").Append(System.Uri.EscapeDataString(ConvertToString(include_details, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
-            }
+
+            urlBuilder_.Append(System.Uri.EscapeDataString("include_details") + "=").Append(System.Uri.EscapeDataString(ConvertToString(true, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
+
             if (name != null)
             {
                 urlBuilder_.Append(System.Uri.EscapeDataString("name") + "=").Append(System.Uri.EscapeDataString(ConvertToString(name, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
@@ -1109,18 +1108,24 @@ namespace Checkmarx.API.AST.Services
 
         public static bool PresetContainsTheSameQueries(PresetDetails originalPreset, PresetDetails targetPreset)
         {
-            if(originalPreset ==null)
+            if (originalPreset ==null)
                 throw new System.ArgumentNullException(nameof(originalPreset), "Original preset cannot be null.");
 
             if (targetPreset ==null)
                 throw new System.ArgumentNullException(nameof(targetPreset), "Target preset cannot be null.");
+
+            if (originalPreset.QueryIds == null)
+                return targetPreset.QueryIds == null;
+
+            if (targetPreset.QueryIds == null)
+                return false;
 
             //  "Query count should match between presets."
             if (originalPreset.QueryIds.Count != targetPreset.QueryIds.Count)
                 return false;
 
             // "All queries in the original preset should be present in the target preset."
-            return originalPreset.QueryIds.All(q => targetPreset.QueryIds.Contains(q)); 
+            return originalPreset.QueryIds.All(q => targetPreset.QueryIds.Contains(q));
         }
     }
 

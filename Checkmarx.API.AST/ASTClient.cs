@@ -1805,6 +1805,14 @@ namespace Checkmarx.API.AST
 
         #region Presets
 
+        public IEnumerable<PresetDetails> GetCustomPresetsDetails()
+        {
+            foreach (var preset in GetAllPresets().Where(x => x.Custom))
+            {
+                yield return PresetManagement.GetPresetById(preset.Id).Result;
+            }
+        }
+
         public IEnumerable<PresetDetails> GetAllPresetsDetails()
         {
             foreach (var preset in GetAllPresets())
