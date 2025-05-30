@@ -169,19 +169,25 @@ namespace Checkmarx.API.AST.Tests
         [TestMethod]
         public void ListProjects()
         {
-            //JohnDeere-Tech/isg-bi-bda-web
             Assert.IsNotNull(astclient.Projects);
 
             var projectsList = astclient.GetAllProjectsDetails();
 
-            Assert.AreEqual(1276, projectsList.Count);
+            foreach (var item in projectsList)
+            {
+                Trace.WriteLine(item.Id + " " + item.Criticality);
+            }
 
-            //var project = projectsList.SingleOrDefault(x => x.Name == "JohnDeere-JDF/jdf-r2-proc-databricks-client");
-            //Trace.WriteLine(project.Id);
 
-            //var scan = astclient.GetLastScan(project.Id);
+            Assert.AreEqual(221, projectsList.Count);
 
-            //var scandetails = astclient.GetScanDetails(scan.Id);
+            //foreach (var proj in projectsList)
+            //{
+            //    var branches = astclient.GetProjectBranches(proj.Id).ToList();
+
+            //    Assert.IsNotNull(branches, proj.Name);
+            //    Assert.IsTrue(branches.Any(), proj.Name);
+            //}
         }
 
         [TestMethod]
@@ -191,7 +197,7 @@ namespace Checkmarx.API.AST.Tests
 
             foreach (var item in astclient.AccessManagement.GetGroupsAsync(1000, 0, null, null).Result)
             {
-                Trace.WriteLine(item.Id + " -> " + item.Name); 
+                Trace.WriteLine(item.Id + " -> " + item.Name);
             }
         }
 
