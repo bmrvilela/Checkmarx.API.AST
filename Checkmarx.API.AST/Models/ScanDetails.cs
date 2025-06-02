@@ -176,7 +176,7 @@ namespace Checkmarx.API.AST.Models
                         loC = sast.Loc;
                 }
 
-                if (string.IsNullOrWhiteSpace(preset))
+                if (string.IsNullOrWhiteSpace(preset) && ScanConfigurations.ContainsKey(ASTClient.SettingsProjectPreset))
                     Preset = ScanConfigurations[ASTClient.SettingsProjectPreset].Value;
 
                 if (loC == null || string.IsNullOrWhiteSpace(preset))

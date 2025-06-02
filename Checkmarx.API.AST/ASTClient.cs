@@ -923,9 +923,9 @@ namespace Checkmarx.API.AST
         /// </summary>
         /// <param name="projectId"></param>
         /// <returns></returns>
-        public IEnumerable<Scan> GetAllScans(Guid projectId, string branch = null)
+        public IEnumerable<Scan> GetAllScans(Guid projectId, string branch = null, bool completed = true)
         {
-            return GetScans(projectId, branch: branch);
+            return GetScans(projectId, branch: branch, completed: completed);
         }
 
         private IEnumerable<Scan> getAllScans(Guid projectId, string branch = null, int itemsPerPage = 1000, int startAt = 0)

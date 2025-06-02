@@ -59,7 +59,7 @@ namespace Checkmarx.API.AST.Tests
         [TestMethod]
         public void GetPresetsTest()
         {
-            var presets = astclient.GetAllPresetsDetails();
+            var presets = astclient.GetAllPresets();
 
             foreach (var preset in presets)
             {
