@@ -18,6 +18,8 @@ using Checkmarx.API.AST.Services.ScannersResults;
 using Checkmarx.API.AST.Services.Scans;
 using Checkmarx.API.AST.Services.Uploads;
 using Checkmarx.API.AST.Services.SASTScanResultsCompare;
+using Checkmarx.API.AST.Services.QueryEditor;
+using Checkmarx.API.AST.Services.CustomStates;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Polly;
@@ -30,7 +32,6 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using Checkmarx.API.AST.Services.QueryEditor;
 using System.Threading.Tasks;
 
 namespace Checkmarx.API.AST
@@ -150,6 +151,8 @@ namespace Checkmarx.API.AST
         public const string Query_Level_Tenant = "Tenant";
         public const string Query_Level_Project = "Project";
 
+        public const string Feature_Flag_CustomStatesEnabled = "CUSTOM_STATES_ENABLED";
+
         private readonly static string CompletedStage = Checkmarx.API.AST.Services.Scans.Status.Completed.ToString();
 
         #region Services
@@ -248,6 +251,18 @@ namespace Checkmarx.API.AST
                     _accessManagement = new AccessManagement(ASTServer, _httpClient);
 
                 return _accessManagement;
+            }
+        }
+
+        private CustomStates _customStates;
+        public CustomStates CustomStates
+        {
+            get
+            {
+                if (Connected && _customStates == null)
+                    _customStates = new CustomStates(ASTServer, _httpClient);
+
+                return _customStates;
             }
         }
 
@@ -704,6 +719,92 @@ namespace Checkmarx.API.AST
         public Services.Applications.Application GetProjectApplication(Guid projectId)
         {
             return GetProjectApplications(projectId)?.FirstOrDefault();
+        }
+
+        #endregion
+
+        #region Feature Flags
+
+        private IEnumerable<Flag> _allFeatureFlags = null;
+        public IEnumerable<Flag> GetFeatureFlags()
+        {
+            if (_allFeatureFlags == null)
+                _allFeatureFlags = FeatureFlags.GetFlagsAsync().Result;
+
+            return _allFeatureFlags;
+        }
+
+        public Flag GetFeatureFlag(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                throw new ArgumentNullException(nameof(name));
+
+            return GetFeatureFlags()?.SingleOrDefault(x => x.Name == name);
+        }
+
+        public bool AreCustomStatesEnabled
+        {
+            get
+            {
+                var customStatesFlag = GetFeatureFlag(Feature_Flag_CustomStatesEnabled);
+
+                return customStatesFlag != null && customStatesFlag.Status;
+            }
+        }
+
+        #endregion
+
+        #region Custom States
+
+        private IEnumerable<CustomState> _allCustomStates = null;
+        public IEnumerable<CustomState> GetAllCustomStates()
+        {
+            if (!AreCustomStatesEnabled)
+                throw new NotSupportedException($"Feature Flag {Feature_Flag_CustomStatesEnabled} is disabled.");
+
+            if (_allCustomStates == null)
+                _allCustomStates = CustomStates.GetAllAsync().Result;
+
+            return _allCustomStates;
+        }
+
+        public CustomState GetCustomState(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                throw new ArgumentNullException(nameof(name));
+
+            return GetAllCustomStates()?.SingleOrDefault(x => x.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase));
+        }
+
+        public void CreateNewCustomState(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                throw new ArgumentNullException(nameof(name));
+
+            if (GetCustomState(name) != null)
+                throw new Exception($"There is already a custom state with the same name.");
+
+            CustomStates.CreateAsync(new CustomStateCreateBody() { Name = name })
+                .GetAwaiter()
+                .GetResult();
+
+            _allCustomStates = null;
+        }
+
+        public void DeleteCustomState(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                throw new ArgumentNullException(nameof(name));
+
+            var customStateToDelete = GetCustomState(name);
+            if (customStateToDelete == null)
+                throw new Exception($"Custom state with name {name} not found.");
+
+            CustomStates.DeleteAsync(customStateToDelete.Id.ToString())
+                .GetAwaiter()
+                .GetResult();
+
+            _allCustomStates = null;
         }
 
         #endregion
@@ -1536,6 +1637,23 @@ namespace Checkmarx.API.AST
                 throw new ArgumentException(nameof(baseScanId));
 
             return SASTScanResultsCompare.StatusAsync(baseScanId, scanId).Result;
+        }
+
+        #endregion
+
+        #region SAST Results Predicates
+
+        public void RecalculateSummaryCounters(Guid projectId, Guid scanId)
+        {
+            if (projectId == Guid.Empty)
+                throw new ArgumentException(nameof(projectId));
+
+            if (scanId == Guid.Empty)
+                throw new ArgumentException(nameof(scanId));
+
+            SASTResultsPredicates.RecalculateSummaryCountersAsync(new RecalculateBody { ProjectId = projectId, ScanId = scanId })
+                .GetAwaiter()
+                .GetResult();
         }
 
         #endregion
