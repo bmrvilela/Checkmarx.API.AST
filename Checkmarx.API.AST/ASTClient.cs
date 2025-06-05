@@ -2517,7 +2517,7 @@ namespace Checkmarx.API.AST
             Guid? id = null;
             while (!completed)
             {
-                System.Threading.Thread.Sleep(5 * 1000);
+                System.Threading.Thread.Sleep(TimeSpan.FromSeconds(5));
 
                 var status = QueryEditor.CheckRequestSessionStatusAsync(session.Id, session.Data.RequestID.Value).Result;
 
@@ -2616,7 +2616,7 @@ namespace Checkmarx.API.AST
             string id = null;
             while (!completed)
             {
-                System.Threading.Thread.Sleep(5 * 1000);
+                System.Threading.Thread.Sleep(TimeSpan.FromSeconds(5));
 
                 var status = QueryEditor.CheckRequestStatusAsync(session, createQueryResult.Id).Result;
 
@@ -2644,7 +2644,7 @@ namespace Checkmarx.API.AST
             string id = null;
             while (!completed)
             {
-                System.Threading.Thread.Sleep(5 * 1000);
+                System.Threading.Thread.Sleep(TimeSpan.FromSeconds(5));
 
                 var status = QueryEditor.CheckRequestStatusAsync(session, createQueryResult.Id).Result;
 
@@ -2677,7 +2677,7 @@ namespace Checkmarx.API.AST
             bool completed = false;
             while (!completed)
             {
-                System.Threading.Thread.Sleep(5 * 1000);
+                System.Threading.Thread.Sleep(TimeSpan.FromSeconds(5));
 
                 var status = QueryEditor.CheckRequestStatusAsync(session, deleteQueryResult.Id).Result;
 
