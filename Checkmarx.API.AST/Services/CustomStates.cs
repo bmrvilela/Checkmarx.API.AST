@@ -339,7 +339,7 @@ namespace Checkmarx.API.AST.Services.CustomStates
         /// <param name="id">Custom State ID</param>
         /// <returns>Successful operation</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<object> DeleteAsync(string id, string authorization = null, System.Guid? correlationId = null, string accept = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        public virtual async System.Threading.Tasks.Task DeleteAsync(string id, string authorization = null, System.Guid? correlationId = null, string accept = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
         {
             if (id == null)
                 throw new System.ArgumentNullException("id");
@@ -389,14 +389,9 @@ namespace Checkmarx.API.AST.Services.CustomStates
                         ProcessResponse(client_, response_);
 
                         var status_ = (int)response_.StatusCode;
-                        if (status_ == 200)
+                        if (status_ == 200 || status_ == 204)
                         {
-                            var objectResponse_ = await ReadObjectResponseAsync<object>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
-                            return objectResponse_.Object;
+                            return;
                         }
                         else
                         if (status_ == 400)
