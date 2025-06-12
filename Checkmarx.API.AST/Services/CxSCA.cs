@@ -27,6 +27,49 @@ namespace Checkmarx.API.AST.Services
     using System.Diagnostics;
     using Checkmarx.API.AST.Exceptions;
 
+
+    public class PackagesRequest
+    {
+        [JsonProperty("packageName")]
+        public string PackageName { get; set; }
+
+        [JsonProperty("packageVersion")]
+        public string PackageVersion { get; set; }
+
+        [JsonProperty("packageManager")]
+        public string PackageManager { get; set; }
+
+        [JsonProperty("projectId")]
+        public Guid ProjectId { get; set; }
+
+        [JsonProperty("actions")]
+        public PackageActionType[] Actions { get; set; }
+    }
+
+    public class PackageActionType
+    {
+        [JsonProperty("actionType")]
+        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+        public PackageActionTypeEnum Type { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("comment", Required = Newtonsoft.Json.Required.AllowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Include)]
+        public string Comment { get; set; }
+
+        [JsonProperty("value")]
+        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+        public PackageState Value { get; set; }
+    }
+
+    public class PackageState
+    {
+        [JsonProperty("state")]
+        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+        public PackageStateEnum State { get; set; }
+
+        [JsonProperty("endDate", Required = Newtonsoft.Json.Required.AllowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Include)]
+        public DateTimeOffset EndDate { get; set; }
+    }
+
     public class PackageInfo
     {
         [JsonProperty("packageName")]

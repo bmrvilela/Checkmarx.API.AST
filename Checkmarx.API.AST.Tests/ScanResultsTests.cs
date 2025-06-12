@@ -264,7 +264,7 @@ namespace Checkmarx.API.AST.Tests
         public void GetSCAPackagesJsonReportTest()
         {
             var result = astClient.Requests.GetReportRequest(
-                astClient.GetLastScan(ProjectId, fullScanOnly: false, completed: true, scanType: ScanTypeEnum.sca).Id, "SpdxJson");
+                astClient.GetLastScan(ProjectId, fullScanOnly: false, completed: true, scanType: ScanTypeEnum.sca).Id, SCAReportFileFormatEnum.SpdxJson);
 
             Trace.WriteLine(result);
 
@@ -278,7 +278,7 @@ namespace Checkmarx.API.AST.Tests
         public void GetSCAReportTest()
         {
             var result = astClient.Requests.GetReportRequest(
-                astClient.GetLastScan(ProjectId, fullScanOnly: false, completed: true, scanType: ScanTypeEnum.sca).Id, "CycloneDxJSON");
+                astClient.GetLastScan(ProjectId, fullScanOnly: false, completed: true, scanType: ScanTypeEnum.sca).Id, SCAReportFileFormatEnum.CycloneDxJson);
 
             Trace.WriteLine(result);
 

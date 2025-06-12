@@ -1515,7 +1515,8 @@ namespace Checkmarx.API.AST
 
         #region Results
 
-        public bool MarkSASTResult(Guid projectId, SASTResult result, IEnumerable<PredicateWithCommentJSON> history, bool updateSeverity = true, bool updateState = true, bool updateComment = true, Guid? scanId = null)
+        public bool MarkSASTResult(Guid projectId, SASTResult result, IEnumerable<PredicateWithCommentJSON> history, bool updateSeverity = true, 
+            bool updateState = true, bool updateComment = true, Guid? scanId = null)
         {
             if (projectId == Guid.Empty)
                 throw new ArgumentException(nameof(projectId));
@@ -1599,7 +1600,8 @@ namespace Checkmarx.API.AST
             return true;
         }
 
-        public void MarkSCAVulnerability(Guid projectId, Vulnerability vulnerabilityRisk, VulnerabilityStatus vulnerabilityStatus, string message)
+        public void MarkSCAVulnerability(Guid projectId, Vulnerability vulnerabilityRisk, 
+            VulnerabilityStatus vulnerabilityStatus, string message)
         {
             if (projectId == Guid.Empty)
                 throw new ArgumentNullException(nameof(projectId));
@@ -1607,8 +1609,8 @@ namespace Checkmarx.API.AST
             if (vulnerabilityRisk == null)
                 throw new ArgumentNullException(nameof(vulnerabilityRisk));
 
-            if (string.IsNullOrEmpty(message))
-                throw new ArgumentNullException(nameof(message));
+            //if (string.IsNullOrEmpty(message))
+            //    throw new ArgumentNullException(nameof(message));
 
             SCA.UpdateResultState(new PackageInfo
             {

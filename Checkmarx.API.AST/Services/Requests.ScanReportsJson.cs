@@ -154,7 +154,7 @@ namespace Checkmarx.API.AST.Services
         public List<object> PackagePaths { get; set; }
 
         [JsonProperty("PackageState", NullValueHandling = NullValueHandling.Ignore)]
-        public string PackageState { get; set; }
+        public PackageStateEnum PackageState { get; set; }
 
         [JsonProperty("PackageStateValue")]
         public object PackageStateValue { get; set; }

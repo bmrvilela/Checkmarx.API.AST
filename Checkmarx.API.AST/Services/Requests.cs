@@ -12,6 +12,21 @@ using static Checkmarx.API.AST.ASTClient;
 namespace Checkmarx.API.AST.Services
 {
 
+    public enum PackageStateEnum
+    {
+        [System.Runtime.Serialization.EnumMember(Value = @"Monitored")]
+        Monitored,
+        [System.Runtime.Serialization.EnumMember(Value = @"Muted")]
+        Muted,
+        [System.Runtime.Serialization.EnumMember(Value = @"Snooze")]
+        Snooze
+    }
+
+    public enum PackageActionTypeEnum
+    {
+        [System.Runtime.Serialization.EnumMember(Value = @"Ignore")]
+        Ignore
+    }
 
     public enum ActionTypeEnum
     {
@@ -70,7 +85,8 @@ namespace Checkmarx.API.AST.Services
         public Guid ScanId { get; set; }
 
         [JsonProperty("FileFormat", Required = Newtonsoft.Json.Required.Always)]
-        public string FileFormat { get; set; }
+        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+        public SCAReportFileFormatEnum FileFormat { get; set; }
 
         [JsonProperty("ExportParameters")]
         public ExportParameters ExportParameters { get; set; }
@@ -82,7 +98,7 @@ namespace Checkmarx.API.AST.Services
         public string Route { get; set; }
 
         [JsonProperty("fileFormats")]
-        public List<string> FileFormats { get; set; }
+        public List<SCAReportFileFormatEnum> FileFormats { get; set; }
     }
 
 
@@ -480,13 +496,24 @@ namespace Checkmarx.API.AST.Services
         }
 
 
-        public string GetReportRequest(Guid scanId, string fileFormat,
+        public string GetReportRequest(Guid scanId, SCAReportFileFormatEnum fileFormat,
             double poolInterval = 0.5)
         {
             return GetReportRequest(new()
             {
                 ScanId = scanId,
-                FileFormat = fileFormat
+                FileFormat = fileFormat,
+                ExportParameters=  new ExportParameters()
+                {
+                    HideDevAndTestDependencies = false,
+                    ShowOnlyEffectiveLicenses = false,
+                    ExcludePackages = false,
+                    ExcludeLicenses = false,
+                    ExcludeVulnerabilities = false,
+                    ExcludePolicies = false,
+                    FilePaths = new List<string>(),
+                    CompressedOutput = false
+                }
             }, poolInterval);
         }
 
@@ -499,9 +526,6 @@ namespace Checkmarx.API.AST.Services
             if (scanData.ScanId == Guid.Empty)
                 throw new ArgumentNullException(nameof(scanData.ScanId));
 
-            if (string.IsNullOrWhiteSpace(scanData.FileFormat))
-                throw new ArgumentNullException(nameof(scanData.FileFormat));
-
             if (poolInterval < 0)
                 throw new ArgumentOutOfRangeException(nameof(poolInterval));
 
@@ -509,7 +533,7 @@ namespace Checkmarx.API.AST.Services
                 .Single(y => y.Route == "/requests")
                 .FileFormats;
 
-            if (!listOfSupportedFormats.Contains(scanData.FileFormat, StringComparer.OrdinalIgnoreCase))
+            if (!listOfSupportedFormats.Contains(scanData.FileFormat))
             {
                 throw new NotSupportedException($"Format \"{scanData.FileFormat}\" NOT Supported. Supported Formats: {string.Join(";", listOfSupportedFormats)}");
             }
@@ -540,7 +564,7 @@ namespace Checkmarx.API.AST.Services
         public ScanReportJson GetScanReport(Guid scanId, double poolInterval = 0.5)
         {
             return JsonConvert.DeserializeObject<ScanReportJson>(
-                GetReportRequest(scanId, "ScanReportJson", poolInterval: poolInterval));
+                GetReportRequest(scanId, SCAReportFileFormatEnum.ScanReportJson, poolInterval: poolInterval));
         }
 
         protected struct ObjectResponseResult<T>
