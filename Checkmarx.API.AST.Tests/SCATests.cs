@@ -97,7 +97,7 @@ namespace Checkmarx.API.AST.Tests
             {
                 try
                 {
-                    astclient.MarkSCAVulnerability(project.Id, vuln, VulnerabilityStatus.NotExploitable, "Marked as fixed by test");
+                    astclient.MarkSCAVulnerability(project.Id, vuln, VulnerabilityStatus.ToVerify, "test");
                 }
                 catch (Exception ex)
                 {

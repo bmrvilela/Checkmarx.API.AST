@@ -1609,8 +1609,8 @@ namespace Checkmarx.API.AST
             if (vulnerabilityRisk == null)
                 throw new ArgumentNullException(nameof(vulnerabilityRisk));
 
-            //if (string.IsNullOrEmpty(message))
-            //    throw new ArgumentNullException(nameof(message));
+            if (string.IsNullOrEmpty(message))
+                throw new ArgumentNullException(nameof(message));
 
             SCA.UpdateResultState(new PackageInfo
             {
