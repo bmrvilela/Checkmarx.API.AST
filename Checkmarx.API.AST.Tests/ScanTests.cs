@@ -208,18 +208,17 @@ namespace Checkmarx.API.AST.Tests
 
             var projects = astclient.GetAllProjectsDetails();
 
-            //var proj = projects.Single(x => x.Id == _projectId);
-
-            var lastSASTScan = astclient.GetLastScan(_projectId, true);
-
-            var newScanDetails = astclient.GetScanDetails(lastSASTScan.Id);
-
-            Trace.WriteLine($"Total: {newScanDetails.SASTResults.Total} " +
-                $"| High: {newScanDetails.SASTResults.High} " +
-                $"| Medium: {newScanDetails.SASTResults.Medium} " +
-                $"| Low: {newScanDetails.SASTResults.Low} " +
-                $"| Info: {newScanDetails.SASTResults.Info} " +
-                $"| ToVerify: {newScanDetails.SASTResults.ToVerify}");
+            foreach (var project in projects)
+            {
+                foreach (var scan in astclient.GetAllScans(project.Id))
+                {
+                    Trace.WriteLine($"Project: {project.Name} | " +
+                        $"Scan ID: {scan.Id} | " +
+                        $"Branch: {scan.Branch} | " +
+                        $"Created At: {scan.CreatedAt.DateTime} " +
+                        $"| Status: {scan.Status}");
+                }
+            }
         }
 
 
@@ -656,7 +655,7 @@ namespace Checkmarx.API.AST.Tests
         [TestMethod]
         public void GetAllScanTriggerByMeTest()
         {
-            var search = astclient.SearchScans("cxservice_pedro.portilha@checkmarx.com", "perfomance_test", "ASAProgramTracker");
+            var search = astclient.SearchScans("cxservice_pedro.portilha@checkmarx.com", "perfomance_test", ["ASAProgramTracker"]);
 
             Trace.WriteLine(string.Join(";", search.Select(x => x.Id)));
 
@@ -809,5 +808,27 @@ namespace Checkmarx.API.AST.Tests
         }
 
         #endregion
+
+        [TestMethod]
+        public void GetScanTagsTest()
+        {
+            Guid scanID = new Guid("c3e095fa-6df5-4af9-a752-f7b7fbb6ebf5");
+
+            astclient.Scans.UpdateTagsAsync(scanID, 
+                new ModifyScanTagsInput
+                {
+                    Tags = new Dictionary<string, string> { 
+                        { "Test", "Value" },
+                        { "EmtpyValue", string.Empty },
+                        { "Test2", "" }
+                    }
+                }).Wait();
+
+            foreach (var item in astclient.Scans.GetTagsAsync(scanID).Result.Tags)
+            {
+                Trace.WriteLine($"{item.Key} = {item.Value}");
+            }
+        }
+
     }
 }

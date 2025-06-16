@@ -66,7 +66,9 @@ namespace Checkmarx.API.AST.Tests
                     $"| Comment: {finding.RiskStateLastUpdateComment} " +
                     $"| Author: {finding.RiskStateLastUpdateUser} " +
                     $"| Version: {finding.PackageVersion} " +
-                    $"| Severity: {finding.Severity} | CveName: {finding.CveName} | FixResolutionText: {finding.FixResolutionText}");
+                    $"| Severity: {finding.Severity} " +
+                    $"| CveName: {finding.CveName} " +
+                    $"| FixResolutionText: {finding.FixResolutionText}");
             }      
 
         }

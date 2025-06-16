@@ -1047,7 +1047,7 @@ namespace Checkmarx.API.AST
             }
         }
 
-        public IEnumerable<Scan> SearchScans(string initiator = null, string tagKey = null, string sourceOrigin = null, int itemsPerPage = 1000, int startAt = 0)
+        public IEnumerable<Scan> SearchScans(string initiator = null, string tagKey = null, string[] sourceOrigin = null, int itemsPerPage = 1000, int startAt = 0)
         {
             string[] tagKeys = null;
             if (!string.IsNullOrWhiteSpace(tagKey))
@@ -1059,7 +1059,7 @@ namespace Checkmarx.API.AST
 
             while (true)
             {
-                var result = Scans.GetListOfScansAsync(limit: itemsPerPage, offset: startAt, initiators: initiators, tags_keys: tagKeys, source_origin: sourceOrigin).Result;
+                var result = Scans.GetListOfScansAsync(limit: itemsPerPage, offset: startAt, initiators: initiators, tags_keys: tagKeys, source_origins: sourceOrigin).Result;
 
                 foreach (var scan in result.Scans)
                 {
