@@ -1243,6 +1243,14 @@ namespace Checkmarx.API.AST.Services.Projects
         [Newtonsoft.Json.JsonProperty("id", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public Guid Id { get; set; }
 
+        public Uri GetLink(Uri astServer)
+        {
+            if (astServer == null)
+                throw new System.ArgumentNullException(nameof(astServer));
+
+            return new Uri(astServer, $"/projects/{Id}/overview");
+        }
+
         /// <summary>
         /// The project name
         /// </summary>
@@ -1299,6 +1307,8 @@ namespace Checkmarx.API.AST.Services.Projects
             get { return _additionalProperties; }
             set { _additionalProperties = value; }
         }
+
+
 
     }
 

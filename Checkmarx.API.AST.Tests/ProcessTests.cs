@@ -110,6 +110,16 @@ namespace Checkmarx.API.AST.Tests
 
 
         [TestMethod]
+        public void ListMainBranchesTest()
+        {
+            foreach (var project in astclient.GetAllProjectsDetails())
+            {
+                Trace.WriteLine($"{project.Name};{project.Id};{project.MainBranch ?? "null"}");
+            }
+        }
+
+
+        [TestMethod]
         public void KicsGetHistoryTest()
         {
             var properties = typeof(Predicate).GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty);

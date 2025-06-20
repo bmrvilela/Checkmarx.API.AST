@@ -31,11 +31,11 @@ namespace Checkmarx.API.AST.Services.Scans
     using System = global::System;
 
     [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.4.0.0 (NJsonSchema v11.3.2.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class Scans 
+    public partial class Scans
     {
-        #pragma warning disable 8618
+#pragma warning disable 8618
         private string _baseUrl = "/api/scans";
-        #pragma warning restore 8618
+#pragma warning restore 8618
 
         private System.Net.Http.HttpClient _httpClient;
         private static System.Lazy<Newtonsoft.Json.JsonSerializerSettings> _settings = new System.Lazy<Newtonsoft.Json.JsonSerializerSettings>(CreateSerializerSettings, true);
@@ -267,13 +267,13 @@ namespace Checkmarx.API.AST.Services.Scans
                         else
                         if (status_ == 401)
                         {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                            string responseText_ = (response_.Content == null) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
                             throw new ApiException("Unauthorized, access token is missing or invalid", status_, responseText_, headers_, null);
                         }
                         else
                         if (status_ == 403)
                         {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                            string responseText_ = (response_.Content == null) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
                             throw new ApiException("Forbidden", status_, responseText_, headers_, null);
                         }
                         else
@@ -565,13 +565,13 @@ namespace Checkmarx.API.AST.Services.Scans
                         else
                         if (status_ == 401)
                         {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                            string responseText_ = (response_.Content == null) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
                             throw new ApiException("Unauthorized, access token is missing or invalid", status_, responseText_, headers_, null);
                         }
                         else
                         if (status_ == 403)
                         {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                            string responseText_ = (response_.Content == null) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
                             throw new ApiException("Forbidden", status_, responseText_, headers_, null);
                         }
                         else
@@ -692,13 +692,13 @@ namespace Checkmarx.API.AST.Services.Scans
                         else
                         if (status_ == 401)
                         {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                            string responseText_ = (response_.Content == null) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
                             throw new ApiException("Unauthorized, access token is missing or invalid", status_, responseText_, headers_, null);
                         }
                         else
                         if (status_ == 403)
                         {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                            string responseText_ = (response_.Content == null) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
                             throw new ApiException("Forbidden", status_, responseText_, headers_, null);
                         }
                         else
@@ -721,18 +721,6 @@ namespace Checkmarx.API.AST.Services.Scans
             }
         }
 
-        /// <summary>
-        /// Run a last scan recalculation
-        /// </summary>
-        /// <param name="authorization">JWT access token (REQUIRED)</param>
-        /// <param name="accept">The API version should be appended to this header</param>
-        /// <param name="correlationId">This ID is used to keep track of a flow if many APIs are involved</param>
-        /// <returns>OK</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual System.Threading.Tasks.Task<Scan> RecalculateAsync(string authorization, string accept, System.Guid? correlationId, RecalculateInput body)
-        {
-            return RecalculateAsync(authorization, accept, correlationId, body, System.Threading.CancellationToken.None);
-        }
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <summary>
@@ -743,7 +731,7 @@ namespace Checkmarx.API.AST.Services.Scans
         /// <param name="correlationId">This ID is used to keep track of a flow if many APIs are involved</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<Scan> RecalculateAsync(string authorization, string accept, System.Guid? correlationId, RecalculateInput body, System.Threading.CancellationToken cancellationToken)
+        public virtual async System.Threading.Tasks.Task<Scan> RecalculateAsync(RecalculateInput body, string authorization = null, string accept = null, System.Guid? correlationId = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
         {
             if (body == null)
                 throw new System.ArgumentNullException("body");
@@ -819,13 +807,13 @@ namespace Checkmarx.API.AST.Services.Scans
                         else
                         if (status_ == 401)
                         {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                            string responseText_ = (response_.Content == null) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
                             throw new ApiException("Unauthorized, access token is missing or invalid", status_, responseText_, headers_, null);
                         }
                         else
                         if (status_ == 403)
                         {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                            string responseText_ = (response_.Content == null) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
                             throw new ApiException("Forbidden", status_, responseText_, headers_, null);
                         }
                         else
@@ -916,13 +904,13 @@ namespace Checkmarx.API.AST.Services.Scans
                         else
                         if (status_ == 401)
                         {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                            string responseText_ = (response_.Content == null) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
                             throw new ApiException("Unauthorized, access token is missing or invalid", status_, responseText_, headers_, null);
                         }
                         else
                         if (status_ == 403)
                         {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                            string responseText_ = (response_.Content == null) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
                             throw new ApiException("Forbidden", status_, responseText_, headers_, null);
                         }
                         else
@@ -1062,13 +1050,13 @@ namespace Checkmarx.API.AST.Services.Scans
                         else
                         if (status_ == 401)
                         {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                            string responseText_ = (response_.Content == null) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
                             throw new ApiException("Unauthorized, access token is missing or invalid", status_, responseText_, headers_, null);
                         }
                         else
                         if (status_ == 403)
                         {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                            string responseText_ = (response_.Content == null) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
                             throw new ApiException("Forbidden", status_, responseText_, headers_, null);
                         }
                         else
@@ -1091,18 +1079,6 @@ namespace Checkmarx.API.AST.Services.Scans
             }
         }
 
-        /// <summary>
-        /// Get a summary of the status of the scans in your account.
-        /// </summary>
-        /// <param name="authorization">JWT access token (REQUIRED)</param>
-        /// <param name="accept">The API version should be appended to this header</param>
-        /// <param name="correlationId">This ID is used to keep track of a flow if many APIs are involved</param>
-        /// <returns>OK</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual System.Threading.Tasks.Task<Response> SummaryAsync(string authorization, string accept, System.Guid? correlationId)
-        {
-            return SummaryAsync(authorization, accept, correlationId, System.Threading.CancellationToken.None);
-        }
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <summary>
@@ -1113,7 +1089,7 @@ namespace Checkmarx.API.AST.Services.Scans
         /// <param name="correlationId">This ID is used to keep track of a flow if many APIs are involved</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<Response> SummaryAsync(string authorization, string accept, System.Guid? correlationId, System.Threading.CancellationToken cancellationToken)
+        public virtual async System.Threading.Tasks.Task<Response> SummaryAsync(string authorization = null, string accept = null, System.Guid? correlationId = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
         {
             var client_ = _httpClient;
             var disposeClient_ = false;
@@ -1172,13 +1148,13 @@ namespace Checkmarx.API.AST.Services.Scans
                         else
                         if (status_ == 401)
                         {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                            string responseText_ = (response_.Content == null) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
                             throw new ApiException("Unauthorized, access token is missing or invalid", status_, responseText_, headers_, null);
                         }
                         else
                         if (status_ == 403)
                         {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                            string responseText_ = (response_.Content == null) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
                             throw new ApiException("Forbidden", status_, responseText_, headers_, null);
                         }
                         else
@@ -1201,18 +1177,6 @@ namespace Checkmarx.API.AST.Services.Scans
             }
         }
 
-        /// <summary>
-        /// Get the list of the available config-as-code template files that are under the dedicated directory.
-        /// </summary>
-        /// <param name="authorization">JWT access token (REQUIRED)</param>
-        /// <param name="accept">The API version should be appended to this header</param>
-        /// <param name="correlationId">This ID is used to keep track of a flow if many APIs are involved</param>
-        /// <returns>OK</returns>
-        /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual System.Threading.Tasks.Task<Response2> TemplatesAsync(string authorization, string accept, System.Guid? correlationId)
-        {
-            return TemplatesAsync(authorization, accept, correlationId, System.Threading.CancellationToken.None);
-        }
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <summary>
@@ -1223,7 +1187,7 @@ namespace Checkmarx.API.AST.Services.Scans
         /// <param name="correlationId">This ID is used to keep track of a flow if many APIs are involved</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<Response2> TemplatesAsync(string authorization, string accept, System.Guid? correlationId, System.Threading.CancellationToken cancellationToken)
+        public virtual async System.Threading.Tasks.Task<Response2> TemplatesAsync(string authorization = null, string accept = null, System.Guid? correlationId = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
         {
             var client_ = _httpClient;
             var disposeClient_ = false;
@@ -1292,13 +1256,13 @@ namespace Checkmarx.API.AST.Services.Scans
                         else
                         if (status_ == 401)
                         {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                            string responseText_ = (response_.Content == null) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
                             throw new ApiException("Unauthorized, access token is missing or invalid", status_, responseText_, headers_, null);
                         }
                         else
                         if (status_ == 403)
                         {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                            string responseText_ = (response_.Content == null) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
                             throw new ApiException("Forbidden", status_, responseText_, headers_, null);
                         }
                         else
@@ -1416,13 +1380,13 @@ namespace Checkmarx.API.AST.Services.Scans
                         else
                         if (status_ == 401)
                         {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                            string responseText_ = (response_.Content == null) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
                             throw new ApiException("Unauthorized, access token is missing or invalid", status_, responseText_, headers_, null);
                         }
                         else
                         if (status_ == 403)
                         {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                            string responseText_ = (response_.Content == null) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
                             throw new ApiException("Forbidden", status_, responseText_, headers_, null);
                         }
                         else
@@ -1528,13 +1492,13 @@ namespace Checkmarx.API.AST.Services.Scans
                         else
                         if (status_ == 401)
                         {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                            string responseText_ = (response_.Content == null) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
                             throw new ApiException("Unauthorized, access token is missing or invalid", status_, responseText_, headers_, null);
                         }
                         else
                         if (status_ == 403)
                         {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                            string responseText_ = (response_.Content == null) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
                             throw new ApiException("Forbidden", status_, responseText_, headers_, null);
                         }
                         else
@@ -1642,13 +1606,13 @@ namespace Checkmarx.API.AST.Services.Scans
                         else
                         if (status_ == 401)
                         {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                            string responseText_ = (response_.Content == null) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
                             throw new ApiException("Unauthorized, access token is missing or invalid", status_, responseText_, headers_, null);
                         }
                         else
                         if (status_ == 403)
                         {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                            string responseText_ = (response_.Content == null) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
                             throw new ApiException("Forbidden", status_, responseText_, headers_, null);
                         }
                         else
@@ -1748,13 +1712,13 @@ namespace Checkmarx.API.AST.Services.Scans
                         else
                         if (status_ == 401)
                         {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                            string responseText_ = (response_.Content == null) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
                             throw new ApiException("Unauthorized, access token is missing or invalid", status_, responseText_, headers_, null);
                         }
                         else
                         if (status_ == 403)
                         {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                            string responseText_ = (response_.Content == null) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
                             throw new ApiException("Forbidden", status_, responseText_, headers_, null);
                         }
                         else
@@ -1862,13 +1826,13 @@ namespace Checkmarx.API.AST.Services.Scans
                         else
                         if (status_ == 401)
                         {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                            string responseText_ = (response_.Content == null) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
                             throw new ApiException("Unauthorized, access token is missing or invalid", status_, responseText_, headers_, null);
                         }
                         else
                         if (status_ == 403)
                         {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                            string responseText_ = (response_.Content == null) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
                             throw new ApiException("Forbidden", status_, responseText_, headers_, null);
                         }
                         else
@@ -1974,13 +1938,13 @@ namespace Checkmarx.API.AST.Services.Scans
                         else
                         if (status_ == 401)
                         {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                            string responseText_ = (response_.Content == null) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
                             throw new ApiException("Unauthorized, access token is missing or invalid", status_, responseText_, headers_, null);
                         }
                         else
                         if (status_ == 403)
                         {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                            string responseText_ = (response_.Content == null) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
                             throw new ApiException("Forbidden", status_, responseText_, headers_, null);
                         }
                         else
@@ -2086,13 +2050,13 @@ namespace Checkmarx.API.AST.Services.Scans
                         else
                         if (status_ == 401)
                         {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                            string responseText_ = (response_.Content == null) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
                             throw new ApiException("Unauthorized, access token is missing or invalid", status_, responseText_, headers_, null);
                         }
                         else
                         if (status_ == 403)
                         {
-                            string responseText_ = ( response_.Content == null ) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                            string responseText_ = (response_.Content == null) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
                             throw new ApiException("Forbidden", status_, responseText_, headers_, null);
                         }
                         else
@@ -2187,7 +2151,7 @@ namespace Checkmarx.API.AST.Services.Scans
                     var field = System.Reflection.IntrospectionExtensions.GetTypeInfo(value.GetType()).GetDeclaredField(name);
                     if (field != null)
                     {
-                        var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute)) 
+                        var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute))
                             as System.Runtime.Serialization.EnumMemberAttribute;
                         if (attribute != null)
                         {
@@ -2199,13 +2163,13 @@ namespace Checkmarx.API.AST.Services.Scans
                     return converted == null ? string.Empty : converted;
                 }
             }
-            else if (value is bool) 
+            else if (value is bool)
             {
                 return System.Convert.ToString((bool)value, cultureInfo).ToLowerInvariant();
             }
             else if (value is byte[])
             {
-                return System.Convert.ToBase64String((byte[]) value);
+                return System.Convert.ToBase64String((byte[])value);
             }
             else if (value is string[])
             {
@@ -2321,7 +2285,7 @@ namespace Checkmarx.API.AST.Services.Scans
         /// <summary>
         /// A JSON object containing info about the scan settings.
         /// </summary>
-        [Newtonsoft.Json.JsonProperty("metadata", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [Newtonsoft.Json.JsonProperty("metadata", Required = Newtonsoft.Json.Required.AllowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public Metadata Metadata { get; set; }
 
         private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
@@ -2588,7 +2552,7 @@ namespace Checkmarx.API.AST.Services.Scans
         /// Project id
         /// </summary>
         [Newtonsoft.Json.JsonProperty("project_id", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string Project_id { get; set; }
+        public Guid Project_id { get; set; }
 
         /// <summary>
         /// Current branch
@@ -2996,7 +2960,7 @@ namespace Checkmarx.API.AST.Services.Scans
 
     }
 
-  
+
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.4.0.0 (NJsonSchema v11.3.2.0 (Newtonsoft.Json v13.0.0.0))")]
     public partial class Body
@@ -3270,10 +3234,10 @@ namespace Checkmarx.API.AST.Services.Scans
 
 }
 
-#pragma warning restore  108
-#pragma warning restore  114
-#pragma warning restore  472
-#pragma warning restore  612
+#pragma warning restore 108
+#pragma warning restore 114
+#pragma warning restore 472
+#pragma warning restore 612
 #pragma warning restore 1573
 #pragma warning restore 1591
 #pragma warning restore 8073

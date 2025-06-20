@@ -63,7 +63,7 @@ namespace Checkmarx.API.AST.Services.SASTScanResultsCompare
         /// <param name="base_scan_id">Scan ID of the older scan to compare</param>
         /// <returns>Successful operation</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async Task<StatsCompareResult> StatusAsync(Guid base_scan_id, Guid scan_id, string authorization = null, Guid? correlationId = null, string accept = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        public virtual async Task<StatsCompareResult> StatusAsync(Guid base_scan_id, Guid scan_id, string authorization = null, Guid? correlationId = null, string accept = null, System.Threading.CancellationToken cancellationToken = default)
         {
             if (scan_id == null)
                 throw new System.ArgumentNullException("scan_id");
@@ -189,7 +189,7 @@ namespace Checkmarx.API.AST.Services.SASTScanResultsCompare
         {
             if (response == null || response.Content == null)
             {
-                return new ObjectResponseResult<T>(default(T), string.Empty);
+                return new ObjectResponseResult<T>(default, string.Empty);
             }
 
             if (ReadResponseAsString)

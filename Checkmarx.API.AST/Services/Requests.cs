@@ -201,7 +201,7 @@ namespace Checkmarx.API.AST.Services
         /// </summary>
         /// <returns>Accepted</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        internal virtual async System.Threading.Tasks.Task<ExportDataResponse> CreateReportAsync(ScanData body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        internal virtual async System.Threading.Tasks.Task<ExportDataResponse> CreateReportAsync(ScanData body, System.Threading.CancellationToken cancellationToken = default)
         {
             if (body == null)
                 throw new System.ArgumentNullException("body");
@@ -277,7 +277,7 @@ namespace Checkmarx.API.AST.Services
         /// </summary>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        internal virtual async System.Threading.Tasks.Task<ExportStatusDetails> GetReportStatusAsync(System.Guid exportId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        internal virtual async System.Threading.Tasks.Task<ExportStatusDetails> GetReportStatusAsync(System.Guid exportId, System.Threading.CancellationToken cancellationToken = default)
         {
             if (exportId == Guid.Empty)
                 throw new System.ArgumentNullException(nameof(exportId));
@@ -350,7 +350,7 @@ namespace Checkmarx.API.AST.Services
         /// Download a report
         /// </summary>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        internal virtual async System.Threading.Tasks.Task<string> DownloadScanReport(string url, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        internal virtual async System.Threading.Tasks.Task<string> DownloadScanReport(string url, System.Threading.CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(url))
                 throw new System.ArgumentNullException("exportId");
@@ -431,7 +431,7 @@ namespace Checkmarx.API.AST.Services
             }
         }
 
-        public virtual async System.Threading.Tasks.Task<List<FileFormatEndpoint>> GetFileFormats(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        public virtual async System.Threading.Tasks.Task<List<FileFormatEndpoint>> GetFileFormats(System.Threading.CancellationToken cancellationToken = default)
         {
             var urlBuilder_ = new System.Text.StringBuilder();
             urlBuilder_.Append(BaseUrl != null ? BaseUrl.TrimEnd('/') : "").Append("/file-formats");
@@ -586,7 +586,7 @@ namespace Checkmarx.API.AST.Services
         {
             if (response == null || response.Content == null)
             {
-                return new ObjectResponseResult<T>(default(T), string.Empty);
+                return new ObjectResponseResult<T>(default, string.Empty);
             }
 
             if (ReadResponseAsString)

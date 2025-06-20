@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 
 using System.Globalization;
+using Checkmarx.API.AST.Services.Results;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
@@ -344,7 +345,7 @@ namespace Checkmarx.API.AST.Services
         public string RiskStateLastUpdateComment { get; set; }
 
         [JsonProperty("RiskStatus", NullValueHandling = NullValueHandling.Ignore)]
-        public string RiskStatus { get; set; }
+        public StatusEnum RiskStatus { get; set; }
 
         [JsonProperty("FirstFoundAt", NullValueHandling = NullValueHandling.Ignore)]
         public DateTimeOffset? FirstFoundAt { get; set; }

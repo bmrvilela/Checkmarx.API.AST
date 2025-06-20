@@ -19,14 +19,16 @@
 
 namespace Checkmarx.API.AST.Services
 {
-    using System = global::System;
-    using static Checkmarx.API.AST.ASTClient;
+    using Checkmarx.API.AST.Exceptions;
+    using Newtonsoft.Json;
+    using Newtonsoft.Json.Converters;
     using System;
     using System.Collections.Generic;
-    using Newtonsoft.Json;
     using System.Diagnostics;
-    using Checkmarx.API.AST.Exceptions;
-
+    using System.Globalization;
+    using static Checkmarx.API.AST.ASTClient;
+    using static System.Net.WebRequestMethods;
+    using System = global::System;
 
     public class PackagesRequest
     {
@@ -105,18 +107,236 @@ namespace Checkmarx.API.AST.Services
         public string Comment { get; set; }
     }
 
+    public partial class CVEDefinition
+    {
+        [JsonProperty("id", NullValueHandling = NullValueHandling.Ignore)]
+        public Guid? Id { get; set; }
+
+        [JsonProperty("revision", NullValueHandling = NullValueHandling.Ignore)]
+        public long? Revision { get; set; }
+
+        [JsonProperty("cveName", NullValueHandling = NullValueHandling.Ignore)]
+        public string CveName { get; set; }
+
+        [JsonProperty("cve", NullValueHandling = NullValueHandling.Ignore)]
+        public string Cve { get; set; }
+
+        [JsonProperty("cwe", NullValueHandling = NullValueHandling.Ignore)]
+        public string Cwe { get; set; }
+
+        [JsonProperty("credit")]
+        public object Credit { get; set; }
+
+        [JsonProperty("description", NullValueHandling = NullValueHandling.Ignore)]
+        public string Description { get; set; }
+
+        [JsonProperty("vulnerabilityType", NullValueHandling = NullValueHandling.Ignore)]
+        public string VulnerabilityType { get; set; }
+
+        [JsonProperty("references", NullValueHandling = NullValueHandling.Ignore)]
+        public List<Reference> References { get; set; }
+
+        [JsonProperty("vulnerablePaths", NullValueHandling = NullValueHandling.Ignore)]
+        public List<VulnerablePath> VulnerablePaths { get; set; }
+
+        [JsonProperty("technicalDetails", NullValueHandling = NullValueHandling.Ignore)]
+        public List<object> TechnicalDetails { get; set; }
+
+        [JsonProperty("cpes", NullValueHandling = NullValueHandling.Ignore)]
+        public List<Cpe> Cpes { get; set; }
+
+        [JsonProperty("publishDate", NullValueHandling = NullValueHandling.Ignore)]
+        public DateTimeOffset? PublishDate { get; set; }
+
+        [JsonProperty("score", NullValueHandling = NullValueHandling.Ignore)]
+        public double? Score { get; set; }
+
+        [JsonProperty("severity", NullValueHandling = NullValueHandling.Ignore)]
+        public string Severity { get; set; }
+
+        [JsonProperty("severityLevel", NullValueHandling = NullValueHandling.Ignore)]
+        public string SeverityLevel { get; set; }
+
+        [JsonProperty("created", NullValueHandling = NullValueHandling.Ignore)]
+        public DateTimeOffset? Created { get; set; }
+
+        [JsonProperty("updateTime", NullValueHandling = NullValueHandling.Ignore)]
+        public DateTimeOffset? UpdateTime { get; set; }
+
+        [JsonProperty("kev", NullValueHandling = NullValueHandling.Ignore)]
+        public Kev Kev { get; set; }
+
+        [JsonProperty("exploitDb", NullValueHandling = NullValueHandling.Ignore)]
+        public ExploitDb ExploitDb { get; set; }
+
+        [JsonProperty("epss", NullValueHandling = NullValueHandling.Ignore)]
+        public Epss Epss { get; set; }
+
+        [JsonProperty("notes")]
+        public object Notes { get; set; }
+
+        [JsonProperty("disclosedBy")]
+        public object DisclosedBy { get; set; }
+
+        [JsonProperty("keywords")]
+        public object Keywords { get; set; }
+
+        [JsonProperty("tags")]
+        public object Tags { get; set; }
+
+        [JsonProperty("cvss2", NullValueHandling = NullValueHandling.Ignore)]
+        public Dictionary<string, string> Cvss2 { get; set; }
+
+        [JsonProperty("cvss3", NullValueHandling = NullValueHandling.Ignore)]
+        public Dictionary<string, string> Cvss3 { get; set; }
+
+        [JsonProperty("cvss4")]
+        public object Cvss4 { get; set; }
+
+        public Uri GetLink(Uri astServer)
+        {
+            if (astServer == null)
+                throw new ArgumentNullException(nameof(astServer), "CxOne server URI cannot be null.");
+
+            return new Uri(astServer, $"sca/#/appsec-knowledge-center/vulnerability/riskId/{CveName}");
+        }
+    }
+
+    public partial class Cpe
+    {
+        [JsonProperty("vendor", NullValueHandling = NullValueHandling.Ignore)]
+        public string Vendor { get; set; }
+
+        [JsonProperty("product", NullValueHandling = NullValueHandling.Ignore)]
+        public string Product { get; set; }
+
+        [JsonProperty("version", NullValueHandling = NullValueHandling.Ignore)]
+        public string Version { get; set; }
+
+        [JsonProperty("versionLabel", NullValueHandling = NullValueHandling.Ignore)]
+        public string VersionLabel { get; set; }
+    }
+
+    public partial class Epss
+    {
+        [JsonProperty("cve", NullValueHandling = NullValueHandling.Ignore)]
+        public string Cve { get; set; }
+
+        [JsonProperty("epss", NullValueHandling = NullValueHandling.Ignore)]
+        public double? EpssEpss { get; set; }
+
+        [JsonProperty("percentile", NullValueHandling = NullValueHandling.Ignore)]
+        public double? Percentile { get; set; }
+
+        [JsonProperty("date", NullValueHandling = NullValueHandling.Ignore)]
+        public DateTimeOffset? Date { get; set; }
+    }
+
+    public partial class ExploitDb
+    {
+        [JsonProperty("dateAdded", NullValueHandling = NullValueHandling.Ignore)]
+        public DateTimeOffset? DateAdded { get; set; }
+
+        [JsonProperty("id", NullValueHandling = NullValueHandling.Ignore)]
+        public long? Id { get; set; }
+
+        [JsonProperty("cveId", NullValueHandling = NullValueHandling.Ignore)]
+        public string CveId { get; set; }
+
+        [JsonProperty("platform", NullValueHandling = NullValueHandling.Ignore)]
+        public string Platform { get; set; }
+
+        [JsonProperty("type", NullValueHandling = NullValueHandling.Ignore)]
+        public string Type { get; set; }
+
+        [JsonProperty("shortDescription", NullValueHandling = NullValueHandling.Ignore)]
+        public string ShortDescription { get; set; }
+
+        [JsonProperty("exploitVerified", NullValueHandling = NullValueHandling.Ignore)]
+        public bool? ExploitVerified { get; set; }
+
+        [JsonProperty("exploitAuthor", NullValueHandling = NullValueHandling.Ignore)]
+        public string ExploitAuthor { get; set; }
+
+        [JsonProperty("link", NullValueHandling = NullValueHandling.Ignore)]
+        public Uri Link { get; set; }
+    }
+
+    public partial class Kev
+    {
+        [JsonProperty("cveId", NullValueHandling = NullValueHandling.Ignore)]
+        public string CveId { get; set; }
+
+        [JsonProperty("vendorProject", NullValueHandling = NullValueHandling.Ignore)]
+        public string VendorProject { get; set; }
+
+        [JsonProperty("product", NullValueHandling = NullValueHandling.Ignore)]
+        public string Product { get; set; }
+
+        [JsonProperty("vulnerabilityName", NullValueHandling = NullValueHandling.Ignore)]
+        public string VulnerabilityName { get; set; }
+
+        [JsonProperty("dateAdded", NullValueHandling = NullValueHandling.Ignore)]
+        public DateTimeOffset? DateAdded { get; set; }
+
+        [JsonProperty("shortDescription", NullValueHandling = NullValueHandling.Ignore)]
+        public string ShortDescription { get; set; }
+
+        [JsonProperty("requiredAction", NullValueHandling = NullValueHandling.Ignore)]
+        public string RequiredAction { get; set; }
+
+        [JsonProperty("dueDate", NullValueHandling = NullValueHandling.Ignore)]
+        public DateTimeOffset? DueDate { get; set; }
+
+        [JsonProperty("notes", NullValueHandling = NullValueHandling.Ignore)]
+        public Uri Notes { get; set; }
+    }
+
+    public partial class Reference
+    {
+        [JsonProperty("comment", NullValueHandling = NullValueHandling.Ignore)]
+        public string Comment { get; set; }
+
+        [JsonProperty("type", NullValueHandling = NullValueHandling.Ignore)]
+        public string Type { get; set; }
+
+        [JsonProperty("url", NullValueHandling = NullValueHandling.Ignore)]
+        public Uri Url { get; set; }
+    }
+
+    public partial class VulnerablePath
+    {
+        [JsonProperty("fileName", NullValueHandling = NullValueHandling.Ignore)]
+        public string FileName { get; set; }
+
+        [JsonProperty("class", NullValueHandling = NullValueHandling.Ignore)]
+        public string Class { get; set; }
+
+        [JsonProperty("functionModifier", NullValueHandling = NullValueHandling.Ignore)]
+        public string FunctionModifier { get; set; }
+
+        [JsonProperty("functionName", NullValueHandling = NullValueHandling.Ignore)]
+        public string FunctionName { get; set; }
+
+        [JsonProperty("functionParams", NullValueHandling = NullValueHandling.Ignore)]
+        public string FunctionParams { get; set; }
+
+        [JsonProperty("packageName")]
+        public object PackageName { get; set; }
+    }
+
 
     [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.0.7.0 (NJsonSchema v11.0.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class CxOneSCA 
+    public partial class CxOneSCA
     {
-        #pragma warning disable 8618
+#pragma warning disable 8618
         private string _baseUrl;
-        #pragma warning restore 8618
+#pragma warning restore 8618
 
         private System.Net.Http.HttpClient _httpClient;
         private static System.Lazy<Newtonsoft.Json.JsonSerializerSettings> _settings = new System.Lazy<Newtonsoft.Json.JsonSerializerSettings>(CreateSerializerSettings, true);
 
-    #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
         public CxOneSCA(System.Uri aSTServer, System.Net.Http.HttpClient httpClient)
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
@@ -152,7 +372,118 @@ namespace Checkmarx.API.AST.Services
         partial void PrepareRequest(System.Net.Http.HttpClient client, System.Net.Http.HttpRequestMessage request, System.Text.StringBuilder urlBuilder);
         partial void ProcessResponse(System.Net.Http.HttpClient client, System.Net.Http.HttpResponseMessage response);
 
+        /// <summary>
+        /// Gets the CV definition for a given CVE identifier.
+        /// </summary>
+        /// <param name="cve">e.g. CVE-2020-1938</param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentNullException"></exception>
+        /// <exception cref="ApiException"></exception>
+        /// <exception cref="ApiException{Error}"></exception>
+        public virtual async System.Threading.Tasks.Task<CVEDefinition> GetCVEDefinitionAsync(string cve, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        {
+            if (string.IsNullOrWhiteSpace(cve))
+                throw new System.ArgumentNullException(nameof(cve), "CVE cannot be null or empty.");
 
+            var client_ = _httpClient;
+            var disposeClient_ = false;
+            try
+            {
+                using (var request_ = new System.Net.Http.HttpRequestMessage())
+                {
+                    request_.Method = new System.Net.Http.HttpMethod("GET");
+                    request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                    var urlBuilder_ = new System.Text.StringBuilder();
+
+                    if (!string.IsNullOrEmpty(_baseUrl))
+                        urlBuilder_.Append(_baseUrl);
+
+                    urlBuilder_.Append("vulnerabilities/v1/");
+                    urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(cve, System.Globalization.CultureInfo.InvariantCulture)));
+
+                    PrepareRequest(client_, request_, urlBuilder_);
+
+                    var url_ = urlBuilder_.ToString();
+                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                    PrepareRequest(client_, request_, url_);
+
+                    var response_ = await _retryPolicy.ExecuteAsync(() => client_.SendAsync(CloneHttpRequestMessage(request_), System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken)).ConfigureAwait(false);
+                    var disposeResponse_ = true;
+                    try
+                    {
+                        var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                        foreach (var item_ in response_.Headers)
+                            headers_[item_.Key] = item_.Value;
+                        if (response_.Content != null && response_.Content.Headers != null)
+                        {
+                            foreach (var item_ in response_.Content.Headers)
+                                headers_[item_.Key] = item_.Value;
+                        }
+
+                        ProcessResponse(client_, response_);
+
+                        var status_ = (int)response_.StatusCode;
+                        if (status_ == 200)
+                        {
+                            var objectResponse_ = await ReadObjectResponseAsync<CVEDefinition>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                            if (objectResponse_.Object == null)
+                            {
+                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            }
+                            return objectResponse_.Object;
+                        }
+                        else
+                        if (status_ == 400)
+                        {
+                            var objectResponse_ = await ReadObjectResponseAsync<Error>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                            if (objectResponse_.Object == null)
+                            {
+                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            }
+                            throw new ApiException<Error>("Bad Request", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        }
+                        else
+                        if (status_ == 403)
+                        {
+                            var objectResponse_ = await ReadObjectResponseAsync<Error>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                            if (objectResponse_.Object == null)
+                            {
+                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            }
+                            throw new ApiException<Error>("Forbidden", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        }
+                        else
+                        if (status_ == 500)
+                        {
+                            var objectResponse_ = await ReadObjectResponseAsync<Error>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                            if (objectResponse_.Object == null)
+                            {
+                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            }
+                            throw new ApiException<Error>("Internal Server Error", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                        }
+                        else
+                        {
+                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        }
+                    }
+                    finally
+                    {
+                        if (disposeResponse_)
+                            response_.Dispose();
+                    }
+                }
+            }
+            finally
+            {
+                if (disposeClient_)
+                    client_.Dispose();
+            }
+        }
 
         /// <summary>
         /// 
@@ -325,7 +656,7 @@ namespace Checkmarx.API.AST.Services
                     var field = System.Reflection.IntrospectionExtensions.GetTypeInfo(value.GetType()).GetDeclaredField(name);
                     if (field != null)
                     {
-                        var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute)) 
+                        var attribute = System.Reflection.CustomAttributeExtensions.GetCustomAttribute(field, typeof(System.Runtime.Serialization.EnumMemberAttribute))
                             as System.Runtime.Serialization.EnumMemberAttribute;
                         if (attribute != null)
                         {
@@ -337,13 +668,13 @@ namespace Checkmarx.API.AST.Services
                     return converted == null ? string.Empty : converted;
                 }
             }
-            else if (value is bool) 
+            else if (value is bool)
             {
                 return System.Convert.ToString((bool)value, cultureInfo).ToLowerInvariant();
             }
             else if (value is byte[])
             {
-                return System.Convert.ToBase64String((byte[]) value);
+                return System.Convert.ToBase64String((byte[])value);
             }
             else if (value is string[])
             {
@@ -365,13 +696,14 @@ namespace Checkmarx.API.AST.Services
         }
     }
 
-    
- }
 
-#pragma warning restore  108
-#pragma warning restore  114
-#pragma warning restore  472
-#pragma warning restore  612
+
+}
+
+#pragma warning restore 108
+#pragma warning restore 114
+#pragma warning restore 472
+#pragma warning restore 612
 #pragma warning restore 1573
 #pragma warning restore 1591
 #pragma warning restore 8073

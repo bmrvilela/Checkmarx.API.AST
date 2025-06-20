@@ -193,6 +193,18 @@ namespace Checkmarx.API.AST
             }
         }
 
+        private Integrations _integrations;
+        public Integrations Integrations
+        {
+            get
+            {
+                if (Connected && _integrations == null)
+                    _integrations = new Integrations(ASTServer, _httpClient);
+
+                return _integrations;
+            }
+        }
+
         private Lists _lists;
         public Lists Lists
         {
@@ -565,6 +577,16 @@ namespace Checkmarx.API.AST
             }
         }
 
+        public HttpClient HttpClient
+        {
+            get
+            {
+                if (!Connected)
+                    throw new Exception("Not connected to AST Server. Please authenticate first.");
+                return _httpClient;
+            }
+        }
+
         public string authenticate()
         {
             var response = requestAuthenticationToken();
@@ -612,9 +634,7 @@ namespace Checkmarx.API.AST
             req.Headers.UserAgent.Add(new ProductInfoHeaderValue("ASAProgramTracker", "1.0"));
 
             _httpClient.DefaultRequestHeaders.Add("Accept", "*/*");
-            var response = _httpClient.SendAsync(req).Result;
-
-            return response;
+            return _httpClient.SendAsync(req).Result;
         }
 
         #endregion
@@ -1029,11 +1049,11 @@ namespace Checkmarx.API.AST
             return GetScans(projectId, branch: branch, completed: completed);
         }
 
-        private IEnumerable<Scan> getAllScans(Guid projectId, string branch = null, int itemsPerPage = 1000, int startAt = 0)
+        private IEnumerable<Scan> getAllScans(Guid projectId, string branch = null, int itemsPerPage = 1000, int startAt = 0, IEnumerable<string> tagKeys = null)
         {
             while (true)
             {
-                var result = Scans.GetListOfScansAsync(projectId, limit: itemsPerPage, offset: startAt, branch: branch).Result;
+                var result = Scans.GetListOfScansAsync(projectId, limit: itemsPerPage, offset: startAt, branch: branch, tags_keys: tagKeys).Result;
 
                 foreach (var scan in result.Scans)
                 {
@@ -1141,9 +1161,9 @@ namespace Checkmarx.API.AST
         /// <param name="maxScanDate">Max scan date, including the date</param>
         /// <param name="minScanDate">Min scan date, including the date</param>
         /// <returns></returns>
-        public IEnumerable<Scan> GetScans(Guid projectId, string engine = null, bool completed = true, string branch = null, ScanRetrieveKind scanKind = ScanRetrieveKind.All, DateTime? maxScanDate = null, DateTime? minScanDate = null)
+        public IEnumerable<Scan> GetScans(Guid projectId, string engine = null, bool completed = true, string branch = null, ScanRetrieveKind scanKind = ScanRetrieveKind.All, DateTime? maxScanDate = null, DateTime? minScanDate = null, IEnumerable<string> tagKeys = null)
         {
-            var scans = getAllScans(projectId, branch);
+            var scans = getAllScans(projectId, branch, tagKeys: tagKeys);
 
             List<Scan> list = [];
             if (scans.Any())
@@ -1515,7 +1535,7 @@ namespace Checkmarx.API.AST
 
         #region Results
 
-        public bool MarkSASTResult(Guid projectId, SASTResult result, IEnumerable<PredicateWithCommentJSON> history, bool updateSeverity = true, 
+        public bool MarkSASTResult(Guid projectId, SASTResult result, IEnumerable<PredicateWithCommentJSON> history, bool updateSeverity = true,
             bool updateState = true, bool updateComment = true, Guid? scanId = null)
         {
             if (projectId == Guid.Empty)
@@ -1600,7 +1620,7 @@ namespace Checkmarx.API.AST
             return true;
         }
 
-        public void MarkSCAVulnerability(Guid projectId, Vulnerability vulnerabilityRisk, 
+        public void MarkSCAVulnerability(Guid projectId, Vulnerability vulnerabilityRisk,
             VulnerabilityStatus vulnerabilityStatus, string message)
         {
             if (projectId == Guid.Empty)
