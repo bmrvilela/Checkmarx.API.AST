@@ -812,23 +812,56 @@ namespace Checkmarx.API.AST.Tests
         [TestMethod]
         public void GetScanTagsTest()
         {
-            Guid scanID = new Guid("c3e095fa-6df5-4af9-a752-f7b7fbb6ebf5");
+            Guid scanID = new Guid("59fc65d3-9fda-4cda-af5f-3869484a25ef");
 
-            astclient.Scans.UpdateTagsAsync(scanID, 
-                new ModifyScanTagsInput
-                {
-                    Tags = new Dictionary<string, string> { 
-                        { "Test", "Value" },
-                        { "EmtpyValue", string.Empty },
-                        { "Test2", "" }
-                    }
-                }).Wait();
+            //astclient.Scans.UpdateTagsAsync(scanID, 
+            //    new ModifyScanTagsInput
+            //    {
+            //        Tags = new Dictionary<string, string> { 
+            //            { "Test", "Value" },
+            //            { "EmtpyValue", string.Empty },
+            //            { "Test2", "" }
+            //        }
+            //    }).Wait();
 
-            foreach (var item in astclient.Scans.GetTagsAsync(scanID).Result.Tags)
+            var result = astclient.Scans.GetTagsAsync(scanID).Result.Tags;
+
+            Assert.IsNotNull(result);
+
+            foreach (var item in result)
             {
                 Trace.WriteLine($"{item.Key} = {item.Value}");
             }
         }
+
+
+        [TestMethod]
+        public void DeleteScanTest()
+        {
+
+            //Guid[] scanIds = new Guid[] {
+            //    new Guid("f2b86b8e-59ee-4f14-a56a-8892b42bc862"),
+            //    new Guid("c8b49478-f580-4ecb-9277-0a97fb71ab3c"),
+            //    new Guid("2428f0b6-286a-445e-a7f9-6954fe0ef4a7")
+            //};
+
+
+            //foreach (var scanId in scanIds)
+            //{
+            //    astclient.Scans.DeleteScanAsync(scanId).Wait();
+            //}
+
+
+            foreach (var item in astclient.Scans.GetListOfScansAsync(source_origins: ["recalc", "Recalc"]).Result.Scans)
+            {
+                Trace.WriteLine(item.Id + " " + item.CreatedAt.DateTime.ToShortDateString());
+
+                // astclient.Scans.DeleteScanAsync(item.Id).Wait();
+            }
+
+
+        }
+
 
     }
 }

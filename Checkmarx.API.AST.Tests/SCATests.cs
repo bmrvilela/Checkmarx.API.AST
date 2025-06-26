@@ -72,7 +72,7 @@ namespace Checkmarx.API.AST.Tests
                     $"| Status: {finding.RiskStatus} " +
                     $"| CveName: {finding.CveName} " +
                     $"| FixResolutionText: {finding.FixResolutionText}");
-               
+
             }
 
         }
@@ -195,7 +195,7 @@ namespace Checkmarx.API.AST.Tests
         }
 
         [TestMethod]
-        public void RecalcTest()
+        public void RecalcMainBranchTest()
         {
             var project = astclient.GetAllProjectsDetails().Single(y => y.Name == "java-goof");
 
@@ -203,18 +203,12 @@ namespace Checkmarx.API.AST.Tests
 
             Assert.IsNotNull(project);
 
-            return;
-
-            var scaLastScan = astclient.GetLastScan(project.Id, scanType: Enums.ScanTypeEnum.sca);
-
-            Assert.IsNotNull(scaLastScan);
-
             var scan = astclient.Scans.RecalculateAsync(new Services.Scans.RecalculateInput
             {
                 Project_id = project.Id,
-                Branch = scaLastScan.Branch,
+                Branch = project.MainBranch,
                 Engines = ["sca"]
-            }).Result;
+            }, "custom-auto-scan").Result;
 
             Assert.IsNotNull(scan);
 
@@ -224,7 +218,7 @@ namespace Checkmarx.API.AST.Tests
         [TestMethod]
         public void CheckForNewResultsTest()
         {
-            var projects = astclient.GetAllProjectsDetails();
+            var projects = astclient.GetAllProjectsDetails().Where(x => x.Name == "BB::ASPLATFORM::NewCVE-Custom01");
 
             foreach (var project in projects)
             {
@@ -243,8 +237,7 @@ namespace Checkmarx.API.AST.Tests
 
                     foreach (var scaVulnerability in scaDetails.SCAVulnerabilities.Where(x => x.RiskStatus == Services.Results.StatusEnum.NEW))
                     {
-                        Trace.WriteLine(project.Name + " " + scaLastScan.Id);
-                        break;
+                        Trace.WriteLine(project.Name + " " + scaLastScan.Id + " " + scaVulnerability.Id + " " + scaVulnerability.PackageName);
                     }
                 }
                 catch (Exception ex)
@@ -256,24 +249,42 @@ namespace Checkmarx.API.AST.Tests
 
         }
 
+
+        [TestMethod]
+        public void GetLastScanFromSpecificTagTest()
+        {
+
+            var lastProductionScan = astclient.GetScans(
+                new Guid("0c136f2c-5bc1-4612-9828-e204da11fc8f"),
+                branch: "master", scanKind: Checkmarx.API.AST.Enums.ScanRetrieveKind.Last, tagKeys: ["SHA256"], completed: false).SingleOrDefault();
+
+
+            Assert.IsNotNull(lastProductionScan);
+
+            Trace.WriteLine(lastProductionScan.Id);
+
+        }
+
         [TestMethod]
         public void GetLibrariesInTheInventoryTest()
         {
-            string cveId = "CVE-2020-1938";
-
-            var projects = astclient.GraphQLClient.GetSCAProjectsThanContainLibraryAsync("jquery", ["3.4.1"]);
+            var projects = astclient.GraphQLClient.GetSCAProjectsThanContainLibraryAsync("org.springframework.security:spring-security-core", ["6.4.3"]);
 
             var allProjects = astclient.GetAllProjectsDetails().ToDictionary(x => x.Id);
 
-            foreach (var packages in projects.Result.Data.ReportingPackages.Select(x => x.ProjectId).Distinct())
+            foreach (var packages in projects)
             {
-                var project = allProjects[packages];
+
+                
+
+                var project = allProjects[packages.ProjectId];
+
                 var projectlink = project.GetLink(astclient.ASTServer);
 
-                Trace.WriteLine(project.Name  + " " + projectlink.AbsoluteUri);
-            }
+                var scan = astclient.GetScanDetails(packages.ScanId);
 
-            
+                Trace.WriteLine($"{project.Name} -> {project.MainBranch}; ScanBranch: {scan.Branch}");
+            }
         }
 
         [TestMethod]

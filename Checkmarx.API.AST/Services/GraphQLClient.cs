@@ -1,4 +1,5 @@
 ﻿using Checkmarx.API.AST.Exceptions;
+using Checkmarx.API.AST.Services.SASTQueriesAudit;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -105,7 +106,21 @@ namespace Checkmarx.API.AST.Services
             return await response.Content.ReadAsStringAsync();
         }
 
-        public async Task<CveProjects> GetSCAProjectsThanContainLibraryAsync(string packageName, IEnumerable<string> packageVersions, System.Threading.CancellationToken cancellationToken = default)
+
+        public ICollection<ReportingPackage> GetSCAProjectsThanContainLibraryAsync(string packageName, IEnumerable<string> packageVersions, System.Threading.CancellationToken cancellationToken = default)
+        {
+           List<ReportingPackage> cveProjects = new List<ReportingPackage>();
+
+            foreach (var versionsChunk in packageVersions.Chunk(1000))
+            {
+                cveProjects.AddRange(getSCAProjectsThanContainLibraryAsync(packageName, versionsChunk, cancellationToken).Result.Data.ReportingPackages);
+            }
+
+            return cveProjects;
+        }
+
+
+        private async Task<CveProjects> getSCAProjectsThanContainLibraryAsync(string packageName, IEnumerable<string> packageVersions, System.Threading.CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(packageName))
                 throw new ArgumentException("Library name cannot be null or empty", nameof(packageName));
@@ -117,7 +132,7 @@ namespace Checkmarx.API.AST.Services
 
             whereClause.Append($" {{ \"and\": [ {{ \"packageName\": {{ \"eq\": \"{packageName}\" }}  }},                {{                     \"or\": [ {string.Join(",", packageVersions.Select(x => $"{{ \"packageVersion\":  {{ \"eq\":  \"{x}\" }}  }}"))} ]                }} ]                }}");
 
-            string queryForProject = $"{{    \"query\": \"query ($where: ReportingPackageModelFilterInput, $take: Int!, $skip: Int!, $order: [ReportingPackageModelSortInput!], $searchTerm: String) {{ reportingPackages (where: $where, take: $take, skip: $skip, order: $order, searchTerm: $searchTerm) {{ projectId }} }}\",    \"variables\": {{        \"where\": { whereClause.ToString() },        \"take\": 100000,        \"skip\": 0,        \"order\": [            {{                \"isMalicious\": \"DESC\"            }}        ]    }}}}";
+            string queryForProject = $"{{    \"query\": \"query ($where: ReportingPackageModelFilterInput, $take: Int!, $skip: Int!, $order: [ReportingPackageModelSortInput!], $searchTerm: String) {{ reportingPackages (where: $where, take: $take, skip: $skip, order: $order, searchTerm: $searchTerm) {{ projectId, projectName, packageName, packageVersion, scanId }} }}\",    \"variables\": {{        \"where\": { whereClause.ToString() },        \"take\": 1000,        \"skip\": 0,        \"order\": [            {{                \"isMalicious\": \"DESC\"            }}        ]    }}}}";
 
             var client_ = _httpClient;
             var disposeClient_ = false;
@@ -329,8 +344,20 @@ namespace Checkmarx.API.AST.Services
 
     public partial class ReportingPackage
     {
-        [JsonProperty("projectId", Required = Newtonsoft.Json.Required.DisallowNull)]
+        [JsonProperty("projectId", NullValueHandling = NullValueHandling.Ignore)]
         public Guid ProjectId { get; set; }
+
+        [JsonProperty("projectName", NullValueHandling = NullValueHandling.Ignore)]
+        public string ProjectName { get; set; }
+
+        [JsonProperty("packageName", NullValueHandling = NullValueHandling.Ignore)]
+        public string PackageName { get; set; }
+
+        [JsonProperty("packageVersion", NullValueHandling = NullValueHandling.Ignore)]
+        public string PackageVersion { get; set; }
+
+        [JsonProperty("scanId", NullValueHandling = NullValueHandling.Ignore)]
+        public Guid ScanId { get; set; }
     }
 
     #region LegalRisk

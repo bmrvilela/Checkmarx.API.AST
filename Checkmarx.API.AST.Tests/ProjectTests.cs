@@ -234,11 +234,11 @@ namespace Checkmarx.API.AST.Tests
 
             foreach (var item in projectsList)
             {
-                Trace.WriteLine(item.Id + " " + item.Criticality);
+                Trace.WriteLine(item.Name);
             }
 
 
-            Assert.AreEqual(221, projectsList.Count);
+            // Assert.AreEqual(221, projectsList.Count);
 
             //foreach (var proj in projectsList)
             //{

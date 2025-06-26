@@ -27,6 +27,7 @@ namespace Checkmarx.API.AST.Services.Scans
     using System;
     using System.Collections.Generic;
     using System.Net;
+    using System.Net.Http.Headers;
     using static Checkmarx.API.AST.ASTClient;
     using System = global::System;
 
@@ -731,7 +732,7 @@ namespace Checkmarx.API.AST.Services.Scans
         /// <param name="correlationId">This ID is used to keep track of a flow if many APIs are involved</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<Scan> RecalculateAsync(RecalculateInput body, string authorization = null, string accept = null, System.Guid? correlationId = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        public virtual async System.Threading.Tasks.Task<Scan> RecalculateAsync(RecalculateInput body, string origin = "recalc", string authorization = null, string accept = null, System.Guid? correlationId = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
         {
             if (body == null)
                 throw new System.ArgumentNullException("body");
@@ -755,6 +756,9 @@ namespace Checkmarx.API.AST.Services.Scans
                     var content_ = new System.Net.Http.StringContent(json_);
                     content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json; version=1.0");
                     request_.Content = content_;
+
+                    request_.Headers.UserAgent.Add(new ProductInfoHeaderValue(origin, null));
+
                     request_.Method = new System.Net.Http.HttpMethod("POST");
 
                     var urlBuilder_ = new System.Text.StringBuilder();
