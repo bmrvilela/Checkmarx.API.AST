@@ -1123,19 +1123,23 @@ namespace Checkmarx.API.AST
             }
         }
 
-        public Scan GetFirstSASTScan(Guid projectId, string branch = null)
+        public Scan GetFirstScan(Guid projectId, bool fullScanOnly = false, bool completed = true, string branch = null, ScanTypeEnum? scanType = null, DateTime? minScanDate = null)
         {
-            var scans = GetScans(projectId, SAST_Engine, true, branch, ScanRetrieveKind.All);
-            if (scans.Any())
+            var scans = GetScans(projectId, scanType?.ToString(), completed, branch, ScanRetrieveKind.All, minScanDate: minScanDate).OrderBy(x => x.CreatedAt);
+
+            if (!fullScanOnly)
+            {
+                return scans.FirstOrDefault();
+            }
+            else
             {
                 var fullScans = scans.Where(x => IsScanIncremental(x.Id)).OrderBy(x => x.CreatedAt);
+
                 if (fullScans.Any())
                     return fullScans.FirstOrDefault();
                 else
-                    return scans.OrderBy(x => x.CreatedAt).FirstOrDefault();
+                    return scans.FirstOrDefault();
             }
-            else
-                return scans.OrderBy(x => x.CreatedAt).FirstOrDefault();
         }
 
         /// <summary>
@@ -1147,7 +1151,6 @@ namespace Checkmarx.API.AST
         {
             return GetScans(projectId, SAST_Engine, true, branch, ScanRetrieveKind.Locked).FirstOrDefault();
         }
-
 
         private Dictionary<Guid, ScanInfo> _sastScansMetada = new Dictionary<Guid, ScanInfo>();
 

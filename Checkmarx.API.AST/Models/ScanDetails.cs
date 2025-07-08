@@ -2,6 +2,7 @@
 using Checkmarx.API.AST.Services;
 using Checkmarx.API.AST.Services.Configuration;
 using Checkmarx.API.AST.Services.KicsResults;
+using Checkmarx.API.AST.Services.ResultsOverview;
 using Checkmarx.API.AST.Services.ResultsSummary;
 using Checkmarx.API.AST.Services.SASTMetadata;
 using Checkmarx.API.AST.Services.SASTResults;
@@ -10,6 +11,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
+using ApiException = Checkmarx.API.AST.Services.Configuration.ApiException;
 
 namespace Checkmarx.API.AST.Models
 {
@@ -47,6 +50,7 @@ namespace Checkmarx.API.AST.Models
         public Guid Id => _scan.Id;
         public Guid ProjectId => _scan.ProjectId;
         public Status Status => _scan.Status;
+        public DateTimeOffset CreatedAt => _scan.CreatedAt;
         public bool Successful => Status == Status.Completed || Status == Status.Partial;
         public string InitiatorName => _scan.Initiator;
         public string Branch => _scan.Branch;
