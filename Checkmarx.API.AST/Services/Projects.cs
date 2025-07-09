@@ -1506,7 +1506,7 @@ namespace Checkmarx.API.AST.Services.Projects
         /// The scan engines
         /// </summary>
         [Newtonsoft.Json.JsonProperty("engines", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.ICollection<object> Engines { get; set; }
+        public System.Collections.Generic.ICollection<string> Engines { get; set; }
 
         /// <summary>
         /// The scan last Source type (e.g. zip, github, gitlab)
@@ -1519,6 +1519,11 @@ namespace Checkmarx.API.AST.Services.Projects
         /// </summary>
         [Newtonsoft.Json.JsonProperty("sourceOrigin", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string SourceOrigin { get; set; }
+
+
+        [Newtonsoft.Json.JsonProperty("recalcStatus", Required = Newtonsoft.Json.Required.AllowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string RecalcStatus { get; set; }
+
 
         private System.Collections.Generic.IDictionary<string, object> _additionalProperties = new System.Collections.Generic.Dictionary<string, object>();
 

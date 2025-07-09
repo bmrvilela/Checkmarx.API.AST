@@ -303,8 +303,14 @@ namespace Checkmarx.API.AST.Services.ScannersResults
         /// <summary>
         /// A value assigned to a specific vulnerability instance in your scan, based on the first and last nodes.&lt;br&gt;This enables CxAST to track that particular instance in future scans.
         /// </summary>
-        [Newtonsoft.Json.JsonProperty("similarityID", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string SimilarityID { get; set; }
+        [Newtonsoft.Json.JsonProperty("similarityId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string SimilarityId { get; set; }
+
+        /// <summary>
+        /// A unique ID per scanner results
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty("alternateId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string AlternateId { get; set; }
 
         [Newtonsoft.Json.JsonProperty("status", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
@@ -346,14 +352,7 @@ namespace Checkmarx.API.AST.Services.ScannersResults
         public System.DateTimeOffset FoundAt { get; set; }
 
         /// <summary>
-        /// The date and time that this result was last updated
-        /// </summary>
-        [Newtonsoft.Json.JsonProperty("updateAt", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        [Newtonsoft.Json.JsonConverter(typeof(DateFormatConverter))]
-        public System.DateTimeOffset UpdateAt { get; set; }
-
-        /// <summary>
-        /// The scanID of the scan in which the result (based on SimilarityID) was first identified in this project
+        /// The scanID of the scan in which the result (based on SimilarityId) was first identified in this project
         /// </summary>
         [Newtonsoft.Json.JsonProperty("firstScanID", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string FirstScanID { get; set; }
@@ -393,7 +392,7 @@ namespace Checkmarx.API.AST.Services.ScannersResults
 
     }
 
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "13.16.1.0 (NJsonSchema v10.7.2.0 (Newtonsoft.Json v12.0.0.0))")]
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.4.0.0 (NJsonSchema v11.3.2.0 (Newtonsoft.Json v13.0.0.0))")]
     public partial class WebError
     {
         [Newtonsoft.Json.JsonProperty("code", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
@@ -405,12 +404,12 @@ namespace Checkmarx.API.AST.Services.ScannersResults
         [Newtonsoft.Json.JsonProperty("data", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public object Data { get; set; }
 
-        private System.Collections.Generic.IDictionary<string, object> _additionalProperties = new System.Collections.Generic.Dictionary<string, object>();
+        private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
 
         [Newtonsoft.Json.JsonExtensionData]
         public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
         {
-            get { return _additionalProperties; }
+            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
             set { _additionalProperties = value; }
         }
 
@@ -419,28 +418,31 @@ namespace Checkmarx.API.AST.Services.ScannersResults
     /// <summary>
     /// The severity of the vulnerability
     /// </summary>
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "13.16.1.0 (NJsonSchema v10.7.2.0 (Newtonsoft.Json v12.0.0.0))")]
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.4.0.0 (NJsonSchema v11.3.2.0 (Newtonsoft.Json v13.0.0.0))")]
     public enum SeverityEnum
     {
 
+        [System.Runtime.Serialization.EnumMember(Value = @"CRITICAL")]
+        CRITICAL = 0,
+
         [System.Runtime.Serialization.EnumMember(Value = @"HIGH")]
-        HIGH = 0,
+        HIGH = 1,
 
         [System.Runtime.Serialization.EnumMember(Value = @"MEDIUM")]
-        MEDIUM = 1,
+        MEDIUM = 2,
 
         [System.Runtime.Serialization.EnumMember(Value = @"LOW")]
-        LOW = 2,
+        LOW = 3,
 
         [System.Runtime.Serialization.EnumMember(Value = @"INFO")]
-        INFO = 3,
+        INFO = 4,
 
     }
 
     /// <summary>
     /// The status of the result
     /// </summary>
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "13.16.1.0 (NJsonSchema v10.7.2.0 (Newtonsoft.Json v12.0.0.0))")]
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.4.0.0 (NJsonSchema v11.3.2.0 (Newtonsoft.Json v13.0.0.0))")]
     public enum StatusEnum
     {
 
@@ -479,7 +481,22 @@ namespace Checkmarx.API.AST.Services.ScannersResults
 
     }
 
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "13.16.1.0 (NJsonSchema v10.7.2.0 (Newtonsoft.Json v12.0.0.0))")]
+    /// <summary>
+    /// Type of result
+    /// </summary>
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.4.0.0 (NJsonSchema v11.3.2.0 (Newtonsoft.Json v13.0.0.0))")]
+    public enum ResultTypesEnum
+    {
+
+        [System.Runtime.Serialization.EnumMember(Value = @"DEV_AND_TEST")]
+        DEV_AND_TEST = 0,
+
+        [System.Runtime.Serialization.EnumMember(Value = @"NONE")]
+        NONE = 1,
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.4.0.0 (NJsonSchema v11.3.2.0 (Newtonsoft.Json v13.0.0.0))")]
     public enum Anonymous
     {
 
@@ -527,7 +544,7 @@ namespace Checkmarx.API.AST.Services.ScannersResults
 
     }
 
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "13.16.1.0 (NJsonSchema v10.7.2.0 (Newtonsoft.Json v12.0.0.0))")]
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.4.0.0 (NJsonSchema v11.3.2.0 (Newtonsoft.Json v13.0.0.0))")]
     public partial class Response
     {
         [Newtonsoft.Json.JsonProperty("results", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]

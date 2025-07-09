@@ -2751,6 +2751,19 @@ namespace Checkmarx.API.AST
             return GraphQLClient.GetSCAScanLegalRisks(query, variables);
         }
 
+        public static ICollection<Vulnerability> GetNewSCAVulnerabilities(List<Vulnerability> firstList, List<Vulnerability> secondList)
+        {
+            if (firstList == null) throw new ArgumentNullException(nameof(firstList));
+            if (secondList == null) throw new ArgumentNullException(nameof(secondList));
+
+            var firstIds = new HashSet<string>(firstList.Select(v => v.Id));
+
+            // Return vulnerabilities that are in secondList but not in firstList
+            return secondList
+                .Where(v => !string.IsNullOrEmpty(v.Id) && !firstIds.Contains(v.Id))
+                .ToList();
+        }
+
         #endregion
 
         #region Logs
