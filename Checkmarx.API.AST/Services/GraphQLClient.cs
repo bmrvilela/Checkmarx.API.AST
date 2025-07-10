@@ -287,7 +287,7 @@ namespace Checkmarx.API.AST.Services
 
                         allVulnerabilities.AddRange(graphQlResponse.Data.VulnerabilitiesRisksByScanId.Items);
                         skip += graphQlResponse.Data.VulnerabilitiesRisksByScanId.Items.Count; // Increment skip by actual items received
-                        Console.WriteLine($"Fetched {graphQlResponse.Data.VulnerabilitiesRisksByScanId.Items.Count} items. Total fetched: {allVulnerabilities.Count}/{totalCount}");
+                        // Console.WriteLine($"Fetched {graphQlResponse.Data.VulnerabilitiesRisksByScanId.Items.Count} items. Total fetched: {allVulnerabilities.Count}/{totalCount}");
                     }
                     else
                     {

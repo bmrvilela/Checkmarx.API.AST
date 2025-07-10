@@ -393,10 +393,8 @@ namespace Checkmarx.API.AST.Models
             {
                 if (_scaRisks == null)
                 {
-                    _scaRisks =  this._client.GraphQLClient.GetAllVulnerabilitiesRisksByScanIdAsync(new VulnerabilitiesRisksByScanIdVariables
-                    {
-                        ScanId = Id,
-                        IsExploitablePathEnabled = false
+                    _scaRisks =  this._client.GraphQLClient.GetAllVulnerabilitiesRisksByScanIdAsync(new VulnerabilitiesRisksByScanIdVariables {
+                        ScanId = Id
                     }).Result;
                 }
                 return _scaRisks;
