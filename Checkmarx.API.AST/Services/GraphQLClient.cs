@@ -282,7 +282,7 @@ namespace Checkmarx.API.AST.Services
                         {
                             totalCount = graphQlResponse.Data.VulnerabilitiesRisksByScanId.TotalCount;
                             firstRequest = false;
-                            Console.WriteLine($"Total vulnerabilities found: {totalCount}");
+                            // Console.WriteLine($"Total vulnerabilities found: {totalCount}");
                         }
 
                         allVulnerabilities.AddRange(graphQlResponse.Data.VulnerabilitiesRisksByScanId.Items);
