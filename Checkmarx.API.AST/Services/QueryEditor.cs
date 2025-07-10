@@ -3613,7 +3613,7 @@ namespace Checkmarx.API.AST.Services.QueryEditor
         public int Query_id { get; set; }
 
         [Newtonsoft.Json.JsonProperty("error", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.ICollection<error> Error { get; set; }
+        public System.Collections.Generic.ICollection<FailQueryError> Error { get; set; }
 
         private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
 
@@ -3673,7 +3673,7 @@ namespace Checkmarx.API.AST.Services.QueryEditor
     /// Compilation error
     /// </summary>
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.2.0.0 (NJsonSchema v11.1.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class error
+    public partial class FailQueryError
     {
         [Newtonsoft.Json.JsonProperty("line", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public int Line { get; set; }

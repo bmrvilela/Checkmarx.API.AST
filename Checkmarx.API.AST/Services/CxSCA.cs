@@ -20,6 +20,7 @@
 namespace Checkmarx.API.AST.Services
 {
     using Checkmarx.API.AST.Exceptions;
+    using Checkmarx.API.AST.Models.SCA;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Converters;
     using System;
@@ -30,23 +31,7 @@ namespace Checkmarx.API.AST.Services
     using static System.Net.WebRequestMethods;
     using System = global::System;
 
-    public class PackagesRequest
-    {
-        [JsonProperty("packageName")]
-        public string PackageName { get; set; }
 
-        [JsonProperty("packageVersion")]
-        public string PackageVersion { get; set; }
-
-        [JsonProperty("packageManager")]
-        public string PackageManager { get; set; }
-
-        [JsonProperty("projectId")]
-        public Guid ProjectId { get; set; }
-
-        [JsonProperty("actions")]
-        public PackageActionType[] Actions { get; set; }
-    }
 
     public class PackageActionType
     {
@@ -72,7 +57,7 @@ namespace Checkmarx.API.AST.Services
         public DateTimeOffset EndDate { get; set; }
     }
 
-    public class PackageInfo
+    public class ScaPackageInfo
     {
         [JsonProperty("packageName")]
         public string PackageName { get; set; }
@@ -100,8 +85,7 @@ namespace Checkmarx.API.AST.Services
         public ActionTypeEnum Type { get; set; }
 
         [JsonProperty("value")]
-        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-        public VulnerabilityStatus Value { get; set; }
+        public string Value { get; set; }
 
         [Newtonsoft.Json.JsonProperty("comment", Required = Newtonsoft.Json.Required.AllowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Include)]
         public string Comment { get; set; }
@@ -494,7 +478,7 @@ namespace Checkmarx.API.AST.Services
         /// <exception cref="ApiException"></exception>
         /// <exception cref="ApiException{WebError}"></exception>
         /// <exception cref="ApiException{Response2}"></exception>
-        public virtual async System.Threading.Tasks.Task UpdateResultState(PackageInfo body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        public virtual async System.Threading.Tasks.Task UpdateResultState(ScaPackageInfo body, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
         {
             var client_ = _httpClient;
             var disposeClient_ = false;

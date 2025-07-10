@@ -5607,7 +5607,7 @@ namespace Checkmarx.API.AST.Services
         public System.Collections.Generic.ICollection<string> BaseRoles { get; set; }
 
         [Newtonsoft.Json.JsonProperty("resources", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.ICollection<resources> Resources { get; set; }
+        public System.Collections.Generic.ICollection<UserResources> Resources { get; set; }
 
         private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
 
@@ -5636,7 +5636,7 @@ namespace Checkmarx.API.AST.Services
         public System.Collections.Generic.ICollection<string> BaseRoles { get; set; }
 
         [Newtonsoft.Json.JsonProperty("resources", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.ICollection<resources2> Resources { get; set; }
+        public System.Collections.Generic.ICollection<ClientResources> Resources { get; set; }
 
         private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
 
@@ -5665,7 +5665,7 @@ namespace Checkmarx.API.AST.Services
         public System.Collections.Generic.ICollection<string> BaseRoles { get; set; }
 
         [Newtonsoft.Json.JsonProperty("resources", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.ICollection<resources3> Resources { get; set; }
+        public System.Collections.Generic.ICollection<GroupResources> Resources { get; set; }
 
         private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
 
@@ -5714,7 +5714,7 @@ namespace Checkmarx.API.AST.Services
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class resources
+    public partial class UserResources
     {
         [Newtonsoft.Json.JsonProperty("id", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string Id { get; set; }
@@ -5741,7 +5741,7 @@ namespace Checkmarx.API.AST.Services
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class resources2
+    public partial class ClientResources
     {
         [Newtonsoft.Json.JsonProperty("id", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string Id { get; set; }
@@ -5768,7 +5768,7 @@ namespace Checkmarx.API.AST.Services
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class resources3
+    public partial class GroupResources
     {
         [Newtonsoft.Json.JsonProperty("id", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string Id { get; set; }

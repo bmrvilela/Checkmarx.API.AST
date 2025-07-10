@@ -33,6 +33,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using Checkmarx.API.AST.Models.SCA;
 
 namespace Checkmarx.API.AST
 {
@@ -1621,7 +1622,7 @@ namespace Checkmarx.API.AST
         }
 
         public void MarkSCAVulnerability(Guid projectId, Vulnerability vulnerabilityRisk,
-            VulnerabilityStatus vulnerabilityStatus, string message)
+            ScaVulnerabilityStatus vulnerabilityStatus, string message)
         {
             if (projectId == Guid.Empty)
                 throw new ArgumentNullException(nameof(projectId));
@@ -1632,7 +1633,7 @@ namespace Checkmarx.API.AST
             if (string.IsNullOrEmpty(message))
                 throw new ArgumentNullException(nameof(message));
 
-            SCA.UpdateResultState(new PackageInfo
+            SCA.UpdateResultState(new ScaPackageInfo
             {
                 PackageManager = vulnerabilityRisk.PackageManager,
                 PackageName = vulnerabilityRisk.PackageName,
@@ -1643,7 +1644,7 @@ namespace Checkmarx.API.AST
                 new ActionType
                 {
                     Type = ActionTypeEnum.ChangeState,
-                    Value = vulnerabilityStatus,
+                    Value = vulnerabilityStatus.ToString(),
                     Comment = message
                 }
             ],

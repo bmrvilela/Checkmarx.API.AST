@@ -65,10 +65,10 @@ namespace Checkmarx.API.AST.Services.SASTScanResultsCompare
         /// <exception cref="ApiException">A server side error occurred.</exception>
         public virtual async Task<StatsCompareResult> StatusAsync(Guid base_scan_id, Guid scan_id, string authorization = null, Guid? correlationId = null, string accept = null, System.Threading.CancellationToken cancellationToken = default)
         {
-            if (scan_id == null)
+            if (scan_id == Guid.Empty)
                 throw new System.ArgumentNullException("scan_id");
 
-            if (base_scan_id == null)
+            if (base_scan_id == Guid.Empty)
                 throw new System.ArgumentNullException("base_scan_id");
 
             var client_ = _httpClient;

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 
 using System.Globalization;
-using Checkmarx.API.AST.Services.Results;
+using Checkmarx.API.AST.Models.SCA;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
@@ -282,103 +282,6 @@ namespace Checkmarx.API.AST.Services
 
         [JsonProperty("None", NullValueHandling = NullValueHandling.Ignore)]
         public long? None { get; set; }
-    }
-
-    public partial class Vulnerability
-    {
-        [JsonProperty("Id", NullValueHandling = NullValueHandling.Ignore)]
-        public string Id { get; set; }
-
-        [JsonProperty("CveName", NullValueHandling = NullValueHandling.Ignore)]
-        public string CveName { get; set; }
-
-        [JsonProperty("Score", NullValueHandling = NullValueHandling.Ignore)]
-        public double? Score { get; set; }
-
-        [JsonProperty("Severity", NullValueHandling = NullValueHandling.Ignore)]
-        public string Severity { get; set; }
-
-        [JsonProperty("PublishDate", NullValueHandling = NullValueHandling.Ignore)]
-        public DateTimeOffset? PublishDate { get; set; }
-
-        [JsonProperty("References", NullValueHandling = NullValueHandling.Ignore)]
-        public List<Uri> References { get; set; }
-
-        [JsonProperty("Description", NullValueHandling = NullValueHandling.Ignore)]
-        public string Description { get; set; }
-
-        [JsonProperty("Cvss2")]
-        public Dictionary<string, string> Cvss2 { get; set; }
-
-        [JsonProperty("Cvss3", NullValueHandling = NullValueHandling.Ignore)]
-        public Dictionary<string, string> Cvss3 { get; set; }
-
-        [JsonProperty("PackageId", NullValueHandling = NullValueHandling.Ignore)]
-        public string PackageId { get; set; }
-
-        [JsonProperty("PackageName", NullValueHandling = NullValueHandling.Ignore)]
-        public string PackageName { get; set; }
-
-        [JsonProperty("PackageVersion", NullValueHandling = NullValueHandling.Ignore)]
-        public string PackageVersion { get; set; }
-
-        [JsonProperty("PackageManager", NullValueHandling = NullValueHandling.Ignore)]
-        public string PackageManager { get; set; }
-
-        [JsonProperty("FixResolutionText")]
-        public string FixResolutionText { get; set; }
-
-        [JsonProperty("IsIgnored", NullValueHandling = NullValueHandling.Ignore)]
-        public bool? IsIgnored { get; set; }
-
-        [JsonProperty("RiskState", NullValueHandling = NullValueHandling.Ignore)]
-        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-        public VulnerabilityStatus RiskState { get; set; }
-
-        [JsonProperty("RiskStateLastUpdateDate")]
-        public DateTimeOffset? RiskStateLastUpdateDate { get; set; }
-
-        [JsonProperty("RiskStateLastUpdateUser")]
-        public string RiskStateLastUpdateUser { get; set; }
-
-        [JsonProperty("RiskStateLastUpdateComment")]
-        public string RiskStateLastUpdateComment { get; set; }
-
-        [JsonProperty("RiskStatus", NullValueHandling = NullValueHandling.Ignore)]
-        public StatusEnum RiskStatus { get; set; }
-
-        [JsonProperty("FirstFoundAt", NullValueHandling = NullValueHandling.Ignore)]
-        public DateTimeOffset? FirstFoundAt { get; set; }
-
-        [JsonProperty("Kev", NullValueHandling = NullValueHandling.Ignore)]
-        public bool? Kev { get; set; }
-
-        [JsonProperty("Poc", NullValueHandling = NullValueHandling.Ignore)]
-        public bool? Poc { get; set; }
-
-        [JsonProperty("Epss", NullValueHandling = NullValueHandling.Ignore)]
-        public bool? Epss { get; set; }
-
-        [JsonProperty("EpssValue")]
-        public double? EpssValue { get; set; }
-
-        [JsonProperty("EpssPercentile")]
-        public double? EpssPercentile { get; set; }
-
-        [JsonProperty("ExploitablePath", NullValueHandling = NullValueHandling.Ignore)]
-        public bool? ExploitablePath { get; set; }
-
-        [JsonProperty("ExploitableMethods", NullValueHandling = NullValueHandling.Ignore)]
-        public List<object> ExploitableMethods { get; set; }
-
-        [JsonProperty("Cwe", NullValueHandling = NullValueHandling.Ignore)]
-        public string Cwe { get; set; }
-
-        [JsonProperty("IsViolatingPolicy", NullValueHandling = NullValueHandling.Ignore)]
-        public bool? IsViolatingPolicy { get; set; }
-
-        [JsonProperty("Type", NullValueHandling = NullValueHandling.Ignore)]
-        public string Type { get; set; }
     }
 
 

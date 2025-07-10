@@ -1,4 +1,6 @@
-﻿using Checkmarx.API.AST.Models.Report;
+﻿using Checkmarx.API.AST.Models;
+using Checkmarx.API.AST.Models.Report;
+using Checkmarx.API.AST.Models.SCA;
 using Checkmarx.API.AST.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -128,44 +130,6 @@ namespace Checkmarx.API.AST.Tests
         }
 
         [TestMethod]
-        public void GetSCAFindingsHistoryTest()
-        {
-            var project = astclient.GetAllProjectsDetails().Single(y => y.Name == "nodejs-goof");
-
-            Assert.IsNotNull(project);
-
-            var scaLastScan = astclient.GetLastScan(project.Id, scanType: Enums.ScanTypeEnum.sca);
-
-            Assert.IsNotNull(scaLastScan);
-
-            var scanDetails = astclient.GetScanDetails(scaLastScan);
-
-            foreach (var finding in scanDetails.SCAVulnerabilities)
-            {
-                var result = astclient.GraphQLClient.GetFindingsChangeHistoryAsync(
-                    project.Id,
-                    scaLastScan.Id,
-                    finding.PackageName,
-                    finding.PackageVersion,
-                    finding.PackageManager,
-                    finding.Id).Result;
-
-                Trace.WriteLine(result);
-
-                break;
-
-            }
-
-
-        }
-
-        [TestMethod]
-        public void GetSCAFindingsTest()
-        {
-
-        }
-
-        [TestMethod]
         public void MarkingFindingsTest()
         {
             var project = astclient.GetAllProjectsDetails().Single(y => y.Name == "java-goof");
@@ -184,7 +148,7 @@ namespace Checkmarx.API.AST.Tests
             {
                 try
                 {
-                    astclient.MarkSCAVulnerability(project.Id, vuln, VulnerabilityStatus.Confirmed, "test");
+                    astclient.MarkSCAVulnerability(project.Id, vuln, ScaVulnerabilityStatus.Confirmed, "test");
                 }
                 catch (Exception ex)
                 {
@@ -235,7 +199,8 @@ namespace Checkmarx.API.AST.Tests
 
                     var scaDetails = astclient.GetScanDetails(scaLastScan); // Ensure the scan details are fetched first
 
-                    foreach (var scaVulnerability in scaDetails.SCAVulnerabilities.Where(x => x.RiskStatus == Services.Results.StatusEnum.NEW))
+                    foreach (var scaVulnerability in scaDetails.SCAVulnerabilities
+                        .Where(x => x.RiskStatus == Services.Results.StatusEnum.NEW))
                     {
                         Trace.WriteLine(project.Name + " " + scaLastScan.Id + " " + scaVulnerability.Id + " " + scaVulnerability.PackageName);
                     }
@@ -248,7 +213,6 @@ namespace Checkmarx.API.AST.Tests
 
 
         }
-
 
         [TestMethod]
         public void GetLastScanFromSpecificTagTest()
@@ -275,7 +239,7 @@ namespace Checkmarx.API.AST.Tests
             foreach (var packages in projects)
             {
 
-                
+
 
                 var project = allProjects[packages.ProjectId];
 
@@ -306,5 +270,98 @@ namespace Checkmarx.API.AST.Tests
             Trace.WriteLine($"Publish Date: {cveDefinition.PublishDate}");
             Trace.WriteLine($"Description: {cveDefinition.Description}");
         }
+
+
+        /// <summary>
+        /// Creates a list of consecutive pairs from the input list.
+        /// Each pair consists of (element[i], element[i+1]).
+        /// </summary>
+        /// <typeparam name="T">The type of objects in the list.</typeparam>
+        /// <param name="source">The input list of objects.</param>
+        /// <returns>A list of tuples, where each tuple represents a pair of consecutive elements.</returns>
+        /// <remarks>
+        /// If the input list has fewer than 2 elements, an empty list of pairs will be returned.
+        /// </remarks>
+        public static List<(T First, T Second)> GetConsecutivePairs<T>(IList<T> source)
+        {
+            // Handle null source list gracefully
+            if (source == null)
+            {
+                throw new ArgumentNullException(nameof(source), "The source list cannot be null.");
+            }
+
+            // If the list has less than 2 elements, no pairs can be formed.
+            if (source.Count < 2)
+            {
+                return new List<(T First, T Second)>();
+            }
+
+            var pairs = new List<(T First, T Second)>();
+
+            // Iterate from the first element up to the second-to-last element
+            for (int i = 0; i < source.Count - 1; i++)
+            {
+                pairs.Add((source[i], source[i + 1]));
+            }
+
+            return pairs;
+        }
+
+        [TestMethod]
+        public void GetScanCompareTest()
+        {
+            foreach (var proj in astclient.GetAllProjectsDetails())
+            {
+                foreach (var branch in astclient.GetProjectBranches(proj.Id))
+                {
+                    // get scans
+                    var allScaScans = astclient.GetScans(
+                        proj.Id,
+                        branch: branch,
+                        engine: ASTClient.SCA_Engine)
+                        .Reverse()
+                        .Select(x => astclient.GetScanDetails(x)).ToList();
+
+                    if (allScaScans.Count() > 1)
+                    {
+                        foreach (var scaScanPair in GetConsecutivePairs<ScanDetails>(allScaScans))
+                        {
+                            foreach (var diff in ASTClient.GetNewSCAVulnerabilities(
+                                scaScanPair.First.SCAVulnerabilities, scaScanPair.Second.SCAVulnerabilities))
+                            {
+                                Trace.WriteLine($"{proj.Name} -  {branch} - {scaScanPair.Second.Id} - New: {diff.CveName} - {diff.RiskStatus.ToString()}");
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+
+        [TestMethod]
+        public void GetSCADiffTest()
+        {
+            var scan1 = astclient.GetScanDetails(new Guid("25731032-2394-479b-b9ca-72d0e15188ad"));
+            var scan2 = astclient.GetScanDetails(new Guid("9a0fc7dd-b1d8-47ae-9e94-20f925a4caeb"));
+
+            Trace.WriteLine($"Scan: {scan2.SCAVulnerabilities.Count()}");
+
+            var grousByRiskStatus = scan2.SCAVulnerabilities
+                .GroupBy(x => x.Severity);
+
+            foreach (var risk in grousByRiskStatus)
+            {
+                Trace.WriteLine($"{risk.Key.ToString()}: {risk.Count()}");
+            }
+
+
+            foreach (var diff in ASTClient.GetNewSCAVulnerabilities(
+                               scan1.SCAVulnerabilities, scan2.SCAVulnerabilities))
+            {
+                Trace.WriteLine($"{diff.RiskStatus.ToString()}: {diff.CveName}");
+            }
+
+        }
+
     }
 }
