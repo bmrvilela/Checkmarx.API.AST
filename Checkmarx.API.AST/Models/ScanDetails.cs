@@ -238,80 +238,9 @@ namespace Checkmarx.API.AST.Models
                 };
 
                 if (_sastResults.Successful)
-                {
-                    updateSASTScanResultDetailsBasedOnScanVulnerabilities(_sastResults, Id);
-                }
+                    updateSASTScanResultDetails(_sastResults);
 
                 return _sastResults;
-            }
-        }
-
-        /// <summary>
-        /// Very performance intensive.
-        /// </summary>
-        /// <param name="scanDetails"></param>
-        /// <param name="scanId"></param>
-        /// <returns></returns>
-        private void updateSASTScanResultDetailsBasedOnScanVulnerabilities(SASTScanResultDetails model, Guid scanId)
-        {
-            var sastResults = SASTVulnerabilities;
-            if (sastResults == null)
-                return;
-
-            var results = SASTVulnerabilities.Where(x => x.State != ResultsState.NOT_EXPLOITABLE);
-
-            model.Id = scanId;
-            model.Total = results.Count();
-            model.Critical = results.Where(x => x.Severity == ResultsSeverity.CRITICAL).Count();
-            model.High = results.Where(x => x.Severity == ResultsSeverity.HIGH).Count();
-            model.Medium = results.Where(x => x.Severity == ResultsSeverity.MEDIUM).Count();
-            model.Low = results.Where(x => x.Severity == ResultsSeverity.LOW).Count();
-            model.Info = results.Where(x => x.Severity == ResultsSeverity.INFO).Count();
-
-            model.CriticalToVerify = sastResults.Where(x => x.Severity == ResultsSeverity.CRITICAL && x.State == ResultsState.TO_VERIFY).Count();
-            model.HighToVerify = sastResults.Where(x => x.Severity == ResultsSeverity.HIGH && x.State == ResultsState.TO_VERIFY).Count();
-            model.MediumToVerify = sastResults.Where(x => x.Severity == ResultsSeverity.MEDIUM && x.State == ResultsState.TO_VERIFY).Count();
-            model.LowToVerify = sastResults.Where(x => x.Severity == ResultsSeverity.LOW && x.State == ResultsState.TO_VERIFY).Count();
-
-            var resultsExcludingInfo = results.Where(x => x.Severity != ResultsSeverity.INFO);
-
-            model.ToVerify = resultsExcludingInfo.Where(x => x.State == ResultsState.TO_VERIFY).Count();
-            model.NotExploitableMarked = resultsExcludingInfo.Where(x => x.State == ResultsState.NOT_EXPLOITABLE).Count();
-            model.PNEMarked = resultsExcludingInfo.Where(x => x.State == ResultsState.PROPOSED_NOT_EXPLOITABLE).Count();
-            model.OtherStates = resultsExcludingInfo.Where(x =>
-                                                        x.State != ResultsState.CONFIRMED &&
-                                                        x.State != ResultsState.URGENT &&
-                                                        x.State != ResultsState.NOT_EXPLOITABLE &&
-                                                        x.State != ResultsState.PROPOSED_NOT_EXPLOITABLE &&
-                                                        x.State != ResultsState.TO_VERIFY).Count();
-            model.LanguagesDetected = sastResults.Select(x => x.LanguageName).Distinct().ToList();
-            //model.Queries = report.ScanResults.Sast.Languages.Sum(x => x.Queries.Count());
-
-            try
-            {
-                // Scan query categories
-                var scanResultsCritical = results.Where(x => x.Severity == ResultsSeverity.CRITICAL);
-                var scanResultsHigh = results.Where(x => x.Severity == ResultsSeverity.HIGH);
-                var scanResultsMedium = results.Where(x => x.Severity == ResultsSeverity.MEDIUM);
-                var scanResultsLow = results.Where(x => x.Severity == ResultsSeverity.LOW);
-
-                var scanQueriesCritical = scanResultsCritical.Select(x => x.QueryID).Distinct().ToList();
-                var scanQueriesHigh = scanResultsHigh.Select(x => x.QueryID).Distinct().ToList();
-                var scanQueriesMedium = scanResultsMedium.Select(x => x.QueryID).Distinct().ToList();
-                var scanQueriesLow = scanResultsLow.Select(x => x.QueryID).Distinct().ToList();
-
-                model.QueriesCritical = scanQueriesCritical.Count();
-                model.QueriesHigh = scanQueriesHigh.Count();
-                model.QueriesMedium = scanQueriesMedium.Count();
-                model.QueriesLow = scanQueriesLow.Count();
-                model.Queries = model.QueriesCritical + model.QueriesHigh + model.QueriesMedium + model.QueriesLow;
-            }
-            catch
-            {
-                model.QueriesCritical = null;
-                model.QueriesHigh = null;
-                model.QueriesMedium = null;
-                model.QueriesLow = null;
             }
         }
 
@@ -355,7 +284,16 @@ namespace Checkmarx.API.AST.Models
                 };
 
                 if (_scaResults.Successful)
-                    updateScaScanResultDetailsBasedOnResultsSummary(_scaResults);
+                {
+                    updateBasicScanResultDetails(
+                        _scaResults,
+                        SCAVulnerabilities,
+                        x => x.Severity,
+                        x => x.RiskState,
+                        VulnerabilityStatus.NotExploitable.ToString(),
+                        VulnerabilityStatus.ToVerify.ToString()
+                    );
+                }
 
                 return _scaResults;
             }
@@ -377,25 +315,6 @@ namespace Checkmarx.API.AST.Models
                 return _scaVulnerabilities;
             }
 
-        }
-
-        private void updateScaScanResultDetailsBasedOnResultsSummary(ScanResultDetails model)
-        {
-            var scaResults = SCAVulnerabilities;
-            if (scaResults == null)
-                return;
-
-            var results = SCAVulnerabilities.Where(x => x.RiskState != VulnerabilityStatus.NotExploitable);
-
-            model.Total = results.Count();
-            model.Critical = results.Where(x => x.Severity.ToUpper() == Services.KicsResults.SeverityEnum.CRITICAL.ToString()).Count();
-            model.High = results.Where(x => x.Severity.ToUpper() == Services.KicsResults.SeverityEnum.HIGH.ToString()).Count();
-            model.Medium = results.Where(x => x.Severity.ToUpper() == Services.KicsResults.SeverityEnum.MEDIUM.ToString()).Count();
-            model.Low = results.Where(x => x.Severity.ToUpper() == Services.KicsResults.SeverityEnum.LOW.ToString()).Count();
-            model.Info = results.Where(x => x.Severity.ToUpper() == Services.KicsResults.SeverityEnum.INFO.ToString()).Count();
-
-            model.ToVerify = results.Where(x => x.RiskState == VulnerabilityStatus.ToVerify &&
-                                                x.Severity.ToUpper() != Services.KicsResults.SeverityEnum.INFO.ToString()).Count();
         }
 
         #endregion
@@ -426,30 +345,169 @@ namespace Checkmarx.API.AST.Models
                 };
 
                 if (_kicsResults.Successful)
-                    updateKicsScanResultDetailsBasedOnKicsVulnerabilities(_kicsResults, Id);
+                {
+                    updateBasicScanResultDetails(
+                        _kicsResults,
+                        _client.GetKicsScanResultsById(Id),
+                        x => x.Severity.ToString(),
+                        x => (VulnerabilityStatus)(int)x.State, // assuming a mapping exists
+                        VulnerabilityStatus.NotExploitable.ToString(),
+                        VulnerabilityStatus.ToVerify.ToString()
+                    );
+                }
 
                 return _kicsResults;
             }
         }
 
-        private void updateKicsScanResultDetailsBasedOnKicsVulnerabilities(ScanResultDetails model, Guid scanId)
+        #endregion
+
+        #region Update Scan Result Details
+
+        private void updateSASTScanResultDetails(SASTScanResultDetails model)
         {
-            var kicsResults = _client.GetKicsScanResultsById(scanId);
-            if (kicsResults == null)
-            {
+            var sastResults = SASTVulnerabilities;
+            if (sastResults == null)
                 return;
+
+            model.Id = Id;
+
+            int total = 0, critical = 0, high = 0, medium = 0, low = 0, info = 0;
+            int criticalToVerify = 0, highToVerify = 0, mediumToVerify = 0, lowToVerify = 0;
+            int toVerify = 0, notExploitableMarked = 0, pneMarked = 0, otherStates = 0;
+
+            var languages = new HashSet<string>();
+            var queriesCritical = new HashSet<string>();
+            var queriesHigh = new HashSet<string>();
+            var queriesMedium = new HashSet<string>();
+            var queriesLow = new HashSet<string>();
+
+            foreach (var vuln in sastResults)
+            {
+                languages.Add(vuln.LanguageName);
+
+                bool isNotInfo = vuln.Severity != ResultsSeverity.INFO;
+
+                if (vuln.State != ResultsState.NOT_EXPLOITABLE)
+                {
+                    total++;
+
+                    switch (vuln.Severity)
+                    {
+                        case ResultsSeverity.CRITICAL:
+                            critical++;
+                            queriesCritical.Add(vuln.QueryID);
+                            if (vuln.State == ResultsState.TO_VERIFY) criticalToVerify++;
+                            break;
+                        case ResultsSeverity.HIGH:
+                            high++;
+                            queriesHigh.Add(vuln.QueryID);
+                            if (vuln.State == ResultsState.TO_VERIFY) highToVerify++;
+                            break;
+                        case ResultsSeverity.MEDIUM:
+                            medium++;
+                            queriesMedium.Add(vuln.QueryID);
+                            if (vuln.State == ResultsState.TO_VERIFY) mediumToVerify++;
+                            break;
+                        case ResultsSeverity.LOW:
+                            low++;
+                            queriesLow.Add(vuln.QueryID);
+                            if (vuln.State == ResultsState.TO_VERIFY) lowToVerify++;
+                            break;
+                        case ResultsSeverity.INFO:
+                            info++;
+                            break;
+                    }
+
+                    if (isNotInfo)
+                    {
+                        switch (vuln.State)
+                        {
+                            case ResultsState.TO_VERIFY:
+                                toVerify++;
+                                break;
+                            case ResultsState.NOT_EXPLOITABLE:
+                                notExploitableMarked++;
+                                break;
+                            case ResultsState.PROPOSED_NOT_EXPLOITABLE:
+                                pneMarked++;
+                                break;
+                            case ResultsState.CONFIRMED:
+                            case ResultsState.URGENT:
+                                break;
+                            default:
+                                otherStates++;
+                                break;
+                        }
+                    }
+                }
             }
 
-            var results = kicsResults.Where(x => x.State != KicsStateEnum.NOT_EXPLOITABLE);
+            model.Total = total;
+            model.Critical = critical;
+            model.High = high;
+            model.Medium = medium;
+            model.Low = low;
+            model.Info = info;
 
-            model.Id = scanId;
-            model.Total = results.Count();
-            model.Critical = results.Where(x => x.Severity == Services.KicsResults.SeverityEnum.CRITICAL).Count();
-            model.High = results.Where(x => x.Severity == Services.KicsResults.SeverityEnum.HIGH).Count();
-            model.Medium = results.Where(x => x.Severity == Services.KicsResults.SeverityEnum.MEDIUM).Count();
-            model.Low = results.Where(x => x.Severity == Services.KicsResults.SeverityEnum.LOW).Count();
-            model.Info = results.Where(x => x.Severity == Services.KicsResults.SeverityEnum.INFO).Count();
-            model.ToVerify = kicsResults.Where(x => x.State == KicsStateEnum.TO_VERIFY && x.Severity != Services.KicsResults.SeverityEnum.INFO).Count();
+            model.CriticalToVerify = criticalToVerify;
+            model.HighToVerify = highToVerify;
+            model.MediumToVerify = mediumToVerify;
+            model.LowToVerify = lowToVerify;
+
+            model.ToVerify = toVerify;
+            model.NotExploitableMarked = notExploitableMarked;
+            model.PNEMarked = pneMarked;
+            model.OtherStates = otherStates;
+
+            model.LanguagesDetected = languages.ToList();
+
+            model.QueriesCritical = queriesCritical.Count;
+            model.QueriesHigh = queriesHigh.Count;
+            model.QueriesMedium = queriesMedium.Count;
+            model.QueriesLow = queriesLow.Count;
+            model.Queries = model.QueriesCritical + model.QueriesHigh + model.QueriesMedium + model.QueriesLow;
+        }
+
+        private void updateBasicScanResultDetails<T>(
+            ScanResultDetails model,
+            IEnumerable<T> results,
+            Func<T, string> getSeverity,
+            Func<T, VulnerabilityStatus> getRiskState,
+            string notExploitableValue,
+            string toVerifyValue)
+        {
+            var filtered = results.Where(x => getRiskState(x).ToString() != notExploitableValue);
+
+            int total = 0, critical = 0, high = 0, medium = 0, low = 0, info = 0, toVerify = 0;
+
+            foreach (var item in filtered)
+            {
+                var severity = getSeverity(item).ToUpperInvariant();
+                var riskState = getRiskState(item).ToString();
+
+                total++;
+
+                switch (severity)
+                {
+                    case "CRITICAL": critical++; break;
+                    case "HIGH": high++; break;
+                    case "MEDIUM": medium++; break;
+                    case "LOW": low++; break;
+                    case "INFO": info++; break;
+                }
+
+                if (riskState == toVerifyValue && severity != "INFO")
+                    toVerify++;
+            }
+
+            model.Total = total;
+            model.Critical = critical;
+            model.High = high;
+            model.Medium = medium;
+            model.Low = low;
+            model.Info = info;
+            model.ToVerify = toVerify;
         }
 
         #endregion

@@ -2302,9 +2302,9 @@ namespace Checkmarx.API.AST.Services.Scans
             set { _additionalProperties = value; }
         }
 
-        public bool IsSASTScan => Engines != null && Engines.Contains(ScanTypeEnum.sast.ToString());
-        public bool IsScaScan => Engines != null && Engines.Contains(ScanTypeEnum.sca.ToString());
-        public bool IsKicsScan => Engines != null && Engines.Contains(ScanTypeEnum.kics.ToString());
+        public bool HasSASTScan => Engines != null && Engines.Contains(ScanTypeEnum.sast.ToString());
+        public bool HasScaScan => Engines != null && Engines.Contains(ScanTypeEnum.sca.ToString());
+        public bool HasKicsScan => Engines != null && Engines.Contains(ScanTypeEnum.kics.ToString());
     }
 
     public class Metadata
