@@ -256,6 +256,19 @@ namespace Checkmarx.API.AST
         }
 
 
+        private API_Risks _api_risks;
+        public API_Risks API_Risks
+        {
+            get
+            {
+                if (Connected && _api_risks == null)
+                    _api_risks = new API_Risks(ASTServer, _httpClient);
+
+                return _api_risks;
+            }
+        }
+
+
         private AccessManagement _accessManagement;
         public AccessManagement AccessManagement
         {
