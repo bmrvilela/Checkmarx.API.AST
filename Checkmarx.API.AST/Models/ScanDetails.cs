@@ -286,13 +286,18 @@ namespace Checkmarx.API.AST.Models
 
                 if (_scaResults.Successful)
                 {
-                    updateBasicScanResultDetails(
+                    //updateScaScanResultDetails(
+                    //    _scaResults,
+                    //    SCAVulnerabilities,
+                    //    severitySelector: x => x.Severity,
+                    //    stateSelector: x => x.RiskState.ToString()
+                    //);
+
+                    updateScaScanResultDetails(
                         _scaResults,
-                        SCAVulnerabilities,
-                        x => x.Severity,
-                        x => x.RiskState,
-                        VulnerabilityStatus.NotExploitable.ToString(),
-                        VulnerabilityStatus.ToVerify.ToString()
+                        SCA_Risks,
+                        severitySelector: x => x.Severity,
+                        stateSelector: x => x.State
                     );
                 }
 
@@ -302,7 +307,6 @@ namespace Checkmarx.API.AST.Models
 
 
         private List<Vulnerability> _scaVulnerabilities;
-
         public List<Vulnerability> SCAVulnerabilities
         {
             get
@@ -318,14 +322,14 @@ namespace Checkmarx.API.AST.Models
         }
 
         private List<ScaVulnerability> _scaRisks;
-
         public List<ScaVulnerability> SCA_Risks
         {
             get
             {
                 if (_scaRisks == null)
                 {
-                    _scaRisks =  this._client.GraphQLClient.GetAllVulnerabilitiesRisksByScanIdAsync(new VulnerabilitiesRisksByScanIdVariables {
+                    _scaRisks = this._client.GraphQLClient.GetAllVulnerabilitiesRisksByScanIdAsync(new VulnerabilitiesRisksByScanIdVariables
+                    {
                         ScanId = Id
                     }).Result;
                 }
@@ -361,16 +365,7 @@ namespace Checkmarx.API.AST.Models
                 };
 
                 if (_kicsResults.Successful)
-                {
-                    updateBasicScanResultDetails(
-                        _kicsResults,
-                        _client.GetKicsScanResultsById(Id),
-                        x => x.Severity.ToString(),
-                        x => (VulnerabilityStatus)(int)x.State, // assuming a mapping exists
-                        VulnerabilityStatus.NotExploitable.ToString(),
-                        VulnerabilityStatus.ToVerify.ToString()
-                    );
-                }
+                    updateKicsScanResultDetails(_kicsResults, _client.GetKicsScanResultsById(Id));
 
                 return _kicsResults;
             }
@@ -485,22 +480,22 @@ namespace Checkmarx.API.AST.Models
             model.Queries = model.QueriesCritical + model.QueriesHigh + model.QueriesMedium + model.QueriesLow;
         }
 
-        private void updateBasicScanResultDetails<T>(
+        private void updateScaScanResultDetails<T>(
             ScanResultDetails model,
             IEnumerable<T> results,
-            Func<T, string> getSeverity,
-            Func<T, VulnerabilityStatus> getRiskState,
-            string notExploitableValue,
-            string toVerifyValue)
+            Func<T, string> severitySelector,
+            Func<T, string> stateSelector)
         {
-            var filtered = results.Where(x => getRiskState(x).ToString() != notExploitableValue);
+            var notExploitable = ScaVulnerabilityStatus.NotExploitable.ToString();
+            var toVerify = ScaVulnerabilityStatus.ToVerify.ToString();
 
-            int total = 0, critical = 0, high = 0, medium = 0, low = 0, info = 0, toVerify = 0;
+            var filtered = results.Where(x => stateSelector(x) != notExploitable);
+
+            int total = 0, critical = 0, high = 0, medium = 0, low = 0, info = 0, toVerifyCount = 0;
 
             foreach (var item in filtered)
             {
-                var severity = getSeverity(item).ToUpperInvariant();
-                var riskState = getRiskState(item).ToString();
+                var severity = severitySelector(item)?.ToUpperInvariant();
 
                 total++;
 
@@ -513,7 +508,39 @@ namespace Checkmarx.API.AST.Models
                     case "INFO": info++; break;
                 }
 
-                if (riskState == toVerifyValue && severity != "INFO")
+                if (stateSelector(item) == toVerify && severity != "INFO")
+                    toVerifyCount++;
+            }
+
+            model.Total = total;
+            model.Critical = critical;
+            model.High = high;
+            model.Medium = medium;
+            model.Low = low;
+            model.Info = info;
+            model.ToVerify = toVerifyCount;
+        }
+
+        private void updateKicsScanResultDetails(ScanResultDetails model, IEnumerable<KicsResult> results)
+        {
+            var filtered = results.Where(x => x.State != KicsStateEnum.NOT_EXPLOITABLE);
+
+            int total = 0, critical = 0, high = 0, medium = 0, low = 0, info = 0, toVerify = 0;
+
+            foreach (var item in filtered)
+            {
+                total++;
+
+                switch (item.Severity)
+                {
+                    case Services.KicsResults.SeverityEnum.CRITICAL: critical++; break;
+                    case Services.KicsResults.SeverityEnum.HIGH: high++; break;
+                    case Services.KicsResults.SeverityEnum.MEDIUM: medium++; break;
+                    case Services.KicsResults.SeverityEnum.LOW: low++; break;
+                    case Services.KicsResults.SeverityEnum.INFO: info++; break;
+                }
+
+                if (item.State == KicsStateEnum.TO_VERIFY && item.Severity != Services.KicsResults.SeverityEnum.INFO)
                     toVerify++;
             }
 
