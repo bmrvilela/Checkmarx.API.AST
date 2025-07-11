@@ -1561,7 +1561,7 @@ namespace Checkmarx.API.AST.Services
         [Newtonsoft.Json.JsonProperty("origin", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string Origin { get; set; }
 
-        [Newtonsoft.Json.JsonProperty("documented", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [Newtonsoft.Json.JsonProperty("documented", Required = Newtonsoft.Json.Required.AllowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public bool Documented { get; set; }
 
         [Newtonsoft.Json.JsonProperty("authenticated", Required = Newtonsoft.Json.Required.AllowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
@@ -1577,7 +1577,7 @@ namespace Checkmarx.API.AST.Services
         public string Sast_risk_id { get; set; }
 
         [Newtonsoft.Json.JsonProperty("project_id", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string Project_id { get; set; }
+        public Guid Project_id { get; set; }
 
         [Newtonsoft.Json.JsonProperty("state", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string State { get; set; }
