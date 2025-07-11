@@ -33,6 +33,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using Checkmarx.API.AST.Models.SCA;
 
 namespace Checkmarx.API.AST
 {
@@ -1624,7 +1625,7 @@ namespace Checkmarx.API.AST
         }
 
         public void MarkSCAVulnerability(Guid projectId, Vulnerability vulnerabilityRisk,
-            VulnerabilityStatus vulnerabilityStatus, string message)
+            ScaVulnerabilityStatus vulnerabilityStatus, string message)
         {
             if (projectId == Guid.Empty)
                 throw new ArgumentNullException(nameof(projectId));
@@ -1635,7 +1636,7 @@ namespace Checkmarx.API.AST
             if (string.IsNullOrEmpty(message))
                 throw new ArgumentNullException(nameof(message));
 
-            SCA.UpdateResultState(new PackageInfo
+            SCA.UpdateResultState(new ScaPackageInfo
             {
                 PackageManager = vulnerabilityRisk.PackageManager,
                 PackageName = vulnerabilityRisk.PackageName,
@@ -1646,7 +1647,7 @@ namespace Checkmarx.API.AST
                 new ActionType
                 {
                     Type = ActionTypeEnum.ChangeState,
-                    Value = vulnerabilityStatus,
+                    Value = vulnerabilityStatus.ToString(),
                     Comment = message
                 }
             ],
@@ -2752,6 +2753,19 @@ namespace Checkmarx.API.AST
             };
 
             return GraphQLClient.GetSCAScanLegalRisks(query, variables);
+        }
+
+        public static ICollection<Vulnerability> GetNewSCAVulnerabilities(List<Vulnerability> firstList, List<Vulnerability> secondList)
+        {
+            if (firstList == null) throw new ArgumentNullException(nameof(firstList));
+            if (secondList == null) throw new ArgumentNullException(nameof(secondList));
+
+            var firstIds = new HashSet<string>(firstList.Select(v => v.Id));
+
+            // Return vulnerabilities that are in secondList but not in firstList
+            return secondList
+                .Where(v => !string.IsNullOrEmpty(v.Id) && !firstIds.Contains(v.Id))
+                .ToList();
         }
 
         #endregion

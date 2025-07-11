@@ -1,19 +1,25 @@
 ﻿using Checkmarx.API.AST.Exceptions;
-using Checkmarx.API.AST.Services.SASTQueriesAudit;
+using Checkmarx.API.AST.Models.SCA;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using static Checkmarx.API.AST.ASTClient;
+using JsonException = Newtonsoft.Json.JsonException;
+
 
 namespace Checkmarx.API.AST.Services
 {
     public partial class GraphQLClient
     {
+
+        //private readonly GraphQLHttpClient _client;
+
 #pragma warning disable 8618
         private string _baseUrl;
 #pragma warning restore 8618
@@ -28,6 +34,17 @@ namespace Checkmarx.API.AST.Services
                 throw new ArgumentException("Endpoint URI cannot be null or empty", nameof(endpointUri));
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
             BaseUrl = endpointUri;
+
+            //var options = new GraphQLHttpClientOptions
+            //{
+            //    EndPoint = new Uri(BaseUrl)
+            //};
+
+            //_client = new GraphQLHttpClient(options, new NewtonsoftJsonSerializer());
+            //foreach (var item in _httpClient.DefaultRequestHeaders)
+            //{
+            //    _client.HttpClient.DefaultRequestHeaders.TryAddWithoutValidation(item.Key, item.Value);
+            //}
         }
 
 
@@ -57,7 +74,6 @@ namespace Checkmarx.API.AST.Services
         partial void PrepareRequest(System.Net.Http.HttpClient client, System.Net.Http.HttpRequestMessage request, System.Text.StringBuilder urlBuilder);
         partial void ProcessResponse(System.Net.Http.HttpClient client, System.Net.Http.HttpResponseMessage response);
 
-
         public async Task<string> ExecuteQueryAsync(string query, object variables = null)
         {
             if (string.IsNullOrWhiteSpace(query))
@@ -85,31 +101,9 @@ namespace Checkmarx.API.AST.Services
             return await response.Content.ReadAsStringAsync();
         }
 
-        public async Task<string> GetFindingsChangeHistoryAsync(Guid projectId, Guid scanId, string packageName, string packageVersion,
-            string packageManager, string vulnerabilityId)
-        {
-            string findingChangeHistory = $"{{    \"query\": \"query ($scanId: UUID!, $projectId: String, $isLatest: Boolean!, $packageName: String, $packageVersion: String, $packageManager: String, $vulnerabilityId: String) {{ searchPackageVulnerabilityStateAndScoreActions (scanId: $scanId, projectId: $projectId, isLatest: $isLatest, packageName: $packageName, packageVersion: $packageVersion, packageManager: $packageManager, vulnerabilityId: $vulnerabilityId) {{ actions {{ isComment, actionType, actionValue, enabled, createdAt, previousActionValue, comment {{ id, message, createdOn, userName }} }} }} }}\",    \"variables\": {{        \"scanId\": \"{scanId}\",        \"projectId\": \"{projectId}\",        \"isLatest\": true,        \"packageName\": \"{packageName}\",        \"packageVersion\": \"{packageVersion}\",        \"packageManager\": \"{packageManager}\",        \"vulnerabilityId\": \"{vulnerabilityId}\"    }}}}";
-
-            var jsonContent = new StringContent(
-                findingChangeHistory,
-                Encoding.UTF8,
-                "application/json"
-            );
-
-            var response = await _retryPolicy.ExecuteAsync(() => _httpClient.PostAsync(BaseUrl, jsonContent)).ConfigureAwait(false);
-            if (!response.IsSuccessStatusCode)
-            {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                throw new HttpRequestException($"Request failed with status code {response.StatusCode}: {errorContent}");
-            }
-
-            return await response.Content.ReadAsStringAsync();
-        }
-
-
         public ICollection<ReportingPackage> GetSCAProjectsThanContainLibraryAsync(string packageName, IEnumerable<string> packageVersions, System.Threading.CancellationToken cancellationToken = default)
         {
-           List<ReportingPackage> cveProjects = new List<ReportingPackage>();
+            List<ReportingPackage> cveProjects = new List<ReportingPackage>();
 
             foreach (var versionsChunk in packageVersions.Chunk(1000))
             {
@@ -119,6 +113,208 @@ namespace Checkmarx.API.AST.Services
             return cveProjects;
         }
 
+
+        /// <summary>
+        /// Calls the GraphQL API to search for package vulnerability state and score actions.
+        /// </summary>
+        /// <param name="variables">An object containing the query variables.</param>
+        /// <returns>A <see cref="GraphQLResponse"/> object containing the deserialized API response.</returns>
+        /// <exception cref="HttpRequestException">Thrown if the HTTP request fails.</exception>
+        /// <exception cref="JsonException">Thrown if JSON deserialization fails.</exception>
+        public async Task<ICollection<ScaActionItem>> SearchPackageVulnerabilityActionsAsync(
+            PackageVulnerabilityStateAndScoreActionsVariables variables)
+        {
+
+            // The GraphQL query string
+            const string PackageVulnerabilityQuery = @"
+            query ($scanId: UUID!, $projectId: String, $isLatest: Boolean!, $packageName: String, $packageVersion: String, $packageManager: String, $vulnerabilityId: String) {
+                searchPackageVulnerabilityStateAndScoreActions (
+                    scanId: $scanId,
+                    projectId: $projectId,
+                    isLatest: $isLatest,
+                    packageName: $packageName,
+                    packageVersion: $packageVersion,
+                    packageManager: $packageManager,
+                    vulnerabilityId: $vulnerabilityId
+                ) {
+                    actions {
+                        isComment,
+                        actionType,
+                        actionValue,
+                        enabled,
+                        createdAt,
+                        previousActionValue,
+                        comment {
+                            id,
+                            message,
+                            createdOn,
+                            userName
+                        }
+                    }
+                }
+            }";
+
+            // Create the GraphQL request payload
+            var requestBody = new GraphQLRequest<PackageVulnerabilityStateAndScoreActionsVariables>
+            {
+                Query = PackageVulnerabilityQuery,
+                Variables = variables
+            };
+
+            // Serialize the request body to JSON
+            // JsonContent.Create handles setting Content-Type: application/json
+            var content = JsonContent.Create(requestBody, options: new JsonSerializerOptions { WriteIndented = true });
+
+            HttpResponseMessage response = null;
+
+            try
+            {
+                // Send the POST request
+                response = await _retryPolicy.ExecuteAsync(() => _httpClient.PostAsync(BaseUrl, content)).ConfigureAwait(false);
+
+                // Ensure the request was successful; throws HttpRequestException for non-success status codes
+                response.EnsureSuccessStatusCode();
+
+                // Read the response content as a string
+                string responseBody = await response.Content.ReadAsStringAsync();
+
+                // Deserialize the JSON response using Newtonsoft.Json
+                var graphQlResponse = JsonConvert.DeserializeObject<GraphQLResponse>(responseBody);
+
+                if (graphQlResponse.Data.SearchPackageVulnerabilityStateAndScoreActions != null)
+                    return graphQlResponse.Data.SearchPackageVulnerabilityStateAndScoreActions.Actions;
+
+                return [];
+            }
+            catch (HttpRequestException ex)
+            {
+                Console.WriteLine($"HTTP Request Error: {ex.StatusCode} - {ex.Message}");
+                // Optionally read response body for more details on error
+                string errorContent = await (response?.Content?.ReadAsStringAsync() ?? Task.FromResult(""));
+                Console.WriteLine($"Error Response Body: {errorContent}");
+                throw; // Re-throw the exception after logging
+            }
+            catch (JsonException ex)
+            {
+                Console.WriteLine($"JSON Deserialization Error: {ex.Message}");
+                throw; // Re-throw the exception after logging
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An unexpected error occurred: {ex.Message}");
+                throw; // Re-throw the exception
+            }
+        }
+
+        /// <summary>
+        /// Calls the GraphQL API to fetch all vulnerabilities for a given scan ID, handling pagination.
+        /// </summary>
+        /// <param name="initialVariables">The initial variables for the query (scanId, isExploitablePathEnabled, where, order).
+        ///                                  Take and Skip will be managed by the method.</param>
+        /// <param name="pageSize">The number of items to request per page. Default is 100.</param>
+        /// <returns>A list of <see cref="Vulnerability"/> objects.</returns>
+        /// <exception cref="HttpRequestException">Thrown if an HTTP request fails.</exception>
+        /// <exception cref="JsonException">Thrown if JSON deserialization fails.</exception>
+        public async Task<List<ScaVulnerability>> GetAllVulnerabilitiesRisksByScanIdAsync(
+            VulnerabilitiesRisksByScanIdVariables initialVariables,
+            int pageSize = 100)
+        {
+            const string VulnerabilitiesRisksQuery = @"
+            query ($where: VulnerabilityModelFilterInput, $take: Int!, $skip: Int!, $order: [VulnerabilitiesSort!], $scanId: UUID!, $isExploitablePathEnabled: Boolean!) {
+                vulnerabilitiesRisksByScanId (
+                    where: $where,
+                    take: $take,
+                    skip: $skip,
+                    order: $order,
+                    scanId: $scanId,
+                    isExploitablePathEnabled: $isExploitablePathEnabled
+                ) {
+                    totalCount,
+                    items {
+                        credit, state, isIgnored, cve, cwe, description, packageId, severity, type, published, score, violatedPolicies, isExploitable, exploitabilityReason, exploitabilityStatus, isKevDataExists, isExploitDbDataExists, vulnerabilityFixResolutionText, relation, epssData { cve, date, epss, percentile }, isEpssDataExists, detectionDate, isVulnerabilityNew, cweInfo { title }, packageInfo { name, packageRepository, version }, exploitablePath { methodMatch { fullName, line, namespace, shortName, sourceFile }, methodSourceCall { fullName, line, namespace, shortName, sourceFile } }, vulnerablePackagePath { id, isDevelopment, isResolved, name, version, vulnerabilityRiskLevel }, references { comment, type, url }, cvss2 { attackComplexity, attackVector, authentication, availability, availabilityRequirement, baseScore, collateralDamagePotential, confidentiality, confidentialityRequirement, exploitCodeMaturity, integrityImpact, integrityRequirement, remediationLevel, reportConfidence, targetDistribution }, cvss3 { attackComplexity, attackVector, availability, availabilityRequirement, baseScore, confidentiality, confidentialityRequirement, exploitCodeMaturity, integrity, integrityRequirement, privilegesRequired, remediationLevel, reportConfidence, scope, userInteraction }, cvss4 { attackComplexity, attackVector, attackRequirements, baseScore, privilegesRequired, userInteraction, vulnerableSystemConfidentiality, vulnerableSystemIntegrity, vulnerableSystemAvailability, subsequentSystemConfidentiality, subsequentSystemIntegrity, subsequentSystemAvailability }, pendingState, pendingChanges, packageState { type, value }, pendingScore, pendingSeverity, isScoreOverridden
+                    }
+                }
+            }";
+
+            var allVulnerabilities = new List<ScaVulnerability>();
+            int skip = 0;
+            int totalCount = 0;
+            bool firstRequest = true;
+
+            // Clone the initial variables to avoid modifying the caller's object
+            var currentVariables = new VulnerabilitiesRisksByScanIdVariables
+            {
+                ScanId = initialVariables.ScanId,
+                IsExploitablePathEnabled = initialVariables.IsExploitablePathEnabled,
+                Where = initialVariables.Where,
+                Order = initialVariables.Order,
+                Take = pageSize, // Set initial take
+                Skip = 0 // Start with skip 0
+            };
+
+            do
+            {
+                currentVariables.Skip = skip; // Set the current skip value
+
+                var requestBody = new GraphQLRequest<VulnerabilitiesRisksByScanIdVariables>
+                {
+                    Query = VulnerabilitiesRisksQuery,
+                    Variables = currentVariables
+                };
+
+                var content = JsonContent.Create(requestBody, options: new JsonSerializerOptions { WriteIndented = true });
+
+                try
+                {
+                    var response = await _retryPolicy.ExecuteAsync(() => _httpClient.PostAsync(BaseUrl, content)).ConfigureAwait(false);
+
+                    response.EnsureSuccessStatusCode();
+
+                    // Read the response content as a string
+                    string responseBody = await response.Content.ReadAsStringAsync();
+
+                    // Deserialize the JSON response using Newtonsoft.Json
+                    var graphQlResponse = JsonConvert.DeserializeObject<GraphQLResponseVulnerabilities>(responseBody);
+
+                    if (graphQlResponse?.Data?.VulnerabilitiesRisksByScanId?.Items != null)
+                    {
+                        if (firstRequest)
+                        {
+                            totalCount = graphQlResponse.Data.VulnerabilitiesRisksByScanId.TotalCount;
+                            firstRequest = false;
+                            // Console.WriteLine($"Total vulnerabilities found: {totalCount}");
+                        }
+
+                        allVulnerabilities.AddRange(graphQlResponse.Data.VulnerabilitiesRisksByScanId.Items);
+                        skip += graphQlResponse.Data.VulnerabilitiesRisksByScanId.Items.Count; // Increment skip by actual items received
+                        // Console.WriteLine($"Fetched {graphQlResponse.Data.VulnerabilitiesRisksByScanId.Items.Count} items. Total fetched: {allVulnerabilities.Count}/{totalCount}");
+                    }
+                    else
+                    {
+                        Console.WriteLine("No items found in the current page or response data is null.");
+                        break; // Exit loop if no items are returned, indicating end of data or an issue
+                    }
+                }
+                catch (HttpRequestException ex)
+                {
+                    Console.WriteLine($"HTTP Request Error during pagination: {ex.StatusCode} - {ex.Message}");
+                    throw;
+                }
+                catch (Newtonsoft.Json.JsonException ex)
+                {
+                    Console.WriteLine($"JSON Deserialization Error during pagination: {ex.Message}");
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"An unexpected error occurred during pagination: {ex.Message}");
+                    throw;
+                }
+
+            } while (skip < totalCount); // Continue if more items are expected
+
+            return allVulnerabilities;
+        }
 
         private async Task<CveProjects> getSCAProjectsThanContainLibraryAsync(string packageName, IEnumerable<string> packageVersions, System.Threading.CancellationToken cancellationToken = default)
         {
@@ -132,7 +328,7 @@ namespace Checkmarx.API.AST.Services
 
             whereClause.Append($" {{ \"and\": [ {{ \"packageName\": {{ \"eq\": \"{packageName}\" }}  }},                {{                     \"or\": [ {string.Join(",", packageVersions.Select(x => $"{{ \"packageVersion\":  {{ \"eq\":  \"{x}\" }}  }}"))} ]                }} ]                }}");
 
-            string queryForProject = $"{{    \"query\": \"query ($where: ReportingPackageModelFilterInput, $take: Int!, $skip: Int!, $order: [ReportingPackageModelSortInput!], $searchTerm: String) {{ reportingPackages (where: $where, take: $take, skip: $skip, order: $order, searchTerm: $searchTerm) {{ projectId, projectName, packageName, packageVersion, scanId }} }}\",    \"variables\": {{        \"where\": { whereClause.ToString() },        \"take\": 1000,        \"skip\": 0,        \"order\": [            {{                \"isMalicious\": \"DESC\"            }}        ]    }}}}";
+            string queryForProject = $"{{    \"query\": \"query ($where: ReportingPackageModelFilterInput, $take: Int!, $skip: Int!, $order: [ReportingPackageModelSortInput!], $searchTerm: String) {{ reportingPackages (where: $where, take: $take, skip: $skip, order: $order, searchTerm: $searchTerm) {{ projectId, projectName, packageName, packageVersion, scanId }} }}\",    \"variables\": {{        \"where\": {whereClause.ToString()},        \"take\": 1000,        \"skip\": 0,        \"order\": [            {{                \"isMalicious\": \"DESC\"            }}        ]    }}}}";
 
             var client_ = _httpClient;
             var disposeClient_ = false;
@@ -327,127 +523,4 @@ namespace Checkmarx.API.AST.Services
         }
 
     }
-
-
-
-    public partial class CveProjects
-    {
-        [JsonProperty("data", NullValueHandling = NullValueHandling.Ignore)]
-        public ReportingPackagesData Data { get; set; }
-    }
-
-    public partial class ReportingPackagesData
-    {
-        [JsonProperty("reportingPackages", NullValueHandling = NullValueHandling.Ignore)]
-        public List<ReportingPackage> ReportingPackages { get; set; }
-    }
-
-    public partial class ReportingPackage
-    {
-        [JsonProperty("projectId", NullValueHandling = NullValueHandling.Ignore)]
-        public Guid ProjectId { get; set; }
-
-        [JsonProperty("projectName", NullValueHandling = NullValueHandling.Ignore)]
-        public string ProjectName { get; set; }
-
-        [JsonProperty("packageName", NullValueHandling = NullValueHandling.Ignore)]
-        public string PackageName { get; set; }
-
-        [JsonProperty("packageVersion", NullValueHandling = NullValueHandling.Ignore)]
-        public string PackageVersion { get; set; }
-
-        [JsonProperty("scanId", NullValueHandling = NullValueHandling.Ignore)]
-        public Guid ScanId { get; set; }
-    }
-
-    #region LegalRisk
-
-    public class SCALegalRisks
-    {
-        public SCALegalRisksData Data { get; set; }
-    }
-
-    public class SCALegalRisksData
-    {
-        public LegalRisksByScanId LegalRisksByScanId { get; set; }
-    }
-
-    public class LegalRisksByScanId
-    {
-        public int TotalCount { get; set; }
-        public RisksLevelCounts RisksLevelCounts { get; set; }
-    }
-
-    public class RisksLevelCounts
-    {
-        public int Critical { get; set; }
-        public int High { get; set; }
-        public int Medium { get; set; }
-        public int Low { get; set; }
-        public int None { get; set; }
-        public int Empty { get; set; }
-    }
-
-    #endregion
-
-
-    // Root myDeserializedClass = JsonConvert.DeserializeObject<Root>(myJsonResponse);
-    public class SCAAction
-    {
-        [JsonProperty("isComment")]
-        public bool? IsComment { get; set; }
-
-        [JsonProperty("actionType")]
-        public string ActionType { get; set; }
-
-        [JsonProperty("actionValue")]
-        public string ActionValue { get; set; }
-
-        [JsonProperty("enabled")]
-        public bool? Enabled { get; set; }
-
-        [JsonProperty("createdAt")]
-        public DateTime? CreatedAt { get; set; }
-
-        [JsonProperty("previousActionValue")]
-        public string PreviousActionValue { get; set; }
-
-        [JsonProperty("comment")]
-        public Comment Comment { get; set; }
-    }
-
-    public class Comment
-    {
-        [JsonProperty("id")]
-        public string Id { get; set; }
-
-        [JsonProperty("message")]
-        public string Message { get; set; }
-
-        [JsonProperty("createdOn")]
-        public DateTime? CreatedOn { get; set; }
-
-        [JsonProperty("userName")]
-        public string UserName { get; set; }
-    }
-
-    public class Info
-    {
-        [JsonProperty("searchPackageVulnerabilityStateAndScoreActions")]
-        public SearchPackageVulnerabilityStateAndScoreActions SearchPackageVulnerabilityStateAndScoreActions { get; set; }
-    }
-
-    public class SCAPredicateHistory
-    {
-        [JsonProperty("data")]
-        public Info Data { get; set; }
-    }
-
-    public class SearchPackageVulnerabilityStateAndScoreActions
-    {
-        [JsonProperty("actions")]
-        public List<SCAAction> Actions { get; set; }
-    }
-
-
 }

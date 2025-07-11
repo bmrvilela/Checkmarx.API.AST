@@ -1,6 +1,7 @@
 using Checkmarx.API.AST.Enums;
 using Checkmarx.API.AST.Models;
 using Checkmarx.API.AST.Models.Report;
+using Checkmarx.API.AST.Models.SCA;
 using Checkmarx.API.AST.Services;
 using Checkmarx.API.AST.Services.KicsResults;
 using Checkmarx.API.AST.Services.Reports;
@@ -140,7 +141,7 @@ namespace Checkmarx.API.AST.Tests
             foreach (var vuln in result.Vulnerabilities)
             {
                 astClient.MarkSCAVulnerability(ProjectId, vuln,
-                    GetRandomEnumMember<VulnerabilityStatus>(),
+                    GetRandomEnumMember<ScaVulnerabilityStatus>(),
                     GetRandomJoke());
             }
         }

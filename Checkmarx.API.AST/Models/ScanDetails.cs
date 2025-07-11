@@ -1,4 +1,5 @@
 ﻿using Checkmarx.API.AST.Enums;
+using Checkmarx.API.AST.Models.SCA;
 using Checkmarx.API.AST.Services;
 using Checkmarx.API.AST.Services.Configuration;
 using Checkmarx.API.AST.Services.KicsResults;
@@ -314,7 +315,22 @@ namespace Checkmarx.API.AST.Models
 
                 return _scaVulnerabilities;
             }
+        }
 
+        private List<ScaVulnerability> _scaRisks;
+
+        public List<ScaVulnerability> SCA_Risks
+        {
+            get
+            {
+                if (_scaRisks == null)
+                {
+                    _scaRisks =  this._client.GraphQLClient.GetAllVulnerabilitiesRisksByScanIdAsync(new VulnerabilitiesRisksByScanIdVariables {
+                        ScanId = Id
+                    }).Result;
+                }
+                return _scaRisks;
+            }
         }
 
         #endregion
