@@ -125,6 +125,7 @@ namespace Checkmarx.API.AST
 
         internal static readonly IAsyncPolicy<HttpResponseMessage> _retryPolicy = HttpPolicyExtensions
                                 .HandleTransientHttpError()
+                                .OrResult(response => response.StatusCode == System.Net.HttpStatusCode.TooManyRequests) // Specifically handle 429
                                 .WaitAndRetryAsync(10, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
                                 (exception, timeSpan, retryCount, context) =>
                                 {
