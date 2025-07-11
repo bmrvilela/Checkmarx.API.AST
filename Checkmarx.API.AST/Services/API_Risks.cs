@@ -42,7 +42,7 @@ namespace Checkmarx.API.AST.Services
         public API_Risks(System.Uri aSTServer, System.Net.Http.HttpClient httpClient)
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         {
-            BaseUrl = $"{aSTServer.AbsoluteUri}/api/apisec/static";
+            BaseUrl = $"{aSTServer.AbsoluteUri}api/apisec/static";
             _httpClient = httpClient;
             Initialize();
         }
@@ -305,7 +305,7 @@ namespace Checkmarx.API.AST.Services
         /// <param name="searching">Full text search (ex: searching=low)</param>
         /// <returns>Success</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<RiskResponse> ApiRisksAsync(Guid scan_id, int? page, int? per_page, string sorting, string filtering, string searching, System.Threading.CancellationToken cancellationToken = default)
+        public virtual async System.Threading.Tasks.Task<RiskResponse> ApiRisksAsync(Guid scan_id, int? page = null, int? per_page = null, string sorting = null, string filtering = null, string searching = null, System.Threading.CancellationToken cancellationToken = default)
         {
             if (scan_id == null)
                 throw new System.ArgumentNullException("scan_id");
@@ -321,10 +321,12 @@ namespace Checkmarx.API.AST.Services
 
                     var urlBuilder_ = new System.Text.StringBuilder();
                     if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                    
                     // Operation Path: "api/risks/{scan_id}"
                     urlBuilder_.Append("api/risks/");
                     urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(scan_id, System.Globalization.CultureInfo.InvariantCulture)));
                     urlBuilder_.Append('?');
+
                     if (page != null)
                     {
                         urlBuilder_.Append(System.Uri.EscapeDataString("page")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(page, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
@@ -1515,11 +1517,11 @@ namespace Checkmarx.API.AST.Services
         [Newtonsoft.Json.JsonProperty("has_next", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public bool Has_next { get; set; }
 
-        [Newtonsoft.Json.JsonProperty("next_page_number", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public int Next_page_number { get; set; }
+        [Newtonsoft.Json.JsonProperty("next_page_number", Required = Newtonsoft.Json.Required.AllowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public int? Next_page_number { get; set; }
 
-        [Newtonsoft.Json.JsonProperty("previous_page_number", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public int Previous_page_number { get; set; }
+        [Newtonsoft.Json.JsonProperty("previous_page_number", Required = Newtonsoft.Json.Required.AllowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public int? Previous_page_number { get; set; }
 
         private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
 
@@ -1538,7 +1540,7 @@ namespace Checkmarx.API.AST.Services
         [Newtonsoft.Json.JsonProperty("risk_id", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string Risk_id { get; set; }
 
-        [Newtonsoft.Json.JsonProperty("api_id", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [Newtonsoft.Json.JsonProperty("api_id", Required = Newtonsoft.Json.Required.AllowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string Api_id { get; set; }
 
         [Newtonsoft.Json.JsonProperty("severity", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
@@ -1562,7 +1564,7 @@ namespace Checkmarx.API.AST.Services
         [Newtonsoft.Json.JsonProperty("documented", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public bool Documented { get; set; }
 
-        [Newtonsoft.Json.JsonProperty("authenticated", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [Newtonsoft.Json.JsonProperty("authenticated", Required = Newtonsoft.Json.Required.AllowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public bool Authenticated { get; set; }
 
         [Newtonsoft.Json.JsonProperty("discovery_date", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
@@ -1571,7 +1573,7 @@ namespace Checkmarx.API.AST.Services
         [Newtonsoft.Json.JsonProperty("scan_id", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public Guid scan_id { get; set; }
 
-        [Newtonsoft.Json.JsonProperty("sast_risk_id", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [Newtonsoft.Json.JsonProperty("sast_risk_id", Required = Newtonsoft.Json.Required.AllowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string Sast_risk_id { get; set; }
 
         [Newtonsoft.Json.JsonProperty("project_id", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
@@ -1609,11 +1611,11 @@ namespace Checkmarx.API.AST.Services
         [Newtonsoft.Json.JsonProperty("has_next", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public bool Has_next { get; set; }
 
-        [Newtonsoft.Json.JsonProperty("next_page_number", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public int Next_page_number { get; set; }
+        [Newtonsoft.Json.JsonProperty("next_page_number", Required = Newtonsoft.Json.Required.AllowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public int? Next_page_number { get; set; }
 
-        [Newtonsoft.Json.JsonProperty("previous_page_number", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public int Previous_page_number { get; set; }
+        [Newtonsoft.Json.JsonProperty("previous_page_number", Required = Newtonsoft.Json.Required.AllowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public int? Previous_page_number { get; set; }
 
         private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
 

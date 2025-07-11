@@ -21,24 +21,13 @@ namespace Checkmarx.API.AST.Tests
 
             Configuration = builder.Build();
 
-            if (!string.IsNullOrWhiteSpace(Configuration["API_KEY"]))
-            {
-                astclient = new ASTClient(
-                new System.Uri(Configuration["ASTServer"]),
-                new System.Uri(Configuration["AccessControlServer"]),
-                Configuration["Tenant"],
-                Configuration["API_KEY"]);
-            }
-            else
-            {
-                astclient = new ASTClient(
-                new System.Uri(Configuration["ASTServer"]),
-                new System.Uri(Configuration["AccessControlServer"]),
-                Configuration["Tenant"],
-                Configuration["ClientId"],
-                Configuration["ClientSecret"]);
-            }
+            Assert.IsNull(Configuration["API_KEY"]);
 
+            astclient = new ASTClient(
+            new System.Uri(Configuration["ASTServer"]),
+            new System.Uri(Configuration["AccessControlServer"]),
+            Configuration["Tenant"],
+            Configuration["API_KEY"]);
         }
 
         [TestMethod]

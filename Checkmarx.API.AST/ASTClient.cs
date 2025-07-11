@@ -867,6 +867,25 @@ namespace Checkmarx.API.AST
             }
         }
 
+        public IEnumerable<Risk> GetApiRisks(Guid scan_id)
+        {
+            var result = new List<Risk>();
+            int? pageNumber = null;
+
+            while (true)
+            {
+                var resultPage = API_Risks.ApiRisksAsync(scan_id, page: pageNumber).Result;
+
+                if (resultPage != null)
+                    result.AddRange(resultPage.Entries);
+
+                pageNumber = resultPage.Next_page_number;
+
+                if (!resultPage.Has_next)
+                    return result;
+            }
+        }
+
         public RichProject GetProject(Guid id)
         {
             if (id == Guid.Empty)
@@ -2923,6 +2942,7 @@ namespace Checkmarx.API.AST
 
             return sastMetadata.IsIncremental && !sastMetadata.IsIncrementalCanceled;
         }
+
 
 
         private IDictionary<Guid, Group> _groups = null;
