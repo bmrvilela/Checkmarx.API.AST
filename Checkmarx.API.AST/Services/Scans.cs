@@ -22,6 +22,7 @@
 
 namespace Checkmarx.API.AST.Services.Scans
 {
+    using Checkmarx.API.AST.Enums;
     using Checkmarx.API.AST.Exceptions;
     using Newtonsoft.Json;
     using System;
@@ -2301,6 +2302,9 @@ namespace Checkmarx.API.AST.Services.Scans
             set { _additionalProperties = value; }
         }
 
+        public bool HasSASTScan => Engines != null && Engines.Contains(ScanTypeEnum.sast.ToString());
+        public bool HasScaScan => Engines != null && Engines.Contains(ScanTypeEnum.sca.ToString());
+        public bool HasKicsScan => Engines != null && Engines.Contains(ScanTypeEnum.kics.ToString());
     }
 
     public class Metadata
