@@ -331,6 +331,13 @@ namespace Checkmarx.API.AST.Services
         [Newtonsoft.Json.JsonProperty("KICS", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string KICS { get; set; }
 
+
+        /// <summary>
+        /// SAST engine version
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty("CxIam", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string Iam { get; set; }
+
         /// <summary>
         /// CxOne version
         /// </summary>
