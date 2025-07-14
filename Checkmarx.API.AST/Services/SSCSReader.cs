@@ -26,6 +26,7 @@ namespace Checkmarx.API.AST
     using System = global::System;
     using static Checkmarx.API.AST.ASTClient;
     using Checkmarx.API.AST.Errors;
+    using System;
 
     [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.4.0.0 (NJsonSchema v11.3.2.0 (Newtonsoft.Json v13.0.0.0))")]
     public partial class SSCSReader 
@@ -79,7 +80,7 @@ namespace Checkmarx.API.AST
         /// <param name="project_ids">string valid</param>
         /// <returns>Ok</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual System.Threading.Tasks.Task<PredicateHistory> GetPredicatesHistoryAsync(string similarity_id, System.Collections.Generic.IEnumerable<string> project_ids)
+        public virtual System.Threading.Tasks.Task<PredicateHistory> GetPredicatesHistoryAsync(string similarity_id, System.Collections.Generic.IEnumerable<Guid> project_ids)
         {
             return GetPredicatesHistoryAsync(similarity_id, project_ids, System.Threading.CancellationToken.None);
         }
@@ -89,7 +90,7 @@ namespace Checkmarx.API.AST
         /// <param name="project_ids">string valid</param>
         /// <returns>Ok</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<PredicateHistory> GetPredicatesHistoryAsync(string similarity_id, System.Collections.Generic.IEnumerable<string> project_ids, System.Threading.CancellationToken cancellationToken)
+        public virtual async System.Threading.Tasks.Task<PredicateHistory> GetPredicatesHistoryAsync(string similarity_id, System.Collections.Generic.IEnumerable<Guid> project_ids, System.Threading.CancellationToken cancellationToken)
         {
             if (similarity_id == null)
                 throw new System.ArgumentNullException("similarity_id");
