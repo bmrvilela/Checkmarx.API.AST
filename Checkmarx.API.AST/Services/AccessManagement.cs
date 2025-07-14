@@ -24,6 +24,7 @@ namespace Checkmarx.API.AST.Services
     using static Checkmarx.API.AST.ASTClient;
     using System;
     using Checkmarx.API.AST.Exceptions;
+    using Checkmarx.API.AST.Errors;
 
     [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
     public partial class AccessManagement 
@@ -5116,33 +5117,6 @@ namespace Checkmarx.API.AST.Services
 
     }
 
-    //[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
-    //public partial class Error
-    //{
-    //    [Newtonsoft.Json.JsonProperty("message", Required = Newtonsoft.Json.Required.Always)]
-    //    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    //    public string Message { get; set; }
-
-    //    [Newtonsoft.Json.JsonProperty("type", Required = Newtonsoft.Json.Required.Always)]
-    //    [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-    //    public string Type { get; set; }
-
-    //    /// <summary>
-    //    /// Refer to the code of the service for error code transcriptions.
-    //    /// </summary>
-    //    [Newtonsoft.Json.JsonProperty("code", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-    //    public int Code { get; set; }
-
-    //    private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
-
-    //    [Newtonsoft.Json.JsonExtensionData]
-    //    public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
-    //    {
-    //        get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
-    //        set { _additionalProperties = value; }
-    //    }
-
-    //}
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.1.0.0 (NJsonSchema v11.0.2.0 (Newtonsoft.Json v13.0.0.0))")]
     public partial class Group

@@ -9,6 +9,7 @@ using Checkmarx.API.AST.Models.Report;
 using System.Threading;
 using static Checkmarx.API.AST.ASTClient;
 using Checkmarx.API.AST.Models.SCA;
+using Checkmarx.API.AST.Exceptions;
 
 namespace Checkmarx.API.AST.Services
 {

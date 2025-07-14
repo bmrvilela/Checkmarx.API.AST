@@ -13,7 +13,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
-using ApiException = Checkmarx.API.AST.Services.Configuration.ApiException;
 
 namespace Checkmarx.API.AST.Models
 {

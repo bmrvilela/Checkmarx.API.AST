@@ -26,6 +26,7 @@ namespace Checkmarx.API.AST.Services
     using System;
     using System = global::System;
     using static Checkmarx.API.AST.ASTClient;
+    using Checkmarx.API.AST.Errors;
 
     [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.4.0.0 (NJsonSchema v11.3.2.0 (Newtonsoft.Json v13.0.0.0))")]
     public partial class Versions
