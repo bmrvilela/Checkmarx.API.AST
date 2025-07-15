@@ -22,11 +22,13 @@
 
 namespace Checkmarx.API.AST
 {
-    using Checkmarx.API.AST.Exceptions;
-    using System = global::System;
-    using static Checkmarx.API.AST.ASTClient;
     using Checkmarx.API.AST.Errors;
+    using Checkmarx.API.AST.Exceptions;
+    using Checkmarx.API.AST.Services.SASTMetadata;
     using System;
+    using System.Diagnostics;
+    using static Checkmarx.API.AST.ASTClient;
+    using System = global::System;
 
     [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.4.0.0 (NJsonSchema v11.3.2.0 (Newtonsoft.Json v13.0.0.0))")]
     public partial class SSCSReader 
@@ -39,11 +41,11 @@ namespace Checkmarx.API.AST
         private static System.Lazy<Newtonsoft.Json.JsonSerializerSettings> _settings = new System.Lazy<Newtonsoft.Json.JsonSerializerSettings>(CreateSerializerSettings, true);
         private Newtonsoft.Json.JsonSerializerSettings _instanceSettings;
 
-    #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-        public SSCSReader(System.Net.Http.HttpClient httpClient)
-    #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+        public SSCSReader(Uri serverUrl, System.Net.Http.HttpClient httpClient)
         {
-            BaseUrl = "/api/micro-engines";
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+            BaseUrl = $"{serverUrl.AbsoluteUri}api/micro-engines";
             _httpClient = httpClient;
             Initialize();
         }
@@ -211,7 +213,7 @@ namespace Checkmarx.API.AST
         /// <param name="search">string valid</param>
         /// <returns>Ok</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual System.Threading.Tasks.Task<SCSSProjects> GetProjectsAsync(int? pageSize, int? currentPage, string filters, string sort, string search)
+        public virtual System.Threading.Tasks.Task<SCSSProjects> GetProjectsAsync(int? pageSize = null, int? currentPage = null, string filters = null, string sort = null, string search = null)
         {
             return GetProjectsAsync(pageSize, currentPage, filters, sort, search, System.Threading.CancellationToken.None);
         }
@@ -285,6 +287,13 @@ namespace Checkmarx.API.AST
                         ProcessResponse(client_, response_);
 
                         var status_ = (int)response_.StatusCode;
+
+
+#if DEBUG
+                        var content = await response_.Content.ReadAsStringAsync();
+                        Trace.WriteLine(content);
+#endif
+
                         if (status_ == 200)
                         {
                             var objectResponse_ = await ReadObjectResponseAsync<SCSSProjects>(response_, headers_, cancellationToken).ConfigureAwait(false);
@@ -775,21 +784,21 @@ namespace Checkmarx.API.AST
             }
         }
 
-        /// <param name="scan">string valid</param>
+        /// <param name="scan_id">string valid</param>
         /// <returns>Ok</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual System.Threading.Tasks.Task<ScanOverview> GetScanOverviewAsync(string scan)
+        public virtual System.Threading.Tasks.Task<ScanOverview> GetScanOverviewAsync(Guid scan_id)
         {
-            return GetScanOverviewAsync(scan, System.Threading.CancellationToken.None);
+            return GetScanOverviewAsync(scan_id, System.Threading.CancellationToken.None);
         }
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-        /// <param name="scan">string valid</param>
+        /// <param name="scan_id">string valid</param>
         /// <returns>Ok</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<ScanOverview> GetScanOverviewAsync(string scan, System.Threading.CancellationToken cancellationToken)
+        public virtual async System.Threading.Tasks.Task<ScanOverview> GetScanOverviewAsync(Guid scan_id, System.Threading.CancellationToken cancellationToken)
         {
-            if (scan == null)
+            if (scan_id == null)
                 throw new System.ArgumentNullException("scan");
 
             var client_ = _httpClient;
@@ -805,7 +814,7 @@ namespace Checkmarx.API.AST
                     if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
                     // Operation Path: "scans/{scan}/scan-overview"
                     urlBuilder_.Append("scans/");
-                    urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(scan, System.Globalization.CultureInfo.InvariantCulture)));
+                    urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(scan_id, System.Globalization.CultureInfo.InvariantCulture)));
                     urlBuilder_.Append("/scan-overview");
 
                     PrepareRequest(client_, request_, urlBuilder_);
@@ -1032,10 +1041,10 @@ namespace Checkmarx.API.AST
         public Engine Name { get; set; }
 
         [Newtonsoft.Json.JsonProperty("scanId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string ScanId { get; set; }
+        public Guid ScanId { get; set; }
 
         [Newtonsoft.Json.JsonProperty("scannedAt", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string ScannedAt { get; set; }
+        public DateTimeOffset ScannedAt { get; set; }
 
         private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
 
@@ -1266,29 +1275,31 @@ namespace Checkmarx.API.AST
 
     }
 
+
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.4.0.0 (NJsonSchema v11.3.2.0 (Newtonsoft.Json v13.0.0.0))")]
     public partial class SCSSProject
     {
         [Newtonsoft.Json.JsonProperty("engines", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.IDictionary<string, int> Engines { get; }
+        public System.Collections.Generic.IDictionary<string, int> Engines { get; set; }
 
-        [Newtonsoft.Json.JsonProperty("enginesFailures", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.ICollection<EngineFailure> EnginesFailures { get; }
+        [Newtonsoft.Json.JsonProperty("enginesFailures", Required = Newtonsoft.Json.Required.AllowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public System.Collections.Generic.ICollection<EngineFailure> EnginesFailures { get; set; }
 
         [Newtonsoft.Json.JsonProperty("id", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string Id { get; set; }
+        public Guid Id { get; set; }
 
         [Newtonsoft.Json.JsonProperty("lastScanMetadata", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public SCSSScanInfo LastScanMetadata { get; set; }
+        public ScanInfo LastScanMetadata { get; set; }
 
         [Newtonsoft.Json.JsonProperty("name", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string Name { get; set; }
 
         [Newtonsoft.Json.JsonProperty("riskLevel", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.IDictionary<string, int> RiskLevel { get; }
+        public System.Collections.Generic.IDictionary<string, int> RiskLevel { get; set; }
 
-        [Newtonsoft.Json.JsonProperty("slsaStep", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore, ItemConverterType = typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-        public System.Collections.Generic.ICollection<SlsaStep> SlsaStep { get; }
+        [Newtonsoft.Json.JsonProperty("slsaStep", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore, 
+            ItemConverterType = typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+        public System.Collections.Generic.ICollection<SlsaStep> SlsaStep { get; set; }
 
         private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
 
@@ -1301,11 +1312,12 @@ namespace Checkmarx.API.AST
 
     }
 
+
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.4.0.0 (NJsonSchema v11.3.2.0 (Newtonsoft.Json v13.0.0.0))")]
     public partial class SCSSProjects
     {
         [Newtonsoft.Json.JsonProperty("entries", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.ICollection<SCSSProject> Entries { get; }
+        public System.Collections.Generic.ICollection<SCSSProject> Entries { get; set; }
 
         [Newtonsoft.Json.JsonProperty("totalCount", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public int TotalCount { get; set; }

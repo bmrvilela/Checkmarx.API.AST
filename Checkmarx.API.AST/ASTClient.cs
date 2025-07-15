@@ -330,6 +330,20 @@ namespace Checkmarx.API.AST
             }
         }
 
+        private SSCSReader _sscsReader;
+        public SSCSReader SSCS
+        {
+            get
+            {
+                if (Connected && _sscsReader == null)
+                    _sscsReader = new SSCSReader(ASTServer, _httpClient);
+
+                return _sscsReader;
+            }
+        }
+
+
+
 
         private SASTResults _SASTResults;
 
