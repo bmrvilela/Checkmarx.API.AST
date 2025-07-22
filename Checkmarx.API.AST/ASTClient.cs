@@ -747,7 +747,25 @@ namespace Checkmarx.API.AST
             }
         }
 
-        public IEnumerable<LicenseEngineType> AllowedEngines => LicenseDetails?.AllowedEngines;
+        private IEnumerable<LicenseEngineTypeEnum> _allowedEngines = null;
+        public IEnumerable<LicenseEngineTypeEnum> AllowedEngines
+        {
+            get
+            {
+                if (_allowedEngines == null)
+                {
+                    var engineStrings = LicenseDetails.LicenseData?.AllowedEngines;
+                    if (engineStrings == null)
+                        _allowedEngines = Enumerable.Empty<LicenseEngineTypeEnum>();
+                    else
+                        _allowedEngines = engineStrings
+                            .Select(EnumUtils.GetEnumValueByDescription<LicenseEngineTypeEnum>)
+                            .ToList();
+                }
+
+                return _allowedEngines;
+            }
+        }
 
         public int? MaxConcurrentScans => LicenseDetails?.LicenseData?.MaxConcurrentScans;
 
