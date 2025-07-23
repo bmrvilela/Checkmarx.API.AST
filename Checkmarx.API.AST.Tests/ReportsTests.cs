@@ -50,8 +50,8 @@ namespace Checkmarx.API.AST.Tests
         public void AllowedEnginesTest()
         {
             var allowedEngines = astclient.AllowedEngines;
-            var maxConcurrent = astclient.MaxConcurrentScans;
-            var maxQueued = astclient.MaxQueuedScans;
+            var maxConcurrent = astclient.LicenseDetails.LicenseData.MaxConcurrentScans;
+            var maxQueued = astclient.LicenseDetails.LicenseData.MaxQueuedScans;
 
             Trace.WriteLine($"Max Concurrent Scans: {maxConcurrent}");
             Trace.WriteLine($"Max Queued Scans: {maxQueued}");

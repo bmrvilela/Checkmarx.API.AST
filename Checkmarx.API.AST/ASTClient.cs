@@ -767,10 +767,6 @@ namespace Checkmarx.API.AST
             }
         }
 
-        public int? MaxConcurrentScans => LicenseDetails?.LicenseData?.MaxConcurrentScans;
-
-        public int? MaxQueuedScans => LicenseDetails?.LicenseData?.MaxQueuedScans;
-
         #endregion
 
         #region Applications
