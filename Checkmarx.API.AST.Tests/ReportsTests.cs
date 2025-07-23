@@ -47,6 +47,18 @@ namespace Checkmarx.API.AST.Tests
         }
 
         [TestMethod]
+        public void AllowedEnginesTest()
+        {
+            var allowedEngines = astclient.AllowedEngines;
+            var maxConcurrent = astclient.LicenseDetails.LicenseData.MaxConcurrentScans;
+            var maxQueued = astclient.LicenseDetails.LicenseData.MaxQueuedScans;
+
+            Trace.WriteLine($"Max Concurrent Scans: {maxConcurrent}");
+            Trace.WriteLine($"Max Queued Scans: {maxQueued}");
+            Trace.WriteLine($"Allowed Engines ({allowedEngines.Count()}): {string.Join(", ", allowedEngines)}");
+        }
+
+        [TestMethod]
         public void GetReportTest()
         {
             var findings = astclient.GetCxOneScanJsonReport(
