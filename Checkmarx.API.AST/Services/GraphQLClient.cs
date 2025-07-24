@@ -4,10 +4,12 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using static Checkmarx.API.AST.ASTClient;
 using JsonException = Newtonsoft.Json.JsonException;
@@ -236,7 +238,6 @@ namespace Checkmarx.API.AST.Services
                 }
             }";
 
-            var allVulnerabilities = new List<ScaVulnerability>();
             int skip = 0;
             int totalCount = 0;
             bool firstRequest = true;
@@ -252,6 +253,8 @@ namespace Checkmarx.API.AST.Services
                 Skip = 0 // Start with skip 0
             };
 
+            var allVulnerabilities = new List<ScaVulnerability>();
+
             do
             {
                 currentVariables.Skip = skip; // Set the current skip value
@@ -262,7 +265,7 @@ namespace Checkmarx.API.AST.Services
                     Variables = currentVariables
                 };
 
-                var content = JsonContent.Create(requestBody, options: new JsonSerializerOptions { WriteIndented = true });
+                var content = JsonContent.Create(requestBody, options: new JsonSerializerOptions { });
 
                 try
                 {
@@ -312,6 +315,66 @@ namespace Checkmarx.API.AST.Services
                 }
 
             } while (skip < totalCount); // Continue if more items are expected
+
+            return allVulnerabilities;
+        }
+
+
+        public async Task<ICollection<ReportingRisk>> GetAllVulnerabilitiesAsync(int take = 1000)
+        {
+            int skip = 0;
+            bool hasMore = true;
+
+            var allVulnerabilities = new List<ReportingRisk>();
+
+            while (hasMore)
+            {
+                var requestBody = new
+                {
+                    query = @"query ($where: ReportingRiskModelFilterInput, $take: Int!, $skip: Int!, $order: [ReportingRiskModelSortInput!]) {
+                                reportingRisks (where: $where, take: $take, skip: $skip, order: $order) {
+                                    scanId, projectId, severity, pendingSeverity, riskType, vulnerabilityId,
+                                    packageId, packageName, packageVersion, projectName, vulnerabilityPublicationDate,
+                                    score, pendingScore, state, pendingState, scanDate, epssPercentile, epss,
+                                    isExploitable, exploitabilityReason, exploitabilityStatus, kevDataExists,
+                                    exploitDbDataExist, epssDataExists, detectionDate, cwe, cweTitle, isFixAvailable,
+                                    fixRecommendationVersion
+                                }
+                            }",
+                    variables = new
+                    {
+                        where = (object)null,
+                        take,
+                        skip,
+                        order = new[] { new { score = "DESC" } }
+                    }
+                };
+
+                using (var request_ = new System.Net.Http.HttpRequestMessage())
+                {
+                    var content = JsonContent.Create(requestBody, options: new JsonSerializerOptions { });
+
+                    var response = await _retryPolicy.ExecuteAsync(() => _httpClient.PostAsync(BaseUrl, content)).ConfigureAwait(false);
+
+                    response.EnsureSuccessStatusCode();
+
+                    // Read the response content as a string
+                    string responseBody = await response.Content.ReadAsStringAsync();
+
+                    // Deserialize the JSON response using Newtonsoft.Json
+                    var result = JsonConvert.DeserializeObject<GraphQLResponseReportingRisk>(responseBody);
+
+                    if (result?.Data?.ReportingRisks is not null && result.Data.ReportingRisks.Count > 0)
+                    {
+                        allVulnerabilities.AddRange(result.Data.ReportingRisks);
+                        skip += take;
+                    }
+                    else
+                    {
+                        hasMore = false;
+                    }
+                }
+            }
 
             return allVulnerabilities;
         }
@@ -522,5 +585,51 @@ namespace Checkmarx.API.AST.Services
             return result == null ? "" : result;
         }
 
+    }
+
+    // === Models ===
+    public class GraphQLResponseReportingRisk
+    {
+        [JsonPropertyName("data")]
+        public DataWrapperReportingRisk Data { get; set; }
+    }
+
+    public class DataWrapperReportingRisk
+    {
+        [JsonPropertyName("reportingRisks")]
+        public List<ReportingRisk> ReportingRisks { get; set; }
+    }
+
+    public class ReportingRisk
+    {
+        public string ScanId { get; set; }
+        public string ProjectId { get; set; }
+        public string Severity { get; set; }
+        public string PendingSeverity { get; set; }
+        public string RiskType { get; set; }
+        public string VulnerabilityId { get; set; }
+        public string PackageId { get; set; }
+        public string PackageName { get; set; }
+        public string PackageVersion { get; set; }
+        public string ProjectName { get; set; }
+        public DateTime? VulnerabilityPublicationDate { get; set; }
+        public double? Score { get; set; }
+        public double? PendingScore { get; set; }
+        public string State { get; set; }
+        public string PendingState { get; set; }
+        public DateTime? ScanDate { get; set; }
+        public double? EpssPercentile { get; set; }
+        public double? Epss { get; set; }
+        public bool? IsExploitable { get; set; }
+        public string ExploitabilityReason { get; set; }
+        public string ExploitabilityStatus { get; set; }
+        public bool? KevDataExists { get; set; }
+        public bool? ExploitDbDataExist { get; set; }
+        public bool? EpssDataExists { get; set; }
+        public DateTime? DetectionDate { get; set; }
+        public string Cwe { get; set; }
+        public string CweTitle { get; set; }
+        public bool? IsFixAvailable { get; set; }
+        public string FixRecommendationVersion { get; set; }
     }
 }
