@@ -346,9 +346,6 @@ namespace Checkmarx.API.AST
             }
         }
 
-
-
-
         private SASTResults _SASTResults;
 
         /// <summary>
@@ -585,6 +582,18 @@ namespace Checkmarx.API.AST
                     _queryEditor = new QueryEditor($"{ASTServer.AbsoluteUri}api/query-editor", _httpClient);
 
                 return _queryEditor;
+            }
+        }
+
+        private Webhooks _webhooks;
+        public Webhooks Webhooks
+        {
+            get
+            {
+                if (Connected && _webhooks == null)
+                    _webhooks = new Webhooks($"{ASTServer.AbsoluteUri}api/webhooks", _httpClient);
+
+                return _webhooks;
             }
         }
 
@@ -2818,6 +2827,91 @@ namespace Checkmarx.API.AST
         #endregion
 
         #endregion
+
+        #endregion
+
+        #region Webhooks
+
+        public ICollection<Webhook> GetWebhooks(int startAt = 0, int limit = 10)
+        {
+            if (limit <= 0)
+                throw new ArgumentOutOfRangeException(nameof(limit));
+
+            var result = new List<Webhook>();
+
+            while (true)
+            {
+                var resultPage = Webhooks.GetTenantWebhooks(limit, startAt).Result;
+
+                if (resultPage.Webhooks != null)
+                    result.AddRange(resultPage.Webhooks);
+
+                startAt += limit;
+
+                if (resultPage.TotalCount == 0 || resultPage.TotalCount == result.Count)
+                    return result;
+            }
+        }
+
+        public enum WebhookEventType
+        {
+            scan_completed_successfully,
+            project_created,
+            scan_failed,
+            scan_partial
+        }
+
+        public Webhook CreateWebhook(string name, string url, string secret, List<WebhookEventType> enabledEvents)
+        {
+            var body = getWebhookInputBody(name, url, secret, enabledEvents);
+
+            return Webhooks.CreateTenantWebhook(body).Result;
+        }
+
+        public void UpdateWebhook(Guid id, string name, string url, string secret, List<WebhookEventType> enabledEvents)
+        {
+            if (id == Guid.Empty)
+                throw new ArgumentNullException(nameof(id));
+
+            var body = getWebhookInputBody(name, url, secret, enabledEvents);
+
+            Webhooks.UpdateWebhook(id, body).Wait();
+        }
+
+        public void DeleteWebhook(Guid id)
+        {
+            if (id == Guid.Empty)
+                throw new ArgumentNullException(nameof(id));
+
+            Webhooks.DeleteWebhook(id).Wait();
+        }
+
+        private WebhookInput getWebhookInputBody(string name, string url, string secret, List<WebhookEventType> enabledEvents)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                throw new ArgumentNullException(nameof(name));
+
+            if (string.IsNullOrWhiteSpace(url))
+                throw new ArgumentNullException(nameof(url));
+
+            if (string.IsNullOrWhiteSpace(secret))
+                throw new ArgumentNullException(nameof(secret));
+
+            if (enabledEvents == null || !enabledEvents.Any())
+                throw new ArgumentNullException(nameof(enabledEvents));
+
+            return new WebhookInput()
+            {
+                Name = name,
+                Config = new WebhookConfig()
+                {
+                    Url = url,
+                    Secret = secret
+                },
+                EnabledEvents = enabledEvents.Select(x => x.ToString()).ToList(),
+                Active = true
+            };
+        }
 
         #endregion
 
