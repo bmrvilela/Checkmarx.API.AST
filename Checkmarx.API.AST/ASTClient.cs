@@ -1,11 +1,14 @@
 ﻿using Checkmarx.API.AST.Enums;
 using Checkmarx.API.AST.Models;
 using Checkmarx.API.AST.Models.Report;
+using Checkmarx.API.AST.Models.SCA;
 using Checkmarx.API.AST.Services;
 using Checkmarx.API.AST.Services.Applications;
 using Checkmarx.API.AST.Services.Configuration;
+using Checkmarx.API.AST.Services.CustomStates;
 using Checkmarx.API.AST.Services.KicsResults;
 using Checkmarx.API.AST.Services.Projects;
+using Checkmarx.API.AST.Services.QueryEditor;
 using Checkmarx.API.AST.Services.Reports;
 using Checkmarx.API.AST.Services.Repostore;
 using Checkmarx.API.AST.Services.ResultsOverview;
@@ -14,12 +17,11 @@ using Checkmarx.API.AST.Services.SASTMetadata;
 using Checkmarx.API.AST.Services.SASTQueriesAudit;
 using Checkmarx.API.AST.Services.SASTResults;
 using Checkmarx.API.AST.Services.SASTResultsPredicates;
+using Checkmarx.API.AST.Services.SASTScanResultsCompare;
 using Checkmarx.API.AST.Services.ScannersResults;
 using Checkmarx.API.AST.Services.Scans;
 using Checkmarx.API.AST.Services.Uploads;
-using Checkmarx.API.AST.Services.SASTScanResultsCompare;
-using Checkmarx.API.AST.Services.QueryEditor;
-using Checkmarx.API.AST.Services.CustomStates;
+using Checkmarx.API.AST.Utils;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Polly;
@@ -27,13 +29,13 @@ using Polly.Extensions.Http;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
-using Checkmarx.API.AST.Models.SCA;
 
 namespace Checkmarx.API.AST
 {
@@ -154,6 +156,8 @@ namespace Checkmarx.API.AST
         public const string Query_Level_Project = "Project";
 
         public const string Feature_Flag_CustomStatesEnabled = "CUSTOM_STATES_ENABLED";
+
+        private const string Claim_License = "ast-license";
 
         private readonly static string CompletedStage = Checkmarx.API.AST.Services.Scans.Status.Completed.ToString();
 
@@ -341,9 +345,6 @@ namespace Checkmarx.API.AST
                 return _sscsReader;
             }
         }
-
-
-
 
         private SASTResults _SASTResults;
 
@@ -584,6 +585,18 @@ namespace Checkmarx.API.AST
             }
         }
 
+        private Webhooks _webhooks;
+        public Webhooks Webhooks
+        {
+            get
+            {
+                if (Connected && _webhooks == null)
+                    _webhooks = new Webhooks($"{ASTServer.AbsoluteUri}api/webhooks", _httpClient);
+
+                return _webhooks;
+            }
+        }
+
         #endregion
 
         #region Connection
@@ -715,6 +728,52 @@ namespace Checkmarx.API.AST
             Tenant = tenant;
             ClientId = clientId;
             ClientSecret = clientSecret;
+        }
+
+        #endregion
+
+        #region License Details
+
+        private LicenseDto _licenseDetails = null;
+        public LicenseDto LicenseDetails
+        {
+            get
+            {
+                if (_licenseDetails == null)
+                {
+                    if (!Connected)
+                        throw new Exception("Not connected to AST Server. Please authenticate first.");
+
+                    var claims = JwtUtils.GetTokenClaims(_httpClient.DefaultRequestHeaders.Authorization?.Parameter);
+                    if (claims.ContainsKey(Claim_License))
+                    {
+                        var licensesJson = claims[Claim_License].Single();
+                        _licenseDetails = JsonConvert.DeserializeObject<LicenseDto>(licensesJson);
+                    }
+                }
+
+                return _licenseDetails;
+            }
+        }
+
+        private IEnumerable<LicenseEngineTypeEnum> _allowedEngines = null;
+        public IEnumerable<LicenseEngineTypeEnum> AllowedEngines
+        {
+            get
+            {
+                if (_allowedEngines == null)
+                {
+                    var engineStrings = LicenseDetails.LicenseData?.AllowedEngines;
+                    if (engineStrings == null)
+                        _allowedEngines = Enumerable.Empty<LicenseEngineTypeEnum>();
+                    else
+                        _allowedEngines = engineStrings
+                            .Select(EnumUtils.GetEnumValueByDescription<LicenseEngineTypeEnum>)
+                            .ToList();
+                }
+
+                return _allowedEngines;
+            }
         }
 
         #endregion
@@ -2768,6 +2827,91 @@ namespace Checkmarx.API.AST
         #endregion
 
         #endregion
+
+        #endregion
+
+        #region Webhooks
+
+        public ICollection<Webhook> GetWebhooks(int startAt = 0, int limit = 10)
+        {
+            if (limit <= 0)
+                throw new ArgumentOutOfRangeException(nameof(limit));
+
+            var result = new List<Webhook>();
+
+            while (true)
+            {
+                var resultPage = Webhooks.GetTenantWebhooks(limit, startAt).Result;
+
+                if (resultPage.Webhooks != null)
+                    result.AddRange(resultPage.Webhooks);
+
+                startAt += limit;
+
+                if (resultPage.TotalCount == 0 || resultPage.TotalCount == result.Count)
+                    return result;
+            }
+        }
+
+        public enum WebhookEventType
+        {
+            scan_completed_successfully,
+            project_created,
+            scan_failed,
+            scan_partial
+        }
+
+        public Webhook CreateWebhook(string name, string url, string secret, List<WebhookEventType> enabledEvents)
+        {
+            var body = getWebhookInputBody(name, url, secret, enabledEvents);
+
+            return Webhooks.CreateTenantWebhook(body).Result;
+        }
+
+        public void UpdateWebhook(Guid id, string name, string url, string secret, List<WebhookEventType> enabledEvents)
+        {
+            if (id == Guid.Empty)
+                throw new ArgumentNullException(nameof(id));
+
+            var body = getWebhookInputBody(name, url, secret, enabledEvents);
+
+            Webhooks.UpdateWebhook(id, body).Wait();
+        }
+
+        public void DeleteWebhook(Guid id)
+        {
+            if (id == Guid.Empty)
+                throw new ArgumentNullException(nameof(id));
+
+            Webhooks.DeleteWebhook(id).Wait();
+        }
+
+        private WebhookInput getWebhookInputBody(string name, string url, string secret, List<WebhookEventType> enabledEvents)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                throw new ArgumentNullException(nameof(name));
+
+            if (string.IsNullOrWhiteSpace(url))
+                throw new ArgumentNullException(nameof(url));
+
+            if (string.IsNullOrWhiteSpace(secret))
+                throw new ArgumentNullException(nameof(secret));
+
+            if (enabledEvents == null || !enabledEvents.Any())
+                throw new ArgumentNullException(nameof(enabledEvents));
+
+            return new WebhookInput()
+            {
+                Name = name,
+                Config = new WebhookConfig()
+                {
+                    Url = url,
+                    Secret = secret
+                },
+                EnabledEvents = enabledEvents.Select(x => x.ToString()).ToList(),
+                Active = true
+            };
+        }
 
         #endregion
 
