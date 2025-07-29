@@ -892,9 +892,9 @@ namespace Checkmarx.API.AST
             if (GetCustomState(name) != null)
                 throw new Exception($"There is already a custom state with the same name.");
 
-            CustomStates.CreateAsync(new CustomStateCreateBody() { Name = name })
-                .GetAwaiter()
-                .GetResult();
+            CustomStates.CreateAsync(new CustomStateCreateBody() {
+                Name = name
+            }).Wait();
 
             _allCustomStates = null;
         }
