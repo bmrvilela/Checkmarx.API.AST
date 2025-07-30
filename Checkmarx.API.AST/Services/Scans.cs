@@ -456,7 +456,11 @@ namespace Checkmarx.API.AST.Services.Scans
                     }
                     if (from_date != null)
                     {
-                        urlBuilder_.Append(System.Uri.EscapeDataString("from-date")).Append('=').Append(System.Uri.EscapeDataString(from_date.Value.ToString("s", System.Globalization.CultureInfo.InvariantCulture))).Append('&');
+                        urlBuilder_
+                            .Append(Uri.EscapeDataString("from-date"))
+                            .Append('=')
+                            .Append(Uri.EscapeDataString(from_date.Value.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ", System.Globalization.CultureInfo.InvariantCulture)))
+                            .Append('&');
                     }
                     if (sort != null)
                     {
