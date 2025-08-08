@@ -29,7 +29,6 @@ using Polly.Extensions.Http;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -892,7 +891,8 @@ namespace Checkmarx.API.AST
             if (GetCustomState(name) != null)
                 throw new Exception($"There is already a custom state with the same name.");
 
-            CustomStates.CreateAsync(new CustomStateCreateBody() {
+            CustomStates.CreateAsync(new CustomStateCreateBody()
+            {
                 Name = name
             }).Wait();
 
@@ -913,6 +913,55 @@ namespace Checkmarx.API.AST
                 .GetResult();
 
             _allCustomStates = null;
+        }
+
+        private List<SASTResultState> _sastStates = null;
+        public List<SASTResultState> SASTStates
+        {
+            get
+            {
+                if (_sastStates == null)
+                {
+                    _sastStates = EnumUtils.GetStateEnumMemberList<ResultsState>().OfType<SASTResultState>().ToList();
+                    if (AreCustomStatesEnabled)
+                    {
+                        var customStates = GetAllCustomStates();
+                        if (customStates.Any())
+                        {
+                            foreach (var state in customStates)
+                            {
+                                _sastStates.Add(new SASTResultState { Id = state.Id, Name = state.Name });
+                            }
+                        }
+                    }
+                }
+
+                return _sastStates;
+            }
+        }
+
+        private List<SCAResultState> _scaStates = null;
+        public List<SCAResultState> SCAStates
+        {
+            get
+            {
+                if (_scaStates == null)
+                    _scaStates = EnumUtils.GetStateEnumMemberList<ScaVulnerabilityStatus>().OfType<SCAResultState>().ToList();
+
+                return _scaStates;
+            }
+        }
+
+        private List<KicsResultState> _kicsStates = null;
+        public List<KicsResultState> KicsStates
+        {
+            get
+            {
+                if (_kicsStates == null)
+                    _kicsStates = EnumUtils.GetStateEnumMemberList<KicsStateEnum>().OfType<KicsResultState>().ToList();
+
+                return _kicsStates;
+            }
         }
 
         #endregion
@@ -1667,9 +1716,21 @@ namespace Checkmarx.API.AST
                     ProjectId = projectId,
                     ScanId = scanId,
                     Severity = updateSeverity ? predicate.Severity : result.Severity,
-                    State = updateState ? predicate.State : result.State,
                     Comment = updateComment ? predicate.Comment : null
                 };
+
+                if (updateState)
+                {
+                    newBody.State = predicate.State;
+                }
+                else
+                {
+                    var sastState = SASTStates.SingleOrDefault(x => x.Name.Equals(result.State, StringComparison.InvariantCultureIgnoreCase));
+                    if (sastState.State.HasValue)
+                        newBody.State = sastState.State.Value;
+                    else
+                        newBody.CustomStateId = sastState.Id;
+                }
 
                 body.Add(newBody);
             }
@@ -1683,7 +1744,7 @@ namespace Checkmarx.API.AST
             return false;
         }
 
-        public void MarkSASTResult(Guid projectId, string similarityId, ResultsSeverity severity, ResultsState state, Guid scanId, string comment = null)
+        public void MarkSASTResult(Guid projectId, string similarityId, ResultsSeverity severity, string state, Guid scanId, string comment = null)
         {
             if (projectId == Guid.Empty)
                 throw new ArgumentException(nameof(projectId));
@@ -1693,9 +1754,14 @@ namespace Checkmarx.API.AST
                 SimilarityId = similarityId,
                 ProjectId = projectId,
                 ScanId = scanId,
-                Severity = severity,
-                State = state
+                Severity = severity
             };
+
+            var sastState = SASTStates.SingleOrDefault(x => x.Name.Equals(state, StringComparison.InvariantCultureIgnoreCase));
+            if (sastState.State.HasValue)
+                newBody.State = sastState.State.Value;
+            else
+                newBody.CustomStateId = sastState.Id;
 
             if (!string.IsNullOrWhiteSpace(comment))
                 newBody.Comment = comment;
@@ -1731,7 +1797,7 @@ namespace Checkmarx.API.AST
         }
 
         public void MarkSCAVulnerability(Guid projectId, Vulnerability vulnerabilityRisk,
-            ScaVulnerabilityStatus vulnerabilityStatus, string message)
+            ScaVulnerabilityStatus vulnerabilityStatus, string message, string severity = null)
         {
             if (projectId == Guid.Empty)
                 throw new ArgumentNullException(nameof(projectId));
@@ -1742,22 +1808,60 @@ namespace Checkmarx.API.AST
             if (string.IsNullOrEmpty(message))
                 throw new ArgumentNullException(nameof(message));
 
-            SCA.UpdateResultState(new ScaPackageInfo
+            var body = new ScaPackageInfo
             {
                 PackageManager = vulnerabilityRisk.PackageManager,
                 PackageName = vulnerabilityRisk.PackageName,
                 PackageVersion = vulnerabilityRisk.PackageVersion,
                 VulnerabilityId = vulnerabilityRisk.Id,
-                ProjectIds = [projectId],
-                Actions = [
+                ProjectIds = [projectId]
+            };
+
+            List<ActionType> actions = new List<ActionType>()
+            {
                 new ActionType
                 {
                     Type = ActionTypeEnum.ChangeState,
                     Value = vulnerabilityStatus.ToString(),
                     Comment = message
                 }
-            ],
-            }).Wait();
+            };
+
+            if (!string.IsNullOrWhiteSpace(severity))
+            {
+                double score = 0.0;
+                switch (severity.Trim().ToUpperInvariant())
+                {
+                    case "CRITICAL":
+                        score = 9;
+                        break;
+                    case "HIGH":
+                        score = 7;
+                        break;
+                    case "MEDIUM":
+                        score = 4;
+                        break;
+                    case "LOW":
+                        score = 0.1;
+                        break;
+                    case "INFO":
+                        score = 0.0;
+                        break;
+                    default:
+                        throw new ArgumentException($"Invalid severity value: {severity}");
+                }
+
+                actions.Add(new ActionType
+                {
+                    Type = ActionTypeEnum.ChangeScore,
+                    Value = score.ToString(),
+                    Comment = message
+                });
+            }
+
+            body.Actions = actions.ToArray();
+
+            SCA.UpdateResultState(body).Wait();
         }
 
         public StatsCompareResult GetScanResultsCompare(Guid baseScanId, Guid scanId)
