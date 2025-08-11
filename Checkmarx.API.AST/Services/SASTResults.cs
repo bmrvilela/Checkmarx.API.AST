@@ -1040,8 +1040,8 @@ namespace Checkmarx.API.AST.Services.SASTResults
         public System.Collections.Generic.ICollection<ResultNode> Nodes { get; set; }
 
         [Newtonsoft.Json.JsonProperty("state", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-        public ResultsState State { get; set; }
+        //[Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+        public string State { get; set; }
 
         [Newtonsoft.Json.JsonProperty("changeDetails", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public ChangeDetails ChangeDetails { get; set; }

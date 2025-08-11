@@ -398,7 +398,7 @@ namespace Checkmarx.API.AST.Models
 
                 bool isNotInfo = vuln.Severity != ResultsSeverity.INFO;
 
-                if (vuln.State != ResultsState.NOT_EXPLOITABLE)
+                if (vuln.State != ResultsState.NOT_EXPLOITABLE.ToString())
                 {
                     total++;
 
@@ -407,22 +407,22 @@ namespace Checkmarx.API.AST.Models
                         case ResultsSeverity.CRITICAL:
                             critical++;
                             queriesCritical.Add(vuln.QueryID);
-                            if (vuln.State == ResultsState.TO_VERIFY) criticalToVerify++;
+                            if (vuln.State == ResultsState.TO_VERIFY.ToString()) criticalToVerify++;
                             break;
                         case ResultsSeverity.HIGH:
                             high++;
                             queriesHigh.Add(vuln.QueryID);
-                            if (vuln.State == ResultsState.TO_VERIFY) highToVerify++;
+                            if (vuln.State == ResultsState.TO_VERIFY.ToString()) highToVerify++;
                             break;
                         case ResultsSeverity.MEDIUM:
                             medium++;
                             queriesMedium.Add(vuln.QueryID);
-                            if (vuln.State == ResultsState.TO_VERIFY) mediumToVerify++;
+                            if (vuln.State == ResultsState.TO_VERIFY.ToString()) mediumToVerify++;
                             break;
                         case ResultsSeverity.LOW:
                             low++;
                             queriesLow.Add(vuln.QueryID);
-                            if (vuln.State == ResultsState.TO_VERIFY) lowToVerify++;
+                            if (vuln.State == ResultsState.TO_VERIFY.ToString()) lowToVerify++;
                             break;
                         case ResultsSeverity.INFO:
                             info++;
@@ -431,23 +431,16 @@ namespace Checkmarx.API.AST.Models
 
                     if (isNotInfo)
                     {
-                        switch (vuln.State)
+                        if (vuln.State == ResultsState.TO_VERIFY.ToString())
+                            toVerify++;
+                        else if (vuln.State == ResultsState.NOT_EXPLOITABLE.ToString())
+                            notExploitableMarked++;
+                        else if (vuln.State == ResultsState.PROPOSED_NOT_EXPLOITABLE.ToString())
+                            pneMarked++;
+                        else
                         {
-                            case ResultsState.TO_VERIFY:
-                                toVerify++;
-                                break;
-                            case ResultsState.NOT_EXPLOITABLE:
-                                notExploitableMarked++;
-                                break;
-                            case ResultsState.PROPOSED_NOT_EXPLOITABLE:
-                                pneMarked++;
-                                break;
-                            case ResultsState.CONFIRMED:
-                            case ResultsState.URGENT:
-                                break;
-                            default:
+                            if (vuln.State != ResultsState.CONFIRMED.ToString() && vuln.State != ResultsState.URGENT.ToString())
                                 otherStates++;
-                                break;
                         }
                     }
                 }
