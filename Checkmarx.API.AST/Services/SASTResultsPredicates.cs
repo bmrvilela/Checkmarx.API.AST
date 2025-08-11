@@ -1089,7 +1089,7 @@ namespace Checkmarx.API.AST.Services.SASTResultsPredicates
 
         [Newtonsoft.Json.JsonProperty("state", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-        public ResultsState State { get; set; }
+        public string State { get; set; }
 
         /// <summary>
         /// comment that describes why the state has predicated. max length is 1024. can be empty.
