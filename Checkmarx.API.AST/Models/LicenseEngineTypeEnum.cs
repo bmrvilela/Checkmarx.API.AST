@@ -55,6 +55,9 @@ namespace Checkmarx.API.AST.Models
         SecretDetection,
 
         [Description("Repository Health")]
-        RepositoryHealth
+        RepositoryHealth,
+
+        [Description("Checkmarx One Assist")]
+        CheckmarxOneAssist
     }
 }
