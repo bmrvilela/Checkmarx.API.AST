@@ -2,6 +2,8 @@
 using Checkmarx.API.AST.Models.Report;
 using Checkmarx.API.AST.Models.SCA;
 using Checkmarx.API.AST.Services;
+using Checkmarx.API.AST.Services.Scans;
+using Keycloak.Net.Models.Root;
 using Microsoft.Extensions.Configuration;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Polly.Fallback;
@@ -48,6 +50,26 @@ namespace Checkmarx.API.AST.Tests
                 Configuration["ClientSecret"]);
             }
 
+        }
+
+
+        [TestMethod]
+        public void ListVulnerabilitiesTest()
+        {
+
+            foreach (var risk in astclient.GetScanDetails(Guid.Parse("9ed7a70a-4d56-433c-af04-28250dca8a17")).SCAVulnerabilities)
+            {
+                Trace.WriteLine($"{risk.CveName} - {risk.RiskState} - {risk.RiskStatus} - {risk.PackageName}");
+            }
+        }
+
+        [TestMethod]
+        public void ListRisksTest()
+        {
+            foreach (var risk in astclient.GetScanDetails(Guid.Parse("9ed7a70a-4d56-433c-af04-28250dca8a17")).SCA_Risks)
+            {
+                Trace.WriteLine($"{risk.Cve} - {risk.PackageState.Value} - {risk.State}");
+            }
         }
 
         [TestMethod]
@@ -337,7 +359,6 @@ namespace Checkmarx.API.AST.Tests
             }
         }
 
-
         [TestMethod]
         public void GetSCADiffTest()
         {
@@ -354,13 +375,157 @@ namespace Checkmarx.API.AST.Tests
                 Trace.WriteLine($"{risk.Key.ToString()}: {risk.Count()}");
             }
 
-
             foreach (var diff in ASTClient.GetNewSCAVulnerabilities(
                                scan1.SCAVulnerabilities, scan2.SCAVulnerabilities))
             {
                 Trace.WriteLine($"{diff.RiskStatus.ToString()}: {diff.CveName}");
             }
+        }
 
+        [TestMethod]
+        public void ListPackageCVETest()
+        {
+            var results = astclient.SCA.GetPackageRisks(["Npm#-#cx-dummy-package#-#1.0.0"]).Result;
+            var risks = astclient.GetScanDetails(new Guid("1e827e52-1f7a-46d0-a904-f202085b14e1")).SCA_Risks.Select(x => x.Cve).ToHashSet();
+
+            Trace.WriteLine("Total Package Risks: " + results.Count());
+            Trace.WriteLine($"Total Risks: {risks.Count()}");
+
+            foreach (var cve in results)
+            {
+                var cveDef = astclient.SCA.GetCVEDefinitionAsync(cve.Cve).Result;
+
+                Trace.WriteLine($"CVE: {cveDef.CveName} {cveDef.Id == Guid.Empty} {cveDef.GetLink(astclient.ASTServer)}] ");
+            }
+        }
+
+
+        [TestMethod]
+        public void ListCxDummyPackageRisksTest()
+        {
+            var results = astclient.SCA.GetPackageRisks(["Npm#-#cx-dummy-package#-#1.0.0"]).Result;
+
+            Trace.WriteLine("Total Package Risks: " + results.Count());
+            foreach (var cve in results)
+            {
+                Trace.WriteLine($"CVE: {cve.Cve}");
+            }
+        }
+
+        [TestMethod]
+        public void ListKnownCVEwithSeverityTest()
+        {
+            var results = astclient.GraphQLClient.GetAllVulnerabilitiesAsync().Result.GroupBy(x => x.State);
+
+            Trace.WriteLine($"Total CVEs: {results.Count()}");
+
+            foreach (var item in results)
+            {
+                Trace.WriteLine(item.Key);
+            }
+        }
+
+        [TestMethod]
+        public void InjectNewCVETest()
+        {
+            var severityToCreate = "Critical";
+
+            var existentRisks = astclient.GraphQLClient.GetAllVulnerabilitiesAsync().Result
+                                        .Where(x => x.VulnerabilityId.StartsWith("CVE-") && x.Severity == severityToCreate);
+
+            var cxDummyPackageRisks = astclient.SCA.GetPackageRisks(["Npm#-#cx-dummy-package#-#1.0.0"]).Result.Select(x => x.Cve).ToHashSet();
+
+            string newCVE = null;
+            foreach (var cve in existentRisks)
+            {
+                newCVE = cve.VulnerabilityId;
+
+                var cveDef = astclient.SCA.GetCVEDefinitionAsync(newCVE).Result;
+
+                if (!cxDummyPackageRisks.Contains(newCVE) && cveDef.Id != Guid.Empty)
+                    break;
+            }
+
+            Trace.WriteLine($"New CVE to inject: {newCVE}");
+
+            astclient.SCA.InjectNewCVE(newCVE).Wait();
+        }
+
+        [TestMethod]
+        public void DeleteCVETest()
+        {
+            astclient.SCA.DeleteCVE("CVE-2021-21347").Wait();
+        }
+
+        [TestMethod]
+        public void MyTestMethod()
+        {
+            var scan = astclient.Scans.GetScanAsync(Guid.Parse("2b07dfbf-9643-4fda-8e69-013097563956")).Result;
+
+            Assert.IsNotNull(scan, "Scan should not be null");
+
+            processScan(scan);
+        }
+
+        private void processScan(Scan scan)
+        {
+            var projectDetails = astclient.GetProject(scan.ProjectId);
+            var scanDetails = astclient.GetScanDetails(scan.Id);
+
+            // Check if Main Branch is defined. If it is, we only process the scan it is from the main branch
+            // If there is no Main branch defined, continue the process
+            if (!string.IsNullOrWhiteSpace(projectDetails.MainBranch) && scan.Branch != projectDetails.MainBranch)
+            {
+                Trace.TraceWarning($"Skipping scan ({scan.Id}) from project {scan.ProjectId}:: MainBranch is {projectDetails.MainBranch} and scan branch is not ({scan.Branch}).");
+                return;
+            }
+
+            // Validate if it has new SCA vulnerabilities
+            int newVulnerabilities = scanDetails.SCAVulnerabilities.Where(x => x.RiskStatus == Checkmarx.API.AST.Services.Results.StatusEnum.NEW).Count();
+
+            #region Clone Metadata & Update Date Tag
+
+            // get scan tags from the last production scan with the tags
+            var lastProductionScan = astclient.GetScans(scan.ProjectId, engine: "sca", branch: scan.Branch, scanKind: Checkmarx.API.AST.Enums.ScanRetrieveKind.Last, tagKeys: ["PRD_DATE"], completed: false).SingleOrDefault();
+
+            Trace.WriteLine(lastProductionScan.Id);
+
+            if (lastProductionScan == null)
+            {
+                Trace.TraceWarning($"No production scan found for project {projectDetails.Name} and branch {scan.Branch}.");
+                return;
+            }
+
+            if (newVulnerabilities == 0)
+            {
+                newVulnerabilities = ASTClient.GetNewSCAVulnerabilities(astclient.GetScanDetails(lastProductionScan).SCAVulnerabilities, scanDetails.SCAVulnerabilities).Count();
+
+                if (newVulnerabilities == 0)
+                {
+                    Trace.TraceWarning($"Project {projectDetails.Name} Scan {scanDetails.Id} has NO NEW SCA vulnerabilities. Process terminated.");
+                    return;
+                }
+            }
+
+            if (newVulnerabilities > 0)
+            {
+                Trace.TraceWarning($"Project {projectDetails.Name} Scan {scanDetails.Id} has new SCA vulnerabilities. Updating tags...");
+
+                var tagResult = astclient.Scans.GetTagsAsync(lastProductionScan.Id).Result;
+                var lastProductionScanTags = tagResult.Tags;
+                if (!lastProductionScanTags.ContainsKey("OrigScanId"))
+                {
+                    lastProductionScanTags.Add("OrigScanId", lastProductionScan.Id.ToString());
+                }
+
+                // clone the tags to the latest scan
+                astclient.Scans.UpdateTagsAsync(scanDetails.Id, new ModifyScanTagsInput
+                {
+                    Tags = lastProductionScanTags
+                });
+            }
+
+            #endregion
         }
 
     }
