@@ -52,6 +52,16 @@ namespace Checkmarx.API.AST.Tests
 
         }
 
+        [TestMethod]
+        public void UpdatePackageStateTest()
+        {
+            Guid projectId = Guid.Parse("852a2366-c1fe-4bfa-af4d-dbb9cb69148c");
+            string packageManager = "Npm";
+            string packageName = "express-jwt";
+            string packageVersion = "0.1.3";
+
+            astclient.MarkSCAPackage(projectId, packageManager, packageName, packageVersion, PackageStateEnum.Snooze, "Test");
+        }
 
         [TestMethod]
         public void ListVulnerabilitiesTest()
