@@ -1796,6 +1796,43 @@ namespace Checkmarx.API.AST
             return true;
         }
 
+        public void MarkSCAPackage(Guid projectId, string packageManager, string packageName, string packageVersion, PackageStateEnum packageState, string message, DateTimeOffset? endDate = null)
+        {
+            if (projectId == Guid.Empty)
+                throw new ArgumentNullException(nameof(projectId));
+
+            if (string.IsNullOrEmpty(packageManager))
+                throw new ArgumentNullException(nameof(packageManager));
+
+            if (string.IsNullOrEmpty(packageName))
+                throw new ArgumentNullException(nameof(packageName));
+
+            if (string.IsNullOrEmpty(packageVersion))
+                throw new ArgumentNullException(nameof(packageVersion));
+
+            if (string.IsNullOrEmpty(message))
+                throw new ArgumentNullException(nameof(message));
+
+            if (packageState == PackageStateEnum.Snooze && endDate == null)
+                endDate = DateTimeOffset.UtcNow;
+
+            var body = new ScaUpdatePackageBody
+            {
+                PackageManager = packageManager,
+                PackageName = packageName,
+                PackageVersion = packageVersion,
+                Actions = [new PackageActionType
+                {
+                    Type = PackageActionTypeEnum.Ignore,
+                    Value = new Services.PackageState{ State = packageState, EndDate = endDate },
+                    Comment = message
+                }],
+                ProjectId = projectId
+            };
+
+            SCA.UpdatePackageState(body).Wait();
+        }
+
         public void MarkSCAVulnerability(Guid projectId, Vulnerability vulnerabilityRisk,
             ScaVulnerabilityStatus vulnerabilityStatus, string message, string severity = null)
         {
