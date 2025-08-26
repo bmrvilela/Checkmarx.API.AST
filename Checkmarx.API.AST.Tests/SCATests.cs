@@ -202,6 +202,29 @@ namespace Checkmarx.API.AST.Tests
         }
 
         [TestMethod]
+        public void RefreshGITest()
+        {
+            foreach (var project in astclient.GetAllProjectsDetails())
+            {
+                Trace.WriteLine(project.Id + " " + project.Name);
+
+                var lastScan = astclient.GetLastScan(project.Id, scanType: Enums.ScanTypeEnum.sca, completed: true, branch: project.MainBranch);
+
+                if (lastScan != null)
+                {
+                    var scan = astclient.Scans.RecalculateAsync(new Services.Scans.RecalculateInput
+                    {
+                        Project_id = project.Id,
+                        Branch = lastScan.Branch,
+                        Engines = ["sca"]
+                    }, "gi-ref").Result;
+
+                    Assert.IsNotNull(scan);
+                }
+            }
+        }
+
+        [TestMethod]
         public void CheckForNewResultsTest()
         {
             var projects = astclient.GetAllProjectsDetails().Where(x => x.Name == "BB::ASPLATFORM::NewCVE-Custom01");
@@ -431,9 +454,12 @@ namespace Checkmarx.API.AST.Tests
             var severityToCreate = "Critical";
 
             var existentRisks = astclient.GraphQLClient.GetAllVulnerabilitiesAsync().Result
-                                        .Where(x => x.VulnerabilityId.StartsWith("CVE-") && x.Severity == severityToCreate);
+                .Where(x => x.VulnerabilityId.StartsWith("CVE-") && 
+                x.Severity == severityToCreate);
 
-            var cxDummyPackageRisks = astclient.SCA.GetPackageRisks(["Npm#-#cx-dummy-package#-#1.0.0"]).Result.Select(x => x.Cve).ToHashSet();
+            var cxDummyPackageRisks = astclient.SCA
+                .GetPackageRisks(["Npm#-#cx-dummy-package#-#1.0.0"]).Result
+                .Select(x => x.Cve).ToHashSet();
 
             string newCVE = null;
             foreach (var cve in existentRisks)
@@ -446,7 +472,7 @@ namespace Checkmarx.API.AST.Tests
                     break;
             }
 
-            Trace.WriteLine($"New CVE to inject: {newCVE}");
+            Trace.WriteLine($"CVE added to cx-dummy-package: {newCVE}");
 
             astclient.SCA.InjectNewCVE(newCVE).Wait();
         }
