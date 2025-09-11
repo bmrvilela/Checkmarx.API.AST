@@ -395,8 +395,8 @@ namespace Checkmarx.API.AST.Tests
         [TestMethod]
         public void GetSCADiffTest()
         {
-            var scan1 = astclient.GetScanDetails(new Guid("25731032-2394-479b-b9ca-72d0e15188ad"));
-            var scan2 = astclient.GetScanDetails(new Guid("9a0fc7dd-b1d8-47ae-9e94-20f925a4caeb"));
+            var scan2 = astclient.GetScanDetails(new Guid("daead9f6-67b4-498c-9db8-b282dfa27034")); // 59
+            var scan1 = astclient.GetScanDetails(new Guid("b915a759-b33f-43f2-9d59-48d88eb388ce")); // 58
 
             Trace.WriteLine($"Scan: {scan2.SCAVulnerabilities.Count()}");
 
@@ -463,7 +463,7 @@ namespace Checkmarx.API.AST.Tests
         {
             var severityToCreate = "Critical";
 
-            var existentRisks = astclient.GraphQLClient.GetAllVulnerabilitiesAsync().Result
+            var existentRisks = astclient.GraphQLClient.GetAllVulnerabilitiesAsync(10000).Result
                 .Where(x => x.VulnerabilityId.StartsWith("CVE-") && 
                 x.Severity == severityToCreate);
 
@@ -472,19 +472,22 @@ namespace Checkmarx.API.AST.Tests
                 .Select(x => x.Cve).ToHashSet();
 
             string newCVE = null;
-            foreach (var cve in existentRisks)
+
+            Parallel.ForEach(existentRisks, new ParallelOptions { MaxDegreeOfParallelism = 100 }, cve =>
             {
                 newCVE = cve.VulnerabilityId;
 
                 var cveDef = astclient.SCA.GetCVEDefinitionAsync(newCVE).Result;
 
                 if (!cxDummyPackageRisks.Contains(newCVE) && cveDef.Id != Guid.Empty)
-                    break;
-            }
+                {
+                    Trace.WriteLine(newCVE);
+                }
+            });
 
             Trace.WriteLine($"CVE added to cx-dummy-package: {newCVE}");
 
-            astclient.SCA.InjectNewCVE(newCVE).Wait();
+            //astclient.SCA.InjectNewCVE(newCVE).Wait();
         }
 
         [TestMethod]
