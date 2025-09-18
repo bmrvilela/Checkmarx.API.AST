@@ -1727,7 +1727,7 @@ namespace Checkmarx.API.AST
                 {
                     var sastState = SASTStates.SingleOrDefault(x => x.Name.Equals(result.State, StringComparison.InvariantCultureIgnoreCase));
                     if (sastState.State.HasValue)
-                        newBody.State = sastState.State.Value;
+                        newBody.State = sastState.State.Value.ToString();
                     else
                         newBody.CustomStateId = sastState.Id;
                 }
@@ -1759,7 +1759,7 @@ namespace Checkmarx.API.AST
 
             var sastState = SASTStates.SingleOrDefault(x => x.Name.Equals(state, StringComparison.InvariantCultureIgnoreCase));
             if (sastState.State.HasValue)
-                newBody.State = sastState.State.Value;
+                newBody.State = sastState.State.Value.ToString();
             else
                 newBody.CustomStateId = sastState.Id;
 

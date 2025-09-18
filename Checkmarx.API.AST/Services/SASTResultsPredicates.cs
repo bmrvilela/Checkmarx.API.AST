@@ -1013,9 +1013,11 @@ namespace Checkmarx.API.AST.Services.SASTResultsPredicates
         [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
         public Checkmarx.API.AST.Services.SASTResults.ResultsSeverity Severity { get; set; }
 
-        [Newtonsoft.Json.JsonProperty("state", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-        public ResultsState State { get; set; }
+        [Newtonsoft.Json.JsonProperty("state", Required = Newtonsoft.Json.Required.AllowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string State { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("customStateId", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public int? CustomStateId { get; set; }
 
         /// <summary>
         /// comment that describes why the state has predicated. max length is 1024. can be empty.
@@ -1088,7 +1090,6 @@ namespace Checkmarx.API.AST.Services.SASTResultsPredicates
         public ResultsSeverity Severity { get; set; }
 
         [Newtonsoft.Json.JsonProperty("state", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
         public string State { get; set; }
 
         /// <summary>
@@ -1229,8 +1230,7 @@ namespace Checkmarx.API.AST.Services.SASTResultsPredicates
         public Checkmarx.API.AST.Services.SASTResults.ResultsSeverity Severity { get; set; }
 
         [Newtonsoft.Json.JsonProperty("state", Required = Newtonsoft.Json.Required.AllowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-        public ResultsState? State { get; set; }
+        public string State { get; set; }
 
         [Newtonsoft.Json.JsonProperty("customStateId", Required = Newtonsoft.Json.Required.AllowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public long? CustomStateId { get; set; }
