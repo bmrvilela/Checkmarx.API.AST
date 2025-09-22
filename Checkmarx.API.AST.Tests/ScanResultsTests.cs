@@ -62,6 +62,34 @@ namespace Checkmarx.API.AST.Tests
         }
 
         [TestMethod]
+        public void GetAllResultNotesTest()
+        {
+            //var results = astClient.GetSASTScanResultsById(new Guid("aad631ad-11f6-4c23-9783-ad49a8eaf471"));
+            //var similarityId = results.First().SimilarityID;
+
+            //Trace.WriteLine($"Similarity ID: {similarityId}");
+
+            Guid projectId = new Guid("54ea2188-3fe6-4e6e-9b59-ede68d746e30");
+            string similarityId = "1880072288";
+
+            //astClient.MarkSASTResult(projectId, similarityId, ResultsSeverity.CRITICAL, ResultsState.TO_VERIFY.ToString(), Guid.Empty, "Go back to the original severity and state.");
+
+            string lastNote = astClient.GetLastSASTNote(similarityId, [projectId]);
+
+            var allNotes = astClient.SASTResultsPredicates
+                .GetPredicatesBySimilarityIDAsync(similarityId, [projectId]).Result.PredicateHistoryPerProject.Single().Predicates;
+
+            Trace.WriteLine($"History");
+            foreach (var note in allNotes)
+            {
+                Trace.WriteLine($"Date: {note.CreatedAt} | Note: {note.Comment}");
+            }
+
+            Trace.WriteLine($"");
+            Trace.WriteLine($"Last Note: {lastNote}");
+        }
+
+        [TestMethod]
         public void GetLastScan()
         {
             var scan = astClient.GetLastScan(
