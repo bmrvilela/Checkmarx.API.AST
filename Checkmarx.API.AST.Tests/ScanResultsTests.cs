@@ -169,7 +169,7 @@ namespace Checkmarx.API.AST.Tests
             foreach (var vuln in result.Vulnerabilities)
             {
                 astClient.MarkSCAVulnerability(ProjectId, vuln,
-                    GetRandomEnumMember<ScaVulnerabilityStatus>(),
+                    GetRandomEnumMember<ScaVulnerabilityStatus>().ToString(),
                     GetRandomJoke());
             }
         }
