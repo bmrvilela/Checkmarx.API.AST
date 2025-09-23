@@ -24,6 +24,7 @@ namespace Checkmarx.API.AST.Services.Scans
 {
     using Checkmarx.API.AST.Enums;
     using Checkmarx.API.AST.Exceptions;
+    using Checkmarx.API.AST.Utils;
     using Newtonsoft.Json;
     using System;
     using System.Collections.Generic;
@@ -762,7 +763,9 @@ namespace Checkmarx.API.AST.Services.Scans
                     content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json; version=1.0");
                     request_.Content = content_;
 
-                    request_.Headers.UserAgent.Add(new ProductInfoHeaderValue(origin, null));
+                    origin = HeaderSanitizer.SanitizeProductName(origin);
+                    if (!string.IsNullOrWhiteSpace(origin))
+                        request_.Headers.UserAgent.Add(new ProductInfoHeaderValue(origin, null));
 
                     request_.Method = new System.Net.Http.HttpMethod("POST");
 
