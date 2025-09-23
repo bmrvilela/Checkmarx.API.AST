@@ -34,6 +34,26 @@ public class GraphQLTests
     }
 
     [TestMethod]
+    public void GetSCAVulnerabilityHistoryTest()
+    {
+        var variables = new Models.SCA.PackageVulnerabilityStateAndScoreActionsVariables
+        {
+            ScanId = new Guid("f283a7e6-0840-4110-bcf4-ab8e884a47f4"),
+            ProjectId = new Guid("7efd49f4-ffe3-486f-b330-876a9e7a6326"),
+            IsLatest = true,
+            PackageName = "org.apache.commons:commons-text",
+            PackageVersion = "1.9",
+            PackageManager = "Maven",
+            VulnerabilityId = "CVE-2022-42889"
+        };
+
+        var result = astclient.GraphQLClient.SearchPackageVulnerabilityActionsAsync(variables).Result;
+
+        foreach (var item in result)
+            Trace.WriteLine($"ActionType: {item.ActionType} | Value: {item.ActionValue} | Date: {item.CreatedAt}");
+    }
+
+    [TestMethod]
     public void MigrateSCAPredicateTest()
     {
         var scanId = Guid.Parse("22b9bc3a-463c-43d8-8875-b1d64ab870bf");

@@ -29,6 +29,7 @@ using Polly.Extensions.Http;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -1833,8 +1834,18 @@ namespace Checkmarx.API.AST
             SCA.UpdatePackageState(body).Wait();
         }
 
+        private static readonly Dictionary<string, double> severityScoreMap =
+            new(StringComparer.OrdinalIgnoreCase)
+            {
+                ["CRITICAL"] = 9,
+                ["HIGH"] = 7,
+                ["MEDIUM"] = 4,
+                ["LOW"] = 0.1,
+                ["INFO"] = 0
+            };
+
         public void MarkSCAVulnerability(Guid projectId, Vulnerability vulnerabilityRisk,
-            ScaVulnerabilityStatus vulnerabilityStatus, string message, string severity = null)
+            string vulnerabilityStatus = null, string message = null, string severityOrScore = null)
         {
             if (projectId == Guid.Empty)
                 throw new ArgumentNullException(nameof(projectId));
@@ -1845,6 +1856,9 @@ namespace Checkmarx.API.AST
             if (string.IsNullOrEmpty(message))
                 throw new ArgumentNullException(nameof(message));
 
+            if (string.IsNullOrWhiteSpace(vulnerabilityStatus) && string.IsNullOrWhiteSpace(severityOrScore))
+                throw new ArgumentNullException($"In order to mark an SCA vulnerability, at least one of the following should have a value: {nameof(vulnerabilityStatus)}, {nameof(severityOrScore)}");
+
             var body = new ScaPackageInfo
             {
                 PackageManager = vulnerabilityRisk.PackageManager,
@@ -1854,38 +1868,27 @@ namespace Checkmarx.API.AST
                 ProjectIds = [projectId]
             };
 
-            List<ActionType> actions = new List<ActionType>()
+            List<ActionType> actions = new List<ActionType>();
+
+            if (!string.IsNullOrWhiteSpace(vulnerabilityStatus))
             {
-                new ActionType
+                actions.Add(new ActionType
                 {
                     Type = ActionTypeEnum.ChangeState,
-                    Value = vulnerabilityStatus.ToString(),
+                    Value = vulnerabilityStatus,
                     Comment = message
-                }
-            };
+                });
+            }
 
-            if (!string.IsNullOrWhiteSpace(severity))
+            if (!string.IsNullOrWhiteSpace(severityOrScore))
             {
-                double score = 0.0;
-                switch (severity.Trim().ToUpperInvariant())
+                double score;
+
+                if (!double.TryParse(severityOrScore, NumberStyles.Float, CultureInfo.InvariantCulture, out score)
+                    || score < 0 || score > 10)
                 {
-                    case "CRITICAL":
-                        score = 9;
-                        break;
-                    case "HIGH":
-                        score = 7;
-                        break;
-                    case "MEDIUM":
-                        score = 4;
-                        break;
-                    case "LOW":
-                        score = 0.1;
-                        break;
-                    case "INFO":
-                        score = 0.0;
-                        break;
-                    default:
-                        throw new ArgumentException($"Invalid severity value: {severity}");
+                    if (!severityScoreMap.TryGetValue(severityOrScore.Trim(), out score))
+                        throw new ArgumentException($"Invalid severity value: {severityOrScore}");
                 }
 
                 actions.Add(new ActionType

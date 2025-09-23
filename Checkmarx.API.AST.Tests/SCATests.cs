@@ -180,7 +180,7 @@ namespace Checkmarx.API.AST.Tests
             {
                 try
                 {
-                    astclient.MarkSCAVulnerability(project.Id, vuln, ScaVulnerabilityStatus.Confirmed, "test");
+                    astclient.MarkSCAVulnerability(project.Id, vuln, ScaVulnerabilityStatus.Confirmed.ToString(), "test");
                 }
                 catch (Exception ex)
                 {
