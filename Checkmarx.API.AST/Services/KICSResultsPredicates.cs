@@ -197,8 +197,7 @@ namespace Checkmarx.API.AST.Services
                 ProjectId = predicate.ProjectId,
                 Severity = predicate.Severity,
                 Comment = predicate.Comment,
-                State = predicate.State,
-                AdditionalProperties = predicate.AdditionalProperties
+                State = predicate.State
             }), authorization, accept, correlationId, cancellationToken);
         }
 

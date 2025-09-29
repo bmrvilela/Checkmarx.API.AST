@@ -172,11 +172,11 @@ namespace Checkmarx.API.AST.Tests
 
             Assert.IsNotNull(scaLastScan);
 
-            ScanReportJson lastScanReport = astclient.Requests.GetScanReport(scaLastScan.Id);
+            var scaVulnerabilities = astclient.GetScaScanVulnerabilities(scaLastScan.Id);
 
-            Assert.IsTrue(lastScanReport.Vulnerabilities.Count > 0, "No vulnerabilities found in the last scan report.");
+            Assert.IsTrue(scaVulnerabilities.Count > 0, "No vulnerabilities found in the last scan report.");
 
-            foreach (var vuln in lastScanReport.Vulnerabilities)
+            foreach (var vuln in scaVulnerabilities)
             {
                 try
                 {
@@ -464,7 +464,7 @@ namespace Checkmarx.API.AST.Tests
             var severityToCreate = "Critical";
 
             var existentRisks = astclient.GraphQLClient.GetAllVulnerabilitiesAsync(10000).Result
-                .Where(x => x.VulnerabilityId.StartsWith("CVE-") && 
+                .Where(x => x.VulnerabilityId.StartsWith("CVE-") &&
                 x.Severity == severityToCreate);
 
             var cxDummyPackageRisks = astclient.SCA

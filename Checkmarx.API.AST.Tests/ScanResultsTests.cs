@@ -161,12 +161,12 @@ namespace Checkmarx.API.AST.Tests
         [TestMethod]
         public void RandomMarkingTheSCAFindingsTest()
         {
-            ScanReportJson result = astClient.Requests.GetScanReport(
+            var scaVulnerabilities = astClient.GetScaScanVulnerabilities(
                 astClient.GetLastScan(ProjectId, fullScanOnly: false, completed: true, scanType: ScanTypeEnum.sca).Id);
 
-            Assert.IsNotNull(result);
+            Assert.IsNotNull(scaVulnerabilities);
 
-            foreach (var vuln in result.Vulnerabilities)
+            foreach (var vuln in scaVulnerabilities)
             {
                 astClient.MarkSCAVulnerability(ProjectId, vuln,
                     GetRandomEnumMember<ScaVulnerabilityStatus>().ToString(),
