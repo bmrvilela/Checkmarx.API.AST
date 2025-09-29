@@ -115,6 +115,26 @@ namespace Checkmarx.API.AST.Services
             return cveProjects;
         }
 
+        public ScanLatestChanges GetSCAScanLatestChanges(Guid scanId)
+        {
+            if (scanId == Guid.Empty)
+                throw new ArgumentNullException(nameof(scanId));
+
+            var query = @"query ($scanId: UUID!) { scanLatestChanges (scanId: $scanId) { supplyChainRiskChangesCounter, vulnerabilityModelChangesCounter, packageModelChangesCounter, directPackagesChangeCounter, transitivePackagesChangeCounter, licenseModelChangesCounter } }";
+
+            // Define variables for the query
+            var variables = new
+            {
+                scanId = scanId
+            };
+
+            var response = ExecuteQueryAsync(query, variables).GetAwaiter().GetResult();
+
+            return System.Text.Json.JsonSerializer.Deserialize<ScanLatestChanges>(
+                response,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+            );
+        }
 
         /// <summary>
         /// Calls the GraphQL API to search for package vulnerability state and score actions.

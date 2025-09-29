@@ -295,8 +295,8 @@ namespace Checkmarx.API.AST.Models
                     updateScaScanResultDetails(
                         _scaResults,
                         SCA_Risks,
-                        severitySelector: x => x.Severity,
-                        stateSelector: x => x.State
+                        severitySelector: x => x.PendingSeverity,
+                        stateSelector: x => x.PendingState
                     );
                 }
 
@@ -311,10 +311,7 @@ namespace Checkmarx.API.AST.Models
             get
             {
                 if (_scaVulnerabilities == null)
-                {
-                    ScanReportJson lastScanReport = this._client.Requests.GetScanReport(Id);
-                    _scaVulnerabilities = lastScanReport.Vulnerabilities;
-                }
+                    _scaVulnerabilities = this._client.GetScaScanVulnerabilities(Id, _scaRisks);
 
                 return _scaVulnerabilities;
             }

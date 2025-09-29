@@ -1516,6 +1516,41 @@ namespace Checkmarx.API.AST
             }
         }
 
+        public List<Vulnerability> GetScaScanVulnerabilities(Guid scanId, List<ScaVulnerability> scaRisks = null)
+        {
+            var vulnerabilities = Requests.GetScanReport(scanId).Vulnerabilities;
+
+            // Check if there are uncommitted changes
+            if (SCAScanHasVulnerabilityChanges(scanId))
+            {
+                var risks = scaRisks ?? GraphQLClient.GetAllVulnerabilitiesRisksByScanIdAsync(new VulnerabilitiesRisksByScanIdVariables
+                {
+                    ScanId = scanId
+                }).Result;
+
+                // Scan report brings only committed changes, so we need to update with pending changes if any
+                foreach (var risk in risks.Where(x => x.PendingChanges))
+                {
+                    var _vuln = vulnerabilities.Single(x => x.Match(risk));
+
+                    if (_vuln.Score != risk.PendingScore)
+                        _vuln.Score = risk.PendingScore;
+
+                    if (_vuln.RiskState != risk.PendingState)
+                        _vuln.RiskState = risk.PendingState;
+
+                    if (_vuln.Severity != risk.PendingSeverity)
+                        _vuln.Severity = risk.PendingSeverity;
+                }
+            }
+
+            return vulnerabilities;
+        }
+
+        public bool SCAScanHasVulnerabilityChanges(Guid scanId)
+        {
+            return GraphQLClient.GetSCAScanLatestChanges(scanId).HasVulnerabilityChanges;
+        }
 
         #region ReRun Scans
 
