@@ -3,6 +3,7 @@ using Checkmarx.API.AST.Models;
 using Checkmarx.API.AST.Models.Report;
 using Checkmarx.API.AST.Models.SCA;
 using Checkmarx.API.AST.Services;
+using Checkmarx.API.AST.Services.Analytics;
 using Checkmarx.API.AST.Services.Applications;
 using Checkmarx.API.AST.Services.Configuration;
 using Checkmarx.API.AST.Services.CustomStates;
@@ -184,6 +185,18 @@ namespace Checkmarx.API.AST
                     _projects = new Projects($"{ASTServer.AbsoluteUri}api/projects", _httpClient);
 
                 return _projects;
+            }
+        }
+
+        private Analytics _analytics;
+        public Analytics Analytics
+        {
+            get
+            {
+                if (Connected && _analytics == null)
+                    _analytics = new Analytics($"{ASTServer.AbsoluteUri}api/data_analytics", _httpClient);
+
+                return _analytics;
             }
         }
 
