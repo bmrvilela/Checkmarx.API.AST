@@ -732,6 +732,35 @@ namespace Checkmarx.API.AST
 
         #endregion
 
+        #region User
+
+        private UserModel _user = null;
+        public UserModel User
+        {
+            get
+            {
+                if (_user == null)
+                {
+                    if (!Connected)
+                        throw new Exception("Not connected to AST Server. Please authenticate first.");
+
+                    _user = new UserModel();
+
+                    var claims = JwtUtils.GetTokenClaims(_httpClient.DefaultRequestHeaders.Authorization?.Parameter);
+
+                    if (claims.ContainsKey("name"))
+                        _user.Name = claims["name"].Single();
+
+                    if (claims.ContainsKey("email"))
+                        _user.Email = claims["email"].Single();
+                }
+
+                return _user;
+            }
+        }
+
+        #endregion
+
         #region License Details
 
         private LicenseDto _licenseDetails = null;
