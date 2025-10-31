@@ -8,6 +8,8 @@
         CycloneDxXml,
         [System.Runtime.Serialization.EnumMember(Value = @"SpdxJson")]
         SpdxJson,
+        [System.Runtime.Serialization.EnumMember(Value = @"RemediatedPackages")]
+        RemediatedPackages,
         [System.Runtime.Serialization.EnumMember(Value = @"RemediatedPackagesJson")]
         RemediatedPackagesJson,
         [System.Runtime.Serialization.EnumMember(Value = @"ScanReportJson")]

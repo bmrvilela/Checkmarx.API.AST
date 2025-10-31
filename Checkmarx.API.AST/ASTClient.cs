@@ -3,6 +3,7 @@ using Checkmarx.API.AST.Models;
 using Checkmarx.API.AST.Models.Report;
 using Checkmarx.API.AST.Models.SCA;
 using Checkmarx.API.AST.Services;
+using Checkmarx.API.AST.Services.Analytics;
 using Checkmarx.API.AST.Services.Applications;
 using Checkmarx.API.AST.Services.Configuration;
 using Checkmarx.API.AST.Services.CustomStates;
@@ -184,6 +185,18 @@ namespace Checkmarx.API.AST
                     _projects = new Projects($"{ASTServer.AbsoluteUri}api/projects", _httpClient);
 
                 return _projects;
+            }
+        }
+
+        private Analytics _analytics;
+        public Analytics Analytics
+        {
+            get
+            {
+                if (Connected && _analytics == null)
+                    _analytics = new Analytics($"{ASTServer.AbsoluteUri}api/data_analytics", _httpClient);
+
+                return _analytics;
             }
         }
 
@@ -728,6 +741,35 @@ namespace Checkmarx.API.AST
             Tenant = tenant;
             ClientId = clientId;
             ClientSecret = clientSecret;
+        }
+
+        #endregion
+
+        #region User
+
+        private UserModel _user = null;
+        public UserModel User
+        {
+            get
+            {
+                if (_user == null)
+                {
+                    if (!Connected)
+                        throw new Exception("Not connected to AST Server. Please authenticate first.");
+
+                    _user = new UserModel();
+
+                    var claims = JwtUtils.GetTokenClaims(_httpClient.DefaultRequestHeaders.Authorization?.Parameter);
+
+                    if (claims.ContainsKey("name"))
+                        _user.Name = claims["name"].Single();
+
+                    if (claims.ContainsKey("email"))
+                        _user.Email = claims["email"].Single();
+                }
+
+                return _user;
+            }
         }
 
         #endregion
@@ -3006,6 +3048,33 @@ namespace Checkmarx.API.AST
         #endregion
 
         #endregion
+
+        #endregion
+
+        #region Analytics
+
+        public SeverityDistribution GetAnalyticsReport(KpiType type, DateTime startDate, DateTime endDate, IEnumerable<Guid> projectIds = null)
+        {
+            if (endDate <= startDate)
+                throw new Exception("The end date must be superior to the start date");
+
+            // These KPI types are supposed to be paginated -> TO DO
+            if (type == KpiType.MostCommonVulnerabilities || type == KpiType.MostAgingVulnerabilities || type == KpiType.AllVulnerabilities)
+                throw new NotSupportedException($"The KPI type {type} is not yet supported in this method.");
+
+            //bool paginated = type == KpiType.MostCommonVulnerabilities || type == KpiType.MostAgingVulnerabilities || type == KpiType.AllVulnerabilities;
+
+            AnalyticsKpiQuery body = new AnalyticsKpiQuery()
+            {
+                Projects = projectIds != null ? projectIds.Select(x => x.ToString()).ToList() : null,
+                StartDate = startDate.ToString("yyyy-MM-dd'T'HH:mm:ss"),
+                EndDate = endDate.ToString("yyyy-MM-dd'T'HH:mm:ss"),
+                Timezone = "UTC",
+                Kpi = KpiType.VulnerabilitiesBySeverityTotal,
+            };
+
+            return Analytics.QueryAsync(body).GetAwaiter().GetResult();
+        }
 
         #endregion
 
