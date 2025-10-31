@@ -3051,6 +3051,33 @@ namespace Checkmarx.API.AST
 
         #endregion
 
+        #region Analytics
+
+        public SeverityDistribution GetAnalyticsReport(KpiType type, DateTime startDate, DateTime endDate, IEnumerable<Guid> projectIds = null)
+        {
+            if (endDate <= startDate)
+                throw new Exception("The end date must be superior to the start date");
+
+            // These KPI types are supposed to be paginated -> TO DO
+            if (type == KpiType.MostCommonVulnerabilities || type == KpiType.MostAgingVulnerabilities || type == KpiType.AllVulnerabilities)
+                throw new NotSupportedException($"The KPI type {type} is not yet supported in this method.");
+
+            //bool paginated = type == KpiType.MostCommonVulnerabilities || type == KpiType.MostAgingVulnerabilities || type == KpiType.AllVulnerabilities;
+
+            AnalyticsKpiQuery body = new AnalyticsKpiQuery()
+            {
+                Projects = projectIds != null ? projectIds.Select(x => x.ToString()).ToList() : null,
+                StartDate = startDate.ToString("yyyy-MM-dd'T'HH:mm:ss"),
+                EndDate = endDate.ToString("yyyy-MM-dd'T'HH:mm:ss"),
+                Timezone = "UTC",
+                Kpi = KpiType.VulnerabilitiesBySeverityTotal,
+            };
+
+            return Analytics.QueryAsync(body).GetAwaiter().GetResult();
+        }
+
+        #endregion
+
         #region Webhooks
 
         public ICollection<Webhook> GetWebhooks(int startAt = 0, int limit = 10)
