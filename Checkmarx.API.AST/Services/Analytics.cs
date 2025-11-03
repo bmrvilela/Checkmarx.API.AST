@@ -22,8 +22,12 @@
 
 namespace Checkmarx.API.AST.Services.Analytics
 {
-    using System = global::System;
+    using Newtonsoft.Json;
+    using System;
+    using System.Collections.Generic;
+    using System.Diagnostics;
     using static Checkmarx.API.AST.ASTClient;
+    using System = global::System;
 
     [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.6.0.0 (NJsonSchema v11.5.0.0 (Newtonsoft.Json v13.0.0.0))")]
     public partial class Analytics
@@ -42,7 +46,11 @@ namespace Checkmarx.API.AST.Services.Analytics
 
         private static Newtonsoft.Json.JsonSerializerSettings CreateSerializerSettings()
         {
-            var settings = new Newtonsoft.Json.JsonSerializerSettings();
+            var settings = new Newtonsoft.Json.JsonSerializerSettings()
+            {
+                DateFormatString = "yyyy-MM-dd'T'HH:mm:ss"
+            };
+
             UpdateJsonSerializerSettings(settings);
             return settings;
         }
@@ -90,6 +98,12 @@ namespace Checkmarx.API.AST.Services.Analytics
                     if (authorization != null)
                         request_.Headers.TryAddWithoutValidation("Authorization", ConvertToString(authorization, System.Globalization.CultureInfo.InvariantCulture));
                     var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+
+#if DEBUG
+
+                    Trace.WriteLine(json_);
+#endif
+
                     var content_ = new System.Net.Http.StringContent(json_);
                     content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json; version=1.0");
                     request_.Content = content_;
@@ -126,6 +140,11 @@ namespace Checkmarx.API.AST.Services.Analytics
                         var status_ = (int)response_.StatusCode;
                         if (status_ == 200)
                         {
+#if DEBUG
+                            var content = await response_.Content.ReadAsStringAsync();
+                            Trace.WriteLine(content);
+#endif
+
                             var objectResponse_ = await ReadObjectResponseAsync<SeverityDistribution>(response_, headers_, cancellationToken).ConfigureAwait(false);
                             if (objectResponse_.Object == null)
                             {
@@ -164,6 +183,8 @@ namespace Checkmarx.API.AST.Services.Analytics
                     client_.Dispose();
             }
         }
+
+
 
         protected struct ObjectResponseResult<T>
         {
@@ -297,10 +318,11 @@ namespace Checkmarx.API.AST.Services.Analytics
         }
     }
 
+    #region Response Types
+
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.6.0.0 (NJsonSchema v11.5.0.0 (Newtonsoft.Json v13.0.0.0))")]
     public partial class SeverityDistribution
     {
-
         [Newtonsoft.Json.JsonProperty("distribution", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public System.Collections.Generic.ICollection<DistributionItem> Distribution { get; set; }
 
@@ -321,18 +343,22 @@ namespace Checkmarx.API.AST.Services.Analytics
 
     }
 
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.6.0.0 (NJsonSchema v11.5.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class DistributionItem
+    public class StatusSummary
     {
-
-        [Newtonsoft.Json.JsonProperty("label", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [JsonProperty("label")]
         public string Label { get; set; }
 
-        [Newtonsoft.Json.JsonProperty("density", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public float Density { get; set; }
+        [JsonProperty("results")]
+        public int Results { get; set; }
 
-        [Newtonsoft.Json.JsonProperty("percentage", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public float Percentage { get; set; }
+        [JsonProperty("severities")]
+        public List<Severity> Severities { get; set; }
+    }
+
+    public partial class SeverityItem
+    {
+        [Newtonsoft.Json.JsonProperty("label", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string Label { get; set; }
 
         [Newtonsoft.Json.JsonProperty("results", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public int Results { get; set; }
@@ -349,23 +375,42 @@ namespace Checkmarx.API.AST.Services.Analytics
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.6.0.0 (NJsonSchema v11.5.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class AnalyticsKpiQuery : AnalyticsKpiQueryBase
+    public partial class DistributionItem
     {
 
-        [Newtonsoft.Json.JsonProperty("kpi", Required = Newtonsoft.Json.Required.Always)]
-        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
-        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-        public KpiType Kpi { get; set; }
+        [Newtonsoft.Json.JsonProperty("label", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string Label { get; set; }
 
-        [Newtonsoft.Json.JsonProperty("status", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore, ItemConverterType = typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-        public System.Collections.Generic.ICollection<StatusType> Status { get; set; }
+        [Newtonsoft.Json.JsonProperty("density", Required = Newtonsoft.Json.Required.AllowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public float Density { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("percentage", Required = Newtonsoft.Json.Required.AllowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public float Percentage { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("results", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public int Results { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("severities", Required = Newtonsoft.Json.Required.AllowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public System.Collections.Generic.ICollection<SeverityItem> Severities { get; set; }
+
+
+        private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
+
+        [Newtonsoft.Json.JsonExtensionData]
+        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        {
+            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+            set { _additionalProperties = value; }
+        }
 
     }
+    #endregion
+
+    #region Query Types
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.6.0.0 (NJsonSchema v11.5.0.0 (Newtonsoft.Json v13.0.0.0))")]
     public partial class AnalyticsKpiQueryBase
     {
-
         [Newtonsoft.Json.JsonProperty("projects", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public System.Collections.Generic.ICollection<string> Projects { get; set; }
 
@@ -416,14 +461,14 @@ namespace Checkmarx.API.AST.Services.Analytics
         /// </summary>
         [Newtonsoft.Json.JsonProperty("startDate", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         [System.ComponentModel.DataAnnotations.RegularExpression(@"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$")]
-        public string StartDate { get; set; }
+        public DateTime StartDate { get; set; }
 
         /// <summary>
         /// date-time in format yyyy-MM-ddTHH:mm:ss
         /// </summary>
         [Newtonsoft.Json.JsonProperty("endDate", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         [System.ComponentModel.DataAnnotations.RegularExpression(@"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$")]
-        public string EndDate { get; set; }
+        public DateTime EndDate { get; set; }
 
         /// <summary>
         /// Number between 1 and 100 for mostCommonVulnerabilities, mostAgingVulnerabilities KPI types and between 1 and 1000 for allVulnerabilities KPI type. Required for all three KPI types.
@@ -447,13 +492,25 @@ namespace Checkmarx.API.AST.Services.Analytics
             get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
             set { _additionalProperties = value; }
         }
-
     }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.6.0.0 (NJsonSchema v11.5.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class AnalyticsKpiQuery : AnalyticsKpiQueryBase
+    {
+        [Newtonsoft.Json.JsonProperty("kpi", Required = Newtonsoft.Json.Required.Always)]
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+        public KpiType Kpi { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("status", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore, ItemConverterType = typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+        public System.Collections.Generic.ICollection<StatusType> Status { get; set; }
+    }
+
+
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.6.0.0 (NJsonSchema v11.5.0.0 (Newtonsoft.Json v13.0.0.0))")]
     public partial class AnalyticsKpiQueryWithFixedKpis : AnalyticsKpiQueryBase
     {
-
         [Newtonsoft.Json.JsonProperty("kpi", Required = Newtonsoft.Json.Required.Always)]
         [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
         [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
@@ -464,13 +521,11 @@ namespace Checkmarx.API.AST.Services.Analytics
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.6.0.0 (NJsonSchema v11.5.0.0 (Newtonsoft.Json v13.0.0.0))")]
     public enum KpiTypeFixed
     {
-
         [System.Runtime.Serialization.EnumMember(Value = @"fixedVulnerabilitiesBySeverityOvertime")]
         FixedVulnerabilitiesBySeverityOvertime = 0,
 
         [System.Runtime.Serialization.EnumMember(Value = @"meanTimeToResolution")]
         MeanTimeToResolution = 1,
-
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.6.0.0 (NJsonSchema v11.5.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -537,6 +592,11 @@ namespace Checkmarx.API.AST.Services.Analytics
         [System.Runtime.Serialization.EnumMember(Value = @"sca")]
         Sca = 2,
 
+        [System.Runtime.Serialization.EnumMember(Value = @"dast")]
+        Dast = 3,
+
+        [System.Runtime.Serialization.EnumMember(Value = @"containers")]
+        Containers = 4
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.6.0.0 (NJsonSchema v11.5.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -579,43 +639,8 @@ namespace Checkmarx.API.AST.Services.Analytics
         [System.Runtime.Serialization.EnumMember(Value = @"information")]
         Information = 4,
 
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.6.0.0 (NJsonSchema v11.5.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class ApiException : System.Exception
-    {
-        public int StatusCode { get; private set; }
-
-        public string Response { get; private set; }
-
-        public System.Collections.Generic.IReadOnlyDictionary<string, System.Collections.Generic.IEnumerable<string>> Headers { get; private set; }
-
-        public ApiException(string message, int statusCode, string response, System.Collections.Generic.IReadOnlyDictionary<string, System.Collections.Generic.IEnumerable<string>> headers, System.Exception innerException)
-            : base(message + "\n\nStatus: " + statusCode + "\nResponse: \n" + ((response == null) ? "(null)" : response.Substring(0, response.Length >= 512 ? 512 : response.Length)), innerException)
-        {
-            StatusCode = statusCode;
-            Response = response;
-            Headers = headers;
-        }
-
-        public override string ToString()
-        {
-            return string.Format("HTTP Response: \n\n{0}\n\n{1}", Response, base.ToString());
-        }
-    }
-
-    [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.6.0.0 (NJsonSchema v11.5.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class ApiException<TResult> : ApiException
-    {
-        public TResult Result { get; private set; }
-
-        public ApiException(string message, int statusCode, string response, System.Collections.Generic.IReadOnlyDictionary<string, System.Collections.Generic.IEnumerable<string>> headers, TResult result, System.Exception innerException)
-            : base(message, statusCode, response, headers, innerException)
-        {
-            Result = result;
-        }
-    }
-
+    } 
+    #endregion
 }
 
 #pragma warning restore 108

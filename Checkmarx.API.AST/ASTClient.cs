@@ -3067,8 +3067,8 @@ namespace Checkmarx.API.AST
             AnalyticsKpiQuery body = new AnalyticsKpiQuery()
             {
                 Projects = projectIds != null ? projectIds.Select(x => x.ToString()).ToList() : null,
-                StartDate = startDate.ToString("yyyy-MM-dd'T'HH:mm:ss"),
-                EndDate = endDate.ToString("yyyy-MM-dd'T'HH:mm:ss"),
+                StartDate = startDate,
+                EndDate = endDate,
                 Timezone = "UTC",
                 Kpi = KpiType.VulnerabilitiesBySeverityTotal,
             };
