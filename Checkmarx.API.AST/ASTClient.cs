@@ -3053,27 +3053,150 @@ namespace Checkmarx.API.AST
 
         #region Analytics
 
-        public SeverityDistribution GetAnalyticsReport(KpiType type, DateTime startDate, DateTime endDate, IEnumerable<Guid> projectIds = null)
+        public SeverityDistribution GetAnalyticsVulnerabilitiesBySeverityTotal(DateTime startDate, DateTime endDate, AnalyticsOptions options = null)
+        {
+            AnalyticsKpiQuery body = getAnalyticsBody(KpiType.VulnerabilitiesBySeverityTotal, startDate, endDate, options);
+
+            return Analytics.GetVulnerabilitiesBySeverityTotal(body).GetAwaiter().GetResult();
+        }
+
+        public SeverityOvertimeDistribution GetAnalyticsVulnerabilitiesBySeverityOvertime(DateTime startDate, DateTime endDate, AnalyticsOptions options = null)
+        {
+            AnalyticsKpiQuery body = getAnalyticsBody(KpiType.VulnerabilitiesBySeverityOvertime, startDate, endDate, options);
+
+            return Analytics.GetVulnerabilitiesBySeverityOvertime(body).GetAwaiter().GetResult();
+        }
+
+        public StateDistribution GetAnalyticsVulnerabilitiesByStateTotal(DateTime startDate, DateTime endDate, AnalyticsOptions options = null)
+        {
+            AnalyticsKpiQuery body = getAnalyticsBody(KpiType.VulnerabilitiesByStateTotal, startDate, endDate, options);
+
+            return Analytics.GetVulnerabilitiesByStateTotal(body).GetAwaiter().GetResult();
+        }
+
+        public StatusDistribution GetAnalyticsVulnerabilitiesByStatusTotal(DateTime startDate, DateTime endDate, AnalyticsOptions options = null)
+        {
+            AnalyticsKpiQuery body = getAnalyticsBody(KpiType.VulnerabilitiesByStatusTotal, startDate, endDate, options);
+
+            return Analytics.GetVulnerabilitiesByStatusTotal(body).GetAwaiter().GetResult();
+        }
+
+        public SeverityAndStateDistribution GetAnalyticsVulnerabilitiesBySeverityAndStateTotal(DateTime startDate, DateTime endDate, AnalyticsOptions options = null)
+        {
+            AnalyticsKpiQuery body = getAnalyticsBody(KpiType.VulnerabilitiesBySeverityAndStateTotal, startDate, endDate, options);
+
+            return Analytics.GetVulnerabilitiesBySeverityAndStateTotal(body).GetAwaiter().GetResult();
+        }
+
+        public AgingAndSeveritiesResponse GetAnalyticsAgingTotal(DateTime startDate, DateTime endDate, AnalyticsOptions options = null)
+        {
+            AnalyticsKpiQuery body = getAnalyticsBody(KpiType.AgingTotal, startDate, endDate, options);
+
+            return Analytics.GetAgingTotal(body).GetAwaiter().GetResult();
+        }
+
+        public IDEDataResponse GetAnalyticsIdeTotal(DateTime startDate, DateTime endDate, AnalyticsOptions options = null)
+        {
+            AnalyticsKpiQuery body = getAnalyticsBody(KpiType.IdeTotal, startDate, endDate, options);
+
+            return Analytics.GetIdeTotal(body).GetAwaiter().GetResult();
+        }
+
+        public IDEDistributionResponse GetAnalyticsIdeOvertime(DateTime startDate, DateTime endDate, AnalyticsOptions options = null)
+        {
+            AnalyticsKpiQuery body = getAnalyticsBody(KpiType.IdeOvertime, startDate, endDate, options);
+
+            return Analytics.GetIdeOvertime(body).GetAwaiter().GetResult();
+        }
+
+        public MostCommonVulnerabilitiesDistribution GetAnalyticsMostCommonVulnerabilities(DateTime startDate, DateTime endDate, int maxNumberVulnerabilities = 100, AnalyticsOptions options = null)
+        {
+            if (maxNumberVulnerabilities < 1)
+                throw new ArgumentOutOfRangeException(nameof(maxNumberVulnerabilities), "The maximum number of vulnerabilities must be at least 1.");
+
+            AnalyticsKpiQuery body = getAnalyticsBody(KpiType.MostCommonVulnerabilities, startDate, endDate, options, maxNumberVulnerabilities);
+
+            return Analytics.GetMostCommonVulnerabilities(body).GetAwaiter().GetResult();
+        }
+
+        public MostAgingVulnerabilitiesDistribution GetAnalyticsMostAgingVulnerabilities(DateTime startDate, DateTime endDate, int maxNumberVulnerabilities = 100, AnalyticsOptions options = null)
+        {
+            if (maxNumberVulnerabilities < 1)
+                throw new ArgumentOutOfRangeException(nameof(maxNumberVulnerabilities), "The maximum number of vulnerabilities must be at least 1.");
+
+            AnalyticsKpiQuery body = getAnalyticsBody(KpiType.MostAgingVulnerabilities, startDate, endDate, options, maxNumberVulnerabilities);
+
+            return Analytics.GetMostAgingVulnerabilities(body).GetAwaiter().GetResult();
+        }
+
+        public List<AllVulnerabilities> GetAnalyticsAllVulnerabilities(DateTime startDate, DateTime endDate, AnalyticsOptions options = null)
+        {
+            const int pageSize = 500;
+            int offset = 0;
+
+            var allItems = new List<AllVulnerabilities>();
+
+            while (true)
+            {
+                var body = getAnalyticsBody(KpiType.AllVulnerabilities, startDate, endDate, options, pageSize, offset);
+                var response = Analytics.GetAllVulnerabilities(body).GetAwaiter().GetResult();
+
+                if (response.Vulnerabilities == null || response.Vulnerabilities.Count == 0)
+                    break;
+
+                allItems.AddRange(response.Vulnerabilities);
+
+                if (response.Vulnerabilities.Count < pageSize)
+                    break;
+
+                offset += pageSize;
+            }
+
+            return allItems;
+        }
+
+        private AnalyticsKpiQuery getAnalyticsBody(
+            KpiType type,
+            DateTime startDate,
+            DateTime endDate,
+            AnalyticsOptions options = null,
+            int? limit = null,
+            int? offset = null)
         {
             if (endDate <= startDate)
                 throw new Exception("The end date must be superior to the start date");
 
-            // These KPI types are supposed to be paginated -> TO DO
-            if (type == KpiType.MostCommonVulnerabilities || type == KpiType.MostAgingVulnerabilities || type == KpiType.AllVulnerabilities)
-                throw new NotSupportedException($"The KPI type {type} is not yet supported in this method.");
-
-            //bool paginated = type == KpiType.MostCommonVulnerabilities || type == KpiType.MostAgingVulnerabilities || type == KpiType.AllVulnerabilities;
-
-            AnalyticsKpiQuery body = new AnalyticsKpiQuery()
+            if (type == KpiType.MostCommonVulnerabilities || type == KpiType.MostAgingVulnerabilities)
             {
-                Projects = projectIds != null ? projectIds.Select(x => x.ToString()).ToList() : null,
-                StartDate = startDate,
-                EndDate = endDate,
-                Timezone = "UTC",
-                Kpi = KpiType.VulnerabilitiesBySeverityTotal,
-            };
+                if (limit is null)
+                    throw new ArgumentException($"KPI type {type} requires limit parameter.");
+            }
+            else if (type == KpiType.AllVulnerabilities)
+            {
+                if (limit is null || offset is null)
+                    throw new ArgumentException($"KPI type {type} requires both limit and offset parameters.");
+            }
 
-            return Analytics.QueryAsync(body).GetAwaiter().GetResult();
+            return new AnalyticsKpiQuery
+            {
+                StartDate = startDate.ToString("yyyy-MM-dd'T'HH:mm:ss"),
+                EndDate = endDate.ToString("yyyy-MM-dd'T'HH:mm:ss"),
+                Timezone = "UTC",
+                Kpi = type,
+                Limit = limit,
+                Offset = offset,
+
+                // Options
+                Projects = options?.Projects?.ToList(),
+                Applications = options?.Applications?.ToList(),
+                Environments = options?.Environments?.ToList(),
+                Scanners = options?.Scanners?.ToList(),
+                ApplicationTags = options?.ApplicationTags?.ToList(),
+                ProjectTags = options?.ProjectTags?.ToList(),
+                ScanTags = options?.ScanTags?.ToList(),
+                States = options?.States?.ToList(),
+                Severities = options?.Severities?.ToList()
+            };
         }
 
         #endregion
