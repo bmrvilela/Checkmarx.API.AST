@@ -3179,8 +3179,8 @@ namespace Checkmarx.API.AST
 
             return new AnalyticsKpiQuery
             {
-                StartDate = startDate.ToString("yyyy-MM-dd'T'HH:mm:ss"),
-                EndDate = endDate.ToString("yyyy-MM-dd'T'HH:mm:ss"),
+                StartDate = startDate,
+                EndDate = endDate,
                 Timezone = "UTC",
                 Kpi = type,
                 Limit = limit,
@@ -3191,6 +3191,7 @@ namespace Checkmarx.API.AST
                 Applications = options?.Applications?.ToList(),
                 Environments = options?.Environments?.ToList(),
                 Scanners = options?.Scanners?.ToList(),
+                BranchNames = options?.Branches?.ToList(),
                 ApplicationTags = options?.ApplicationTags?.ToList(),
                 ProjectTags = options?.ProjectTags?.ToList(),
                 ScanTags = options?.ScanTags?.ToList(),

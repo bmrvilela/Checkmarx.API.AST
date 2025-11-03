@@ -383,7 +383,6 @@ namespace Checkmarx.API.AST.Services.Analytics
         }
     }
 
-    #region Response Types
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.6.0.0 (NJsonSchema v11.5.0.0 (Newtonsoft.Json v13.0.0.0))")]
     public partial class SeverityDistribution
@@ -988,7 +987,6 @@ namespace Checkmarx.API.AST.Services.Analytics
         }
 
     }
-    #endregion
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.6.0.0 (NJsonSchema v11.5.0.0 (Newtonsoft.Json v13.0.0.0))")]
     public partial class Severities
@@ -1101,15 +1099,12 @@ namespace Checkmarx.API.AST.Services.Analytics
 
     }
 
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.6.0.0 (NJsonSchema v11.5.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class AnalyticsKpiQuery : AnalyticsKpiQueryBase
-    {
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.6.0.0 (NJsonSchema v11.5.0.0 (Newtonsoft.Json v13.0.0.0))")]
     public partial class AnalyticsKpiQueryBase
     {
         [Newtonsoft.Json.JsonProperty("projects", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.ICollection<Guid> Projects { get; set; }
+        public System.Collections.Generic.ICollection<string> Projects { get; set; }
 
         [Newtonsoft.Json.JsonProperty("applications", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public System.Collections.Generic.ICollection<string> Applications { get; set; }
@@ -1279,7 +1274,6 @@ namespace Checkmarx.API.AST.Services.Analytics
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.6.0.0 (NJsonSchema v11.5.0.0 (Newtonsoft.Json v13.0.0.0))")]
     public enum ScannerType
     {
-
         [System.Runtime.Serialization.EnumMember(Value = @"sast")]
         Sast = 0,
 
@@ -1337,7 +1331,6 @@ namespace Checkmarx.API.AST.Services.Analytics
         Information = 4,
 
     } 
-    #endregion
 }
 
 #pragma warning restore 108

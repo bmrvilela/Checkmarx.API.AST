@@ -6,8 +6,11 @@ namespace Checkmarx.API.AST.Models
 {
     public class AnalyticsOptions
     {
-        public IEnumerable<Guid> Projects { get; set; }
+        public IEnumerable<string> Projects { get; set; }
         public IEnumerable<string> Applications { get; set; }
+
+        public IEnumerable<string> Branches { get; set; }
+
         public IEnumerable<string> Environments { get; set; }
         public IEnumerable<ScannerType> Scanners { get; set; }
         public IEnumerable<string> ApplicationTags { get; set; }

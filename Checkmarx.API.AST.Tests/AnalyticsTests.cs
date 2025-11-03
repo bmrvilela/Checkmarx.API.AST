@@ -51,7 +51,7 @@ namespace Checkmarx.API.AST.Tests
         {
             try
             {
-                var result = astclient.GetAnalyticsVulnerabilitiesBySeverityTotal(StartDate, EndDate, null);
+                var result = astclient.GetAnalyticsVulnerabilitiesBySeverityTotal(StartDate, EndDate);
 
                 Trace.WriteLine($"LoC: {result.Loc}");
                 Trace.WriteLine($"Total: {result.Total}");
@@ -71,8 +71,8 @@ namespace Checkmarx.API.AST.Tests
             {
                 var result = astclient.GetAnalyticsVulnerabilitiesBySeverityTotal(StartDate, EndDate, new Models.AnalyticsOptions()
                 {
-                    Projects = projectIds.ToList(),
-                    Scanners = new List<ScannerType>() { ScannerType.Sast },
+                    Projects = projectIds.Select(x => x.ToString()),
+                    Scanners = [ ScannerType.Sast ],
                 });
 
                 Trace.WriteLine($"LoC: {result.Loc}");
