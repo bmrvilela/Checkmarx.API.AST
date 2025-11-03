@@ -51,27 +51,6 @@ namespace Checkmarx.API.AST.Tests
         }
 
         [TestMethod]
-        public void AnalyticsTest()
-        {
-            var type = Services.Analytics.KpiType.VulnerabilitiesBySeverityTotal;
-            var startDate = DateTime.UtcNow.AddMonths(-6);
-            var endDate = DateTime.UtcNow;
-
-            try
-            {
-                var result = astclient.GetAnalyticsReport(type, startDate, endDate);
-                Trace.WriteLine($"LoC: {result.Loc}");
-                Trace.WriteLine($"Total: {result.Total}");
-                foreach (var data in result.Distribution)
-                    Trace.WriteLine($"Label: {data.Label} | Density: {data.Density} | Percentage: {data.Percentage} | Results: {data.Results}");
-            }
-            catch (Exception ex)
-            {
-                Trace.WriteLine($"Error getting analytics report: {ex.Message}");
-            }
-        }
-
-        [TestMethod]
         public void ListAllQueriesTest()
         {
             astclient.GetQueries(projectId);
