@@ -22,10 +22,14 @@
 
 namespace Checkmarx.API.AST.Services.Analytics
 {
+    using Checkmarx.API.AST.Models;
+    using Checkmarx.API.AST.Utils;
     using Newtonsoft.Json;
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.Linq;
+    using System.Reflection;
     using static Checkmarx.API.AST.ASTClient;
     using System = global::System;
 
@@ -76,82 +80,121 @@ namespace Checkmarx.API.AST.Services.Analytics
         partial void PrepareRequest(System.Net.Http.HttpClient client, System.Net.Http.HttpRequestMessage request, System.Text.StringBuilder urlBuilder);
         partial void ProcessResponse(System.Net.Http.HttpClient client, System.Net.Http.HttpResponseMessage response);
 
-        public virtual async System.Threading.Tasks.Task<SeverityDistribution> GetVulnerabilitiesBySeverityTotal(AnalyticsKpiQuery body, string authorization = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        public async System.Threading.Tasks.Task<SeverityDistribution> GetVulnerabilitiesBySeverityTotal(DateTime startDate, DateTime endDate, AnalyticsOptions options = null)
         {
-            body.Kpi = KpiType.VulnerabilitiesBySeverityTotal;
-            return await QueryAsync<SeverityDistribution>(body, authorization, cancellationToken);
+            AnalyticsKpiQuery body = getBody(KpiType.VulnerabilitiesBySeverityTotal, startDate, endDate, options);
+
+            return await QueryAsync<SeverityDistribution>(body);
         }
 
-        public virtual async System.Threading.Tasks.Task<SeverityOvertimeDistribution> GetVulnerabilitiesBySeverityOvertime(AnalyticsKpiQuery body, string authorization = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        public async System.Threading.Tasks.Task<SeverityOvertimeDistribution> GetVulnerabilitiesBySeverityOvertime(DateTime startDate, DateTime endDate, AnalyticsOptions options = null)
         {
-            body.Kpi = KpiType.VulnerabilitiesBySeverityOvertime;
-            return await QueryAsync<SeverityOvertimeDistribution>(body, authorization, cancellationToken);
+            AnalyticsKpiQuery body = getBody(KpiType.VulnerabilitiesBySeverityOvertime, startDate, endDate, options);
+
+            return await QueryAsync<SeverityOvertimeDistribution>(body);
         }
 
-        public virtual async System.Threading.Tasks.Task<StateDistribution> GetVulnerabilitiesByStateTotal(AnalyticsKpiQuery body, string authorization = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        public async System.Threading.Tasks.Task<StateDistribution> GetVulnerabilitiesByStateTotal(DateTime startDate, DateTime endDate, AnalyticsOptions options = null)
         {
-            body.Kpi = KpiType.VulnerabilitiesByStateTotal;
-            return await QueryAsync<StateDistribution>(body, authorization, cancellationToken);
+            AnalyticsKpiQuery body = getBody(KpiType.VulnerabilitiesByStateTotal, startDate, endDate, options);
+
+            return await QueryAsync<StateDistribution>(body);
         }
 
-        public virtual async System.Threading.Tasks.Task<StatusDistribution> GetVulnerabilitiesByStatusTotal(AnalyticsKpiQuery body, string authorization = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        public async System.Threading.Tasks.Task<StatusDistribution> GetVulnerabilitiesByStatusTotal(DateTime startDate, DateTime endDate, AnalyticsOptions options = null)
         {
-            body.Kpi = KpiType.VulnerabilitiesByStatusTotal;
-            return await QueryAsync<StatusDistribution>(body, authorization, cancellationToken);
+            AnalyticsKpiQuery body = getBody(KpiType.VulnerabilitiesByStatusTotal, startDate, endDate, options);
+
+            return await QueryAsync<StatusDistribution>(body);
         }
 
-        public virtual async System.Threading.Tasks.Task<SeverityAndStateDistribution> GetVulnerabilitiesBySeverityAndStateTotal(AnalyticsKpiQuery body, string authorization = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        public async System.Threading.Tasks.Task<SeverityAndStateDistribution> GetVulnerabilitiesBySeverityAndStateTotal(DateTime startDate, DateTime endDate, AnalyticsOptions options = null)
         {
-            body.Kpi = KpiType.VulnerabilitiesBySeverityAndStateTotal;
-            return await QueryAsync<SeverityAndStateDistribution>(body, authorization, cancellationToken);
+            AnalyticsKpiQuery body = getBody(KpiType.VulnerabilitiesBySeverityAndStateTotal, startDate, endDate, options);
+
+            return await QueryAsync<SeverityAndStateDistribution>(body);
         }
 
-        public virtual async System.Threading.Tasks.Task<AgingAndSeveritiesResponse> GetAgingTotal(AnalyticsKpiQuery body, string authorization = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        public async System.Threading.Tasks.Task<AgingAndSeveritiesResponse> GetAgingTotal(DateTime startDate, DateTime endDate, AnalyticsOptions options = null)
         {
-            body.Kpi = KpiType.AgingTotal;
-            return await QueryAsync<AgingAndSeveritiesResponse>(body, authorization, cancellationToken);
+            AnalyticsKpiQuery body = getBody(KpiType.AgingTotal, startDate, endDate, options);
+
+            return await QueryAsync<AgingAndSeveritiesResponse>(body);
         }
 
-        public virtual async System.Threading.Tasks.Task<IDEDataResponse> GetIdeTotal(AnalyticsKpiQuery body, string authorization = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        public async System.Threading.Tasks.Task<IDEDataResponse> GetIdeTotal(DateTime startDate, DateTime endDate, AnalyticsOptions options = null)
         {
-            body.Kpi = KpiType.IdeTotal;
-            return await QueryAsync<IDEDataResponse>(body, authorization, cancellationToken);
+            AnalyticsKpiQuery body = getBody(KpiType.IdeTotal, startDate, endDate, options);
+
+            return await QueryAsync<IDEDataResponse>(body);
         }
 
-        public virtual async System.Threading.Tasks.Task<IDEDistributionResponse> GetIdeOvertime(AnalyticsKpiQuery body, string authorization = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        public async System.Threading.Tasks.Task<IDEDistributionResponse> GetIdeOvertime(DateTime startDate, DateTime endDate, AnalyticsOptions options = null)
         {
-            body.Kpi = KpiType.IdeOvertime;
-            return await QueryAsync<IDEDistributionResponse>(body, authorization, cancellationToken);
+            AnalyticsKpiQuery body = getBody(KpiType.IdeOvertime, startDate, endDate, options);
+
+            return await QueryAsync<IDEDistributionResponse>(body);
         }
 
-        public virtual async System.Threading.Tasks.Task<MostCommonVulnerabilitiesDistribution> GetMostCommonVulnerabilities(AnalyticsKpiQuery body, string authorization = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        public async System.Threading.Tasks.Task<MostCommonVulnerabilitiesDistribution> GetMostCommonVulnerabilities(DateTime startDate, DateTime endDate, int maxNumberVulnerabilities = 10, AnalyticsOptions options = null)
         {
-            if (body.Limit is null)
-                throw new ArgumentException($"KPI type {KpiType.MostCommonVulnerabilities} requires limit parameter.");
+            if (maxNumberVulnerabilities < 1 || maxNumberVulnerabilities > 100)
+                throw new ArgumentOutOfRangeException(nameof(maxNumberVulnerabilities), $"The value {maxNumberVulnerabilities} is invalid. It must be between 1 and 100.");
 
-            body.Kpi = KpiType.MostCommonVulnerabilities;
-            return await QueryAsync<MostCommonVulnerabilitiesDistribution>(body, authorization, cancellationToken);
+            AnalyticsKpiQuery body = getBody(KpiType.MostCommonVulnerabilities, startDate, endDate, options, maxNumberVulnerabilities);
+
+            return await QueryAsync<MostCommonVulnerabilitiesDistribution>(body);
         }
 
-        public virtual async System.Threading.Tasks.Task<MostAgingVulnerabilitiesDistribution> GetMostAgingVulnerabilities(AnalyticsKpiQuery body, string authorization = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        public async System.Threading.Tasks.Task<MostAgingVulnerabilitiesDistribution> GetMostAgingVulnerabilities(DateTime startDate, DateTime endDate, int maxNumberVulnerabilities = 10, AnalyticsOptions options = null)
         {
-            if (body.Limit is null)
-                throw new ArgumentException($"KPI type {KpiType.MostAgingVulnerabilities} requires limit parameter.");
+            if (maxNumberVulnerabilities < 1 || maxNumberVulnerabilities > 100)
+                throw new ArgumentOutOfRangeException(nameof(maxNumberVulnerabilities), $"The value {maxNumberVulnerabilities} is invalid. It must be between 1 and 100.");
 
-            body.Kpi = KpiType.MostAgingVulnerabilities;
-            return await QueryAsync<MostAgingVulnerabilitiesDistribution>(body, authorization, cancellationToken);
+            AnalyticsKpiQuery body = getBody(KpiType.MostAgingVulnerabilities, startDate, endDate, options, maxNumberVulnerabilities);
+
+            return await QueryAsync<MostAgingVulnerabilitiesDistribution>(body);
         }
 
-        public virtual async System.Threading.Tasks.Task<AllVulnerabilitiesDistribution> GetAllVulnerabilities(AnalyticsKpiQuery body, string authorization = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        public async System.Threading.Tasks.Task<IEnumerable<AllVulnerabilities>> GetAllVulnerabilities(DateTime startDate, DateTime endDate, int limit = 500, AnalyticsOptions options = null)
         {
-            if (body.Limit is null)
-                throw new ArgumentException($"KPI type {KpiType.AllVulnerabilities} requires limit parameter.");
+            if (limit < 1 || limit > 1000)
+                throw new ArgumentOutOfRangeException(nameof(limit), $"The value {limit} is invalid. It must be between 1 and 1000.");
 
-            if (body.Offset is null)
-                throw new ArgumentException($"KPI type {KpiType.AllVulnerabilities} requires offset parameter.");
+            int offset = 0;
 
-            body.Kpi = KpiType.AllVulnerabilities;
-            return await QueryAsync<AllVulnerabilitiesDistribution>(body, authorization, cancellationToken);
+            var allItems = new List<AllVulnerabilities>();
+            while (true)
+            {
+                var body = getBody(KpiType.AllVulnerabilities, startDate, endDate, options, limit, offset);
+                var response = await QueryAsync<AllVulnerabilitiesDistribution>(body);
+
+                if (response.Vulnerabilities == null || response.Vulnerabilities.Count == 0)
+                    break;
+
+                allItems.AddRange(response.Vulnerabilities);
+
+                if (response.Vulnerabilities.Count < limit)
+                    break;
+
+                offset += limit;
+            }
+
+            return allItems;
+        }
+
+        public async System.Threading.Tasks.Task<FixedVulnerabilitiesBySeverityDistribution> GetFixedVulnerabilitiesBySeverityOvertime(DateTime startDate, DateTime endDate, AnalyticsOptions options = null)
+        {
+            AnalyticsKpiQuery body = getBody(KpiType.FixedVulnerabilitiesBySeverityOvertime, startDate, endDate, options);
+
+            return await QueryAsync<FixedVulnerabilitiesBySeverityDistribution>(body);
+        }
+
+        public async System.Threading.Tasks.Task<MeanTimeToResolutionDistribution> GetMeanTimeToResolution(DateTime startDate, DateTime endDate, AnalyticsOptions options = null)
+        {
+            AnalyticsKpiQuery body = getBody(KpiType.MeanTimeToResolution, startDate, endDate, options);
+
+            return await QueryAsync<MeanTimeToResolutionDistribution>(body);
         }
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -161,7 +204,7 @@ namespace Checkmarx.API.AST.Services.Analytics
         /// <param name="authorization">REQUIRED: JWT authorization token</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<T> QueryAsync<T>(AnalyticsKpiQuery body, string authorization = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        private async System.Threading.Tasks.Task<T> QueryAsync<T>(AnalyticsKpiQuery body, string authorization = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
         {
             if (body == null)
                 throw new System.ArgumentNullException("body");
@@ -257,7 +300,67 @@ namespace Checkmarx.API.AST.Services.Analytics
             }
         }
 
+        private AnalyticsKpiQuery getBody(
+            KpiType type,
+            DateTime startDate,
+            DateTime endDate,
+            AnalyticsOptions options = null,
+            int? limit = null,
+            int? offset = null)
+        {
+            if (endDate <= startDate)
+                throw new Exception("The end date must be superior to the start date");
 
+            if (startDate <= DateTime.UtcNow.AddYears(-1))
+                throw new Exception("The start date must not be less than 1 year from today's date");
+
+            if (type == KpiType.MostCommonVulnerabilities || type == KpiType.MostAgingVulnerabilities)
+            {
+                if (limit is null)
+                    throw new ArgumentException($"KPI type {type} requires limit parameter.");
+            }
+            else if (type == KpiType.AllVulnerabilities)
+            {
+                if (limit is null || offset is null)
+                    throw new ArgumentException($"KPI type {type} requires both limit and offset parameters.");
+            }
+
+            IEnumerable<string> states = null;
+            if (options?.States != null && options.States.Any())
+                states = options.States.Select(s => s.GetEnumMemberValue()).ToList();
+
+            if (options?.CustomStates != null && options.CustomStates.Any())
+            {
+                states = states != null
+                    ? states.Union(options.CustomStates).ToList()
+                    : options.CustomStates;
+            }
+
+            return new AnalyticsKpiQuery
+            {
+                StartDate = startDate,
+                EndDate = endDate,
+                Timezone = "UTC",
+                Kpi = type,
+                Limit = limit,
+                Offset = offset,
+
+                // Options
+                Projects = options?.Projects,
+                Applications = options?.Applications,
+                Scanners = options?.Scanners,
+                BranchNames = options?.Branches,
+                ApplicationTags = options?.ApplicationTags,
+                ProjectTags = options?.ProjectTags,
+                States = states,
+                Severities = options?.Severities,
+                GroupIds = options?.GroupIds
+
+                //Not working
+                // ScanTags = options?.ScanTags,
+                //Environments = options?.Environments
+            };
+        }
 
         protected struct ObjectResponseResult<T>
         {
@@ -383,12 +486,80 @@ namespace Checkmarx.API.AST.Services.Analytics
         }
     }
 
+    public class AnalyticsOptions
+    {
+        public IEnumerable<string> Projects { get; set; }
+        public IEnumerable<string> Applications { get; set; }
+        public IEnumerable<string> Branches { get; set; }
+        public IEnumerable<ScannerType> Scanners { get; set; }
+        public IEnumerable<string> ApplicationTags { get; set; }
+        public IEnumerable<string> ProjectTags { get; set; }
+        public IEnumerable<StateType> States { get; set; }
+        public IEnumerable<string> CustomStates { get; set; }
+        public IEnumerable<SeverityType> Severities { get; set; }
+        public IEnumerable<Guid> GroupIds { get; set; }
+
+        // Not working
+        //public IEnumerable<string> ScanTags { get; set; }
+        //public IEnumerable<string> Environments { get; set; }
+    }
+
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.6.0.0 (NJsonSchema v11.5.0.0 (Newtonsoft.Json v13.0.0.0))")]
     public partial class SeverityDistribution
     {
+        [Newtonsoft.Json.JsonProperty("loc", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public int Loc { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("total", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public int Total { get; set; }
+
         [Newtonsoft.Json.JsonProperty("distribution", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.ICollection<DistributionItem> Distribution { get; set; }
+        public System.Collections.Generic.ICollection<SeverityDistributionItem> Distribution { get; set; }
+
+        private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
+
+        [Newtonsoft.Json.JsonExtensionData]
+        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        {
+            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+            set { _additionalProperties = value; }
+        }
+    }
+
+    public partial class SeverityDistributionItem
+    {
+
+        [Newtonsoft.Json.JsonProperty("label", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string Label { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("density", Required = Newtonsoft.Json.Required.AllowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public float Density { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("percentage", Required = Newtonsoft.Json.Required.AllowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public float Percentage { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("results", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public int Results { get; set; }
+
+
+        private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
+
+        [Newtonsoft.Json.JsonExtensionData]
+        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        {
+            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+            set { _additionalProperties = value; }
+        }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.6.0.0 (NJsonSchema v11.5.0.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class StateDistribution
+    {
+
+        [Newtonsoft.Json.JsonProperty("distribution", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public System.Collections.Generic.ICollection<StateDistributionItem> Distribution { get; set; }
 
         [Newtonsoft.Json.JsonProperty("loc", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public int Loc { get; set; }
@@ -408,17 +579,21 @@ namespace Checkmarx.API.AST.Services.Analytics
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.6.0.0 (NJsonSchema v11.5.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class StateDistribution
+    public partial class StateDistributionItem
     {
 
-        [Newtonsoft.Json.JsonProperty("distribution", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.ICollection<DistributionItem> Distribution { get; set; }
+        [Newtonsoft.Json.JsonProperty("label", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string Label { get; set; }
 
-        [Newtonsoft.Json.JsonProperty("loc", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public int Loc { get; set; }
+        [Newtonsoft.Json.JsonProperty("density", Required = Newtonsoft.Json.Required.AllowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public float Density { get; set; }
 
-        [Newtonsoft.Json.JsonProperty("total", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public int Total { get; set; }
+        [Newtonsoft.Json.JsonProperty("percentage", Required = Newtonsoft.Json.Required.AllowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public float Percentage { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("results", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public int Results { get; set; }
+
 
         private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
 
@@ -428,7 +603,6 @@ namespace Checkmarx.API.AST.Services.Analytics
             get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
             set { _additionalProperties = value; }
         }
-
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.6.0.0 (NJsonSchema v11.5.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -456,7 +630,7 @@ namespace Checkmarx.API.AST.Services.Analytics
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.6.0.0 (NJsonSchema v11.5.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class SeverityAndStateDistribution : System.Collections.ObjectModel.Collection<Anonymous>
+    public partial class SeverityAndStateDistribution : System.Collections.ObjectModel.Collection<SeverityAndStateItem>
     {
 
     }
@@ -514,9 +688,10 @@ namespace Checkmarx.API.AST.Services.Analytics
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.6.0.0 (NJsonSchema v11.5.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class FixedVulnerabilitiesBySeverityDistribution : System.Collections.ObjectModel.Collection<SeverityOvertimeItem>
+    public partial class FixedVulnerabilitiesBySeverityDistribution
     {
-
+        [Newtonsoft.Json.JsonProperty("distribution")]
+        public List<SeverityOvertimeItem> Distribution { get; set; }
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.6.0.0 (NJsonSchema v11.5.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -934,7 +1109,7 @@ namespace Checkmarx.API.AST.Services.Analytics
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.6.0.0 (NJsonSchema v11.5.0.0 (Newtonsoft.Json v13.0.0.0))")]
-    public partial class Anonymous
+    public partial class SeverityAndStateItem
     {
 
         [Newtonsoft.Json.JsonProperty("label", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
@@ -1104,37 +1279,37 @@ namespace Checkmarx.API.AST.Services.Analytics
     public partial class AnalyticsKpiQueryBase
     {
         [Newtonsoft.Json.JsonProperty("projects", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.ICollection<string> Projects { get; set; }
+        public System.Collections.Generic.IEnumerable<string> Projects { get; set; }
 
         [Newtonsoft.Json.JsonProperty("applications", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.ICollection<string> Applications { get; set; }
+        public System.Collections.Generic.IEnumerable<string> Applications { get; set; }
 
         [Newtonsoft.Json.JsonProperty("environments", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.ICollection<string> Environments { get; set; }
+        public System.Collections.Generic.IEnumerable<string> Environments { get; set; }
 
         [Newtonsoft.Json.JsonProperty("scanners", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore, ItemConverterType = typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-        public System.Collections.Generic.ICollection<ScannerType> Scanners { get; set; }
+        public System.Collections.Generic.IEnumerable<ScannerType> Scanners { get; set; }
 
         [Newtonsoft.Json.JsonProperty("applicationTags", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.ICollection<string> ApplicationTags { get; set; }
+        public System.Collections.Generic.IEnumerable<string> ApplicationTags { get; set; }
 
         [Newtonsoft.Json.JsonProperty("projectTags", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.ICollection<string> ProjectTags { get; set; }
+        public System.Collections.Generic.IEnumerable<string> ProjectTags { get; set; }
 
         [Newtonsoft.Json.JsonProperty("scanTags", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.ICollection<string> ScanTags { get; set; }
+        public System.Collections.Generic.IEnumerable<string> ScanTags { get; set; }
 
-        [Newtonsoft.Json.JsonProperty("states", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore, ItemConverterType = typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-        public System.Collections.Generic.ICollection<StateType> States { get; set; }
+        [Newtonsoft.Json.JsonProperty("states", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public System.Collections.Generic.IEnumerable<string> States { get; set; }
 
         [Newtonsoft.Json.JsonProperty("severities", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore, ItemConverterType = typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-        public System.Collections.Generic.ICollection<SeverityType> Severities { get; set; }
+        public System.Collections.Generic.IEnumerable<SeverityType> Severities { get; set; }
 
         /// <summary>
         /// List of strings representing the name of the selected branches
         /// </summary>
         [Newtonsoft.Json.JsonProperty("branchNames", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.ICollection<string> BranchNames { get; set; }
+        public System.Collections.Generic.IEnumerable<string> BranchNames { get; set; }
 
         /// <summary>
         /// A valid timezone identifier. This will convert the input and output dates to the selected timezone
@@ -1146,7 +1321,7 @@ namespace Checkmarx.API.AST.Services.Analytics
         /// List of UUIDs representing the IDs of the selected groups
         /// </summary>
         [Newtonsoft.Json.JsonProperty("groupIds", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.ICollection<string> GroupIds { get; set; }
+        public System.Collections.Generic.IEnumerable<Guid> GroupIds { get; set; }
 
         /// <summary>
         /// date-time in format yyyy-MM-ddTHH:mm:ss
@@ -1269,6 +1444,11 @@ namespace Checkmarx.API.AST.Services.Analytics
         [System.Runtime.Serialization.EnumMember(Value = @"ideOvertime")]
         IdeOvertime = 10,
 
+        [System.Runtime.Serialization.EnumMember(Value = @"fixedVulnerabilitiesBySeverityOvertime")]
+        FixedVulnerabilitiesBySeverityOvertime = 11,
+
+        [System.Runtime.Serialization.EnumMember(Value = @"meanTimeToResolution")]
+        MeanTimeToResolution = 12,
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.6.0.0 (NJsonSchema v11.5.0.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -1330,7 +1510,7 @@ namespace Checkmarx.API.AST.Services.Analytics
         [System.Runtime.Serialization.EnumMember(Value = @"information")]
         Information = 4,
 
-    } 
+    }
 }
 
 #pragma warning restore 108

@@ -87,5 +87,12 @@ namespace Checkmarx.API.AST.Utils
                 throw new ArgumentException($"Unsupported enum type: {typeof(T).Name}. Supported types are ResultsState, ScaVulnerabilityStatus, and KicsStateEnum.");
             }
         }
+
+        public static string GetEnumMemberValue(this Enum enumValue)
+        {
+            var memberInfo = enumValue.GetType().GetMember(enumValue.ToString()).FirstOrDefault();
+            var attribute = memberInfo?.GetCustomAttribute<EnumMemberAttribute>();
+            return attribute?.Value ?? enumValue.ToString();
+        }
     }
 }

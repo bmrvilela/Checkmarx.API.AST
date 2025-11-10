@@ -1,6 +1,10 @@
-﻿using Checkmarx.API.AST.Services;
+﻿using Checkmarx.API.AST.Models;
+using Checkmarx.API.AST.Services;
 using Checkmarx.API.AST.Services.Analytics;
+using Checkmarx.API.AST.Services.Applications;
+using Checkmarx.API.AST.Services.CustomStates;
 using Checkmarx.API.AST.Services.Projects;
+using Checkmarx.API.AST.Services.ResultsOverview;
 using Microsoft.Extensions.Configuration;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json.Linq;
@@ -25,8 +29,28 @@ namespace Checkmarx.API.AST.Tests
             new Guid("929369b4-80b2-4344-9469-033222ef00f2")
         ];
 
+        public static IEnumerable<Guid> groupIds = [
+            new Guid("0c1bbd87-565d-43d2-8121-2e21dcecdb53")
+        ];
+
         public static DateTime StartDate = DateTime.UtcNow.AddMonths(-6);
-        public static DateTime EndDate = DateTime.UtcNow;
+        public static DateTime EndDate = DateTime.UtcNow.AddDays(6);
+
+        public static AnalyticsOptions options = new AnalyticsOptions()
+        {
+            Projects = ["Critical"],
+            ProjectTags = ["PT_Tests"],
+            Applications = ["PT"],
+            ApplicationTags = ["Tests"],
+            Branches = ["Main"],
+            Scanners = [ScannerType.Sast],
+            States = [StateType.Urgent],
+            CustomStates = ["MyState"],
+            Severities = [SeverityType.Critical],
+            GroupIds = groupIds
+            // ScanTags = [ "Test_Scan" ], -> Not working
+            // Environments = ["4fc81b46-929a-46ec-9676-166b6889ea05"] -> Not working
+        };
 
         [ClassInitialize]
         public static void InitializeTest(TestContext testContext)
@@ -51,29 +75,7 @@ namespace Checkmarx.API.AST.Tests
         {
             try
             {
-                var result = astclient.GetAnalyticsVulnerabilitiesBySeverityTotal(StartDate, EndDate);
-
-                Trace.WriteLine($"LoC: {result.Loc}");
-                Trace.WriteLine($"Total: {result.Total}");
-                foreach (var data in result.Distribution)
-                    Trace.WriteLine($"Label: {data.Label} | Density: {data.Density} | Percentage: {data.Percentage} | Results: {data.Results}");
-            }
-            catch (Exception ex)
-            {
-                Trace.WriteLine($"Error getting Vulnerabilities By Severity Total report: {ex.Message}");
-            }
-        }
-
-        [TestMethod]
-        public void VulnerabilitiesBySeverityTotalWithOptionsTest()
-        {
-            try
-            {
-                var result = astclient.GetAnalyticsVulnerabilitiesBySeverityTotal(StartDate, EndDate, new Models.AnalyticsOptions()
-                {
-                    Projects = projectIds.Select(x => x.ToString()),
-                    Scanners = [ ScannerType.Sast ],
-                });
+                var result = astclient.Analytics.GetVulnerabilitiesBySeverityTotal(StartDate, EndDate, options: options).GetAwaiter().GetResult();
 
                 Trace.WriteLine($"LoC: {result.Loc}");
                 Trace.WriteLine($"Total: {result.Total}");
@@ -91,7 +93,7 @@ namespace Checkmarx.API.AST.Tests
         {
             try
             {
-                var result = astclient.GetAnalyticsVulnerabilitiesBySeverityOvertime(StartDate, EndDate, null);
+                var result = astclient.Analytics.GetVulnerabilitiesBySeverityOvertime(StartDate, EndDate, options: options).GetAwaiter().GetResult();
 
                 foreach (var data in result.Distribution)
                 {
@@ -102,7 +104,6 @@ namespace Checkmarx.API.AST.Tests
                     }
                     Trace.WriteLine("");
                 }
-
             }
             catch (Exception ex)
             {
@@ -115,7 +116,7 @@ namespace Checkmarx.API.AST.Tests
         {
             try
             {
-                var result = astclient.GetAnalyticsVulnerabilitiesByStateTotal(StartDate, EndDate, null);
+                var result = astclient.Analytics.GetVulnerabilitiesByStateTotal(StartDate, EndDate, options: options).GetAwaiter().GetResult();
 
                 Trace.WriteLine($"LoC: {result.Loc}");
                 Trace.WriteLine($"Total: {result.Total}");
@@ -133,7 +134,7 @@ namespace Checkmarx.API.AST.Tests
         {
             try
             {
-                var result = astclient.GetAnalyticsVulnerabilitiesBySeverityAndStateTotal(StartDate, EndDate, null);
+                var result = astclient.Analytics.GetVulnerabilitiesBySeverityAndStateTotal(StartDate, EndDate).GetAwaiter().GetResult();
 
                 foreach (var data in result)
                 {
@@ -157,7 +158,7 @@ namespace Checkmarx.API.AST.Tests
         {
             try
             {
-                var result = astclient.GetAnalyticsAgingTotal(StartDate, EndDate, null);
+                var result = astclient.Analytics.GetAgingTotal(StartDate, EndDate, options: options).GetAwaiter().GetResult();
 
                 foreach (var data in result.AgingAndSeverities)
                 {
@@ -181,7 +182,7 @@ namespace Checkmarx.API.AST.Tests
         {
             try
             {
-                var result = astclient.GetAnalyticsIdeTotal(StartDate, EndDate, null);
+                var result = astclient.Analytics.GetIdeTotal(StartDate, EndDate, options: options).GetAwaiter().GetResult();
 
                 foreach (var data in result.IdeData)
                     Trace.WriteLine($"Label: {data.Label} | Scans: {data.Scans} | Developers: {data.Developers}");
@@ -197,7 +198,7 @@ namespace Checkmarx.API.AST.Tests
         {
             try
             {
-                var result = astclient.GetAnalyticsIdeOvertime(StartDate, EndDate, null);
+                var result = astclient.Analytics.GetIdeOvertime(StartDate, EndDate, options: options).GetAwaiter().GetResult();
 
                 foreach (var data in result.Distribution)
                 {
@@ -218,7 +219,7 @@ namespace Checkmarx.API.AST.Tests
         {
             try
             {
-                var results = astclient.GetAnalyticsMostCommonVulnerabilities(StartDate, EndDate, 10, null);
+                var results = astclient.Analytics.GetMostCommonVulnerabilities(StartDate, EndDate, options: options).GetAwaiter().GetResult();
 
                 foreach (var data in results)
                 {
@@ -240,7 +241,7 @@ namespace Checkmarx.API.AST.Tests
         {
             try
             {
-                var results = astclient.GetAnalyticsMostAgingVulnerabilities(StartDate, EndDate, 10, null);
+                var results = astclient.Analytics.GetMostAgingVulnerabilities(StartDate, EndDate, options: options).GetAwaiter().GetResult();
 
                 foreach (var data in results)
                     Trace.WriteLine($"Label: {data.Label} | Age: {data.Age} | VulnerabilityName: {data.VulnerabilityName}");
@@ -256,11 +257,11 @@ namespace Checkmarx.API.AST.Tests
         {
             try
             {
-                var results = astclient.GetAnalyticsAllVulnerabilities(StartDate, EndDate, null);
+                var results = astclient.Analytics.GetAllVulnerabilities(StartDate, EndDate, options: options).GetAwaiter().GetResult();
 
                 foreach (var data in results)
                 {
-                    Trace.WriteLine($"VulnerabilityName: {data.VulnerabilityName} | Scanner: {data.Scanner} | Age: {data.Total}");
+                    Trace.WriteLine($"VulnerabilityName: {data.VulnerabilityName} | Scanner: {data.Scanner} | Total: {data.Total}");
                     foreach (var severity in data.Severities)
                         Trace.WriteLine($"Label: {severity.Label} | Results: {severity.Results}");
                     Trace.WriteLine("");
@@ -268,7 +269,56 @@ namespace Checkmarx.API.AST.Tests
             }
             catch (Exception ex)
             {
-                Trace.WriteLine($"Error getting Most Aging Vulnerabilities report: {ex.Message}");
+                Trace.WriteLine($"Error getting All Vulnerabilities report: {ex.Message}");
+            }
+        }
+
+        [TestMethod]
+        public void FixedVulnerabilitiesBySeverityOvertimeTest()
+        {
+            try
+            {
+                var result = astclient.Analytics.GetFixedVulnerabilitiesBySeverityOvertime(StartDate, EndDate, options: options).GetAwaiter().GetResult();
+
+                foreach (var data in result.Distribution)
+                {
+                    Trace.WriteLine($"Label: {data.Label}");
+                    foreach (var value in data.Values)
+                    {
+                        Trace.WriteLine($"Time: {value.Time} | Value: {value.Value} | Date: {value.Date}");
+                    }
+                    Trace.WriteLine("");
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"Error getting Vulnerabilities By Severity Overtime report: {ex.Message}");
+            }
+        }
+
+        [TestMethod]
+        public void MeanTimeToResolutionTest()
+        {
+            try
+            {
+                var result = astclient.Analytics.GetMeanTimeToResolution(StartDate, EndDate).GetAwaiter().GetResult();
+
+                Trace.WriteLine($"Total Results: {result.TotalResults}");
+                Trace.WriteLine("");
+
+                Trace.WriteLine($"Mean Time Data:");
+                foreach (var data in result.MeanTimeData)
+                    Trace.WriteLine($"Label: {data.Label} | Results: {data.Results} | Meantime: {data.MeanTime}");
+
+                Trace.WriteLine("");
+
+                Trace.WriteLine($"Mean Time State Data:");
+                foreach (var data in result.MeanTimeStateData)
+                    Trace.WriteLine($"Label: {data.Label} | Results: {data.Results} | Meantime: {data.MeanTime}");
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine($"Error getting Vulnerabilities By Severity Overtime report: {ex.Message}");
             }
         }
     }
