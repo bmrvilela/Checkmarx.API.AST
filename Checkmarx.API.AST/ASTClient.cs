@@ -1069,11 +1069,13 @@ namespace Checkmarx.API.AST
             if (project == null)
                 throw new Exception($"No project found with id {projectId}");
 
+            var groups = project.Groups != null && project.Groups.Any() ? project.Groups : null;
+
             ProjectInput input = new ProjectInput
             {
                 Tags = tags,
                 Name = project.Name,
-                Groups = project.Groups,
+                Groups = groups,
                 RepoUrl = project.RepoUrl,
                 MainBranch = project.MainBranch,
                 Origin = project.Origin,
