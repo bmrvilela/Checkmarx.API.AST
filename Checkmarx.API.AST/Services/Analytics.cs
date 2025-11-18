@@ -27,9 +27,11 @@ namespace Checkmarx.API.AST.Services.Analytics
     using Newtonsoft.Json;
     using System;
     using System.Collections.Generic;
+    using System.ComponentModel;
     using System.Diagnostics;
     using System.Linq;
     using System.Reflection;
+    using System.Runtime.Serialization;
     using static Checkmarx.API.AST.ASTClient;
     using System = global::System;
 
@@ -1410,44 +1412,56 @@ namespace Checkmarx.API.AST.Services.Analytics
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.6.0.0 (NJsonSchema v11.5.0.0 (Newtonsoft.Json v13.0.0.0))")]
     public enum KpiType
     {
-
-        [System.Runtime.Serialization.EnumMember(Value = @"vulnerabilitiesBySeverityTotal")]
+        [EnumMember(Value = "vulnerabilitiesBySeverityTotal")]
+        [Description("Total vulnerabilities by severity")]
         VulnerabilitiesBySeverityTotal = 0,
 
-        [System.Runtime.Serialization.EnumMember(Value = @"vulnerabilitiesBySeverityOvertime")]
+        [EnumMember(Value = "vulnerabilitiesBySeverityOvertime")]
+        [Description("Vulnerabilities by severity over time")]
         VulnerabilitiesBySeverityOvertime = 1,
 
-        [System.Runtime.Serialization.EnumMember(Value = @"vulnerabilitiesByStateTotal")]
+        [EnumMember(Value = "vulnerabilitiesByStateTotal")]
+        [Description("Total vulnerabilities by state")]
         VulnerabilitiesByStateTotal = 2,
 
-        [System.Runtime.Serialization.EnumMember(Value = @"vulnerabilitiesByStatusTotal")]
+        [EnumMember(Value = "vulnerabilitiesByStatusTotal")]
+        [Description("Total vulnerabilities by status")]
         VulnerabilitiesByStatusTotal = 3,
 
-        [System.Runtime.Serialization.EnumMember(Value = @"vulnerabilitiesBySeverityAndStateTotal")]
+        [EnumMember(Value = "vulnerabilitiesBySeverityAndStateTotal")]
+        [Description("Vulnerabilities breakdown by severity and state")]
         VulnerabilitiesBySeverityAndStateTotal = 4,
 
-        [System.Runtime.Serialization.EnumMember(Value = @"mostCommonVulnerabilities")]
+        [EnumMember(Value = "mostCommonVulnerabilities")]
+        [Description("Most common vulnerabilities")]
         MostCommonVulnerabilities = 5,
 
-        [System.Runtime.Serialization.EnumMember(Value = @"mostAgingVulnerabilities")]
+        [EnumMember(Value = "mostAgingVulnerabilities")]
+        [Description("Oldest open vulnerabilities")]
         MostAgingVulnerabilities = 6,
 
-        [System.Runtime.Serialization.EnumMember(Value = @"allVulnerabilities")]
+        [EnumMember(Value = "allVulnerabilities")]
+        [Description("Complete list of all vulnerabilities")]
         AllVulnerabilities = 7,
 
-        [System.Runtime.Serialization.EnumMember(Value = @"agingTotal")]
+        [EnumMember(Value = "agingTotal")]
+        [Description("Aging vulnerabilities")]
         AgingTotal = 8,
 
-        [System.Runtime.Serialization.EnumMember(Value = @"ideTotal")]
+        [EnumMember(Value = "ideTotal")]
+        [Description("IDE total scans")]
         IdeTotal = 9,
 
-        [System.Runtime.Serialization.EnumMember(Value = @"ideOvertime")]
+        [EnumMember(Value = "ideOvertime")]
+        [Description("IDE over time")]
         IdeOvertime = 10,
 
-        [System.Runtime.Serialization.EnumMember(Value = @"fixedVulnerabilitiesBySeverityOvertime")]
+        [EnumMember(Value = "fixedVulnerabilitiesBySeverityOvertime")]
+        [Description("Fixed vulnerabilities by severity over time")]
         FixedVulnerabilitiesBySeverityOvertime = 11,
 
-        [System.Runtime.Serialization.EnumMember(Value = @"meanTimeToResolution")]
+        [EnumMember(Value = "meanTimeToResolution")]
+        [Description("Mean time to resolve vulnerabilities")]
         MeanTimeToResolution = 12,
     }
 
