@@ -1189,6 +1189,38 @@ namespace Checkmarx.API.AST
             return new Uri(astServer, $"projects/{projectId.ToString("D")}/overview");
         }
 
+        public Dictionary<string, SubsetScan> GetProjectsLastScans(IEnumerable<Guid> projectIds = null, bool completed = true, ScanTypeEnum scanType = ScanTypeEnum.sast, int startAt = 0, int limit = 500)
+        {
+            if (limit <= 0)
+                throw new ArgumentOutOfRangeException(nameof(limit));
+
+            var scanStatus = completed ? CompletedStage : null;
+
+            var result = new Dictionary<string, SubsetScan>();
+
+            while (true)
+            {
+                // Fetch the page of results
+                var resultPage = Projects.GetProjectLastScan(projectIds, engine: scanType.ToString(), scan_status: scanStatus, limit: limit, offset: startAt).Result;
+
+                // Add each item individually to avoid duplicates
+                foreach (var kvp in resultPage)
+                {
+                    // Optional: skip if key already exists
+                    if (!result.ContainsKey(kvp.Key))
+                        result.Add(kvp.Key, kvp.Value);
+                }
+
+                startAt += limit;
+
+                // Stop if no more items returned
+                if (resultPage.Count == 0)
+                    break;
+            }
+
+            return result;
+        }
+
         #endregion
 
         #region Scans
@@ -1304,7 +1336,7 @@ namespace Checkmarx.API.AST
                 var scans = this.Projects.GetProjectLastScan([projectId], scan_status: scanStatus, branch: branch, engine: scanType.ToString()).Result;
 
                 if (scans.ContainsKey(projectId.ToString()))
-                    return this.Scans.GetScanAsync(new Guid(scans[projectId.ToString()].Id)).Result;
+                    return this.Scans.GetScanAsync(scans[projectId.ToString()].Id).Result;
 
                 return null;
             }
