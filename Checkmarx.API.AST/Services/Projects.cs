@@ -1291,7 +1291,7 @@ namespace Checkmarx.API.AST.Services.Projects
         /// The origin of project
         /// </summary>
         [Newtonsoft.Json.JsonProperty("criticality", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public int Criticality { get; set; } 
+        public int Criticality { get; set; }
 
         /// <summary>
         /// Project tags
@@ -1470,7 +1470,7 @@ namespace Checkmarx.API.AST.Services.Projects
         /// A unique identifier for a scan
         /// </summary>
         [Newtonsoft.Json.JsonProperty("id", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string Id { get; set; }
+        public Guid Id { get; set; }
 
         [Newtonsoft.Json.JsonProperty("createdAt", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public System.DateTimeOffset CreatedAt { get; set; }
