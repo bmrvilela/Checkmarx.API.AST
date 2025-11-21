@@ -1135,17 +1135,17 @@ namespace Checkmarx.API.AST
         /// <param name="scanId">Id of the scan</param>
         /// <param name="engines"></param>
         /// <returns></returns>
-        public IEnumerable<ScannerResult> GetScannersResultsById(Guid scanId, params string[] engines)
+        public IEnumerable<ScannerResult> GetScannersResultsById(Guid scanId, System.Collections.Generic.IEnumerable<Checkmarx.API.AST.Services.ScannersResults.SeverityEnum> severities = null, params string[] engines)
         {
             if (scanId == Guid.Empty)
                 throw new ArgumentNullException(nameof(scanId));
-
-            int startAt = 0;
+            
+            int page = 0;
             int limit = 500;
 
             while (true)
             {
-                var response = ScannersResults.GetResultsByScanAsync(scanId, startAt, limit).Result;
+                var response = ScannersResults.GetResultsByScanAsync(scanId, page, limit, severity: severities).Result;
                 foreach (var result in response.Results)
                 {
                     if (!engines.Any() || (engines.Any() && engines.Contains(result.Type, StringComparer.InvariantCultureIgnoreCase)))
@@ -1155,7 +1155,7 @@ namespace Checkmarx.API.AST
                 if (response.Results.Count() < limit)
                     yield break;
 
-                startAt += limit;
+                page++;
             }
         }
 
