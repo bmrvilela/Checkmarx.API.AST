@@ -37,6 +37,7 @@ namespace Checkmarx.API.AST.Models
         public int? QueriesHigh { get; set; }
         public int? QueriesMedium { get; set; }
         public int? QueriesLow { get; set; }
+        public int? QueriesToVerify { get; set; }
 
         public int? NotExploitableMarked { get; set; }
         public int? PNEMarked { get; set; }

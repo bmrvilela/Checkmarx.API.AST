@@ -330,7 +330,7 @@ namespace Checkmarx.API.AST.Tests
 
             var properties = typeof(Services.ScannersResults.ScannerResult).GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty);
 
-            var results = astclient.GetScannersResultsById(lastSCAScan.Id, ASTClient.SCA_Engine, ASTClient.SCA_Container_Engine);
+            var results = astclient.GetScannersResultsById(lastSCAScan.Id, null, ASTClient.SCA_Engine, ASTClient.SCA_Container_Engine);
 
             foreach (Services.ScannersResults.ScannerResult result in results)
             {
