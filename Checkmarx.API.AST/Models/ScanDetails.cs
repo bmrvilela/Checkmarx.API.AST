@@ -1,9 +1,7 @@
 ﻿using Checkmarx.API.AST.Enums;
 using Checkmarx.API.AST.Models.SCA;
-using Checkmarx.API.AST.Services;
 using Checkmarx.API.AST.Services.Configuration;
 using Checkmarx.API.AST.Services.KicsResults;
-using Checkmarx.API.AST.Services.ResultsOverview;
 using Checkmarx.API.AST.Services.ResultsSummary;
 using Checkmarx.API.AST.Services.SASTMetadata;
 using Checkmarx.API.AST.Services.SASTResults;
@@ -12,7 +10,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
 
 namespace Checkmarx.API.AST.Models
 {
@@ -388,6 +385,7 @@ namespace Checkmarx.API.AST.Models
             var queriesHigh = new HashSet<string>();
             var queriesMedium = new HashSet<string>();
             var queriesLow = new HashSet<string>();
+            var queriesToVerify = new HashSet<string>();
 
             foreach (var vuln in sastResults)
             {
@@ -429,7 +427,10 @@ namespace Checkmarx.API.AST.Models
                     if (isNotInfo)
                     {
                         if (vuln.State == ResultsState.TO_VERIFY.ToString())
+                        {
                             toVerify++;
+                            queriesToVerify.Add(vuln.QueryID);
+                        }
                         else if (vuln.State == ResultsState.NOT_EXPLOITABLE.ToString())
                             notExploitableMarked++;
                         else if (vuln.State == ResultsState.PROPOSED_NOT_EXPLOITABLE.ToString())
@@ -466,6 +467,7 @@ namespace Checkmarx.API.AST.Models
             model.QueriesHigh = queriesHigh.Count;
             model.QueriesMedium = queriesMedium.Count;
             model.QueriesLow = queriesLow.Count;
+            model.QueriesToVerify = queriesToVerify.Count;
             model.Queries = model.QueriesCritical + model.QueriesHigh + model.QueriesMedium + model.QueriesLow;
         }
 
