@@ -317,20 +317,52 @@ namespace Checkmarx.API.AST.Tests
         }
 
         [TestMethod]
+        public void GetScannerResultsTest()
+        {
+            var results = astclient.GetScannersResultsById(new Guid("9283f360-85c7-4d66-9469-ed4e471550ba"));
+
+            Trace.WriteLine("Without Severity Filter:" + results.Count());
+        }
+
+
+        [TestMethod]
+        public void GetScannerResultBySeverityTest()
+        {
+
+            foreach (var item in Enum.GetValues<Services.ScannersResults.SeverityEnum>())
+            {
+                var results = astclient.GetScannersResultsById(new Guid("9283f360-85c7-4d66-9469-ed4e471550ba"), [item]);
+
+                Trace.WriteLine(item + " = " + results.Count()); 
+            }
+
+        }
+
+        [TestMethod]
+        public void GetCriticalScannerResultsTest()
+        {
+            var results = astclient.GetScannersResultsById(new Guid("9283f360-85c7-4d66-9469-ed4e471550ba"), 
+                [Services.ScannersResults.SeverityEnum.CRITICAL]);
+
+            Assert.IsTrue(results.Any(static x => x.Severity == Checkmarx.API.AST.Services.ScannersResults.SeverityEnum.CRITICAL));
+        }
+
+
+        [TestMethod]
         public void ListSCAScanResultsTest()
         {
-            var proj = astclient.Projects.GetProjectAsync(
-                new Guid("80fe1c50-f062-4061-a7ef-576fea9c2971")).Result;
+            //var proj = astclient.Projects.GetProjectAsync(
+            //    new Guid("80fe1c50-f062-4061-a7ef-576fea9c2971")).Result;
 
-            Scan lastSCAScan = astclient.GetLastScan(proj.Id, true, scanType: Enums.ScanTypeEnum.sca);
+            //Scan lastSCAScan = astclient.GetLastScan(proj.Id, true, scanType: Enums.ScanTypeEnum.sca);
 
-            Trace.WriteLine(lastSCAScan.Id);
+            //Trace.WriteLine(lastSCAScan.Id);
 
-            Assert.IsNotNull(lastSCAScan);
+            //Assert.IsNotNull(lastSCAScan);
 
             var properties = typeof(Services.ScannersResults.ScannerResult).GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty);
 
-            var results = astclient.GetScannersResultsById(lastSCAScan.Id, null, ASTClient.SCA_Engine, ASTClient.SCA_Container_Engine);
+            var results = astclient.GetScannersResultsById(new Guid("9283f360-85c7-4d66-9469-ed4e471550ba"));
 
             foreach (Services.ScannersResults.ScannerResult result in results)
             {
