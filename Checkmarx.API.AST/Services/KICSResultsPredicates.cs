@@ -19,12 +19,13 @@
 
 namespace Checkmarx.API.AST.Services
 {
+    using Checkmarx.API.AST.Exceptions;
     using Checkmarx.API.AST.Services.KicsResults;
+    using Newtonsoft.Json;
     using System;
     using System.Linq;
-    using System = global::System;
     using static Checkmarx.API.AST.ASTClient;
-    using Checkmarx.API.AST.Exceptions;
+    using System = global::System;
 
     [System.CodeDom.Compiler.GeneratedCode("NSwag", "14.0.7.0 (NJsonSchema v11.0.0.0 (Newtonsoft.Json v13.0.0.0))")]
     public partial class KICSResultsPredicates
@@ -650,8 +651,8 @@ namespace Checkmarx.API.AST.Services
         [Newtonsoft.Json.JsonProperty("message", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string Message { get; set; }
 
-        [Newtonsoft.Json.JsonProperty("data", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public object Data { get; set; }
+        [Newtonsoft.Json.JsonProperty("data", Required = Newtonsoft.Json.Required.AllowNull, NullValueHandling = NullValueHandling.Ignore)]
+        public object? Data { get; set; }
 
         private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
 
@@ -675,7 +676,7 @@ namespace Checkmarx.API.AST.Services
 
 
 
- 
+
 
 }
 
