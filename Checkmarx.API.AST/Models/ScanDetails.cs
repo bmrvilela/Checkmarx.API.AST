@@ -262,6 +262,9 @@ namespace Checkmarx.API.AST.Models
             return new Uri(_client.ASTServer, $"/sast-results/{ProjectId}/{Id}?resultId={Uri.EscapeDataString(result.ResultHash)}");
         }
 
+
+        public string EngineVersion => this._client.GetScanEngineVersionAsync([Id]).Result.Values.FirstOrDefault();
+
         #endregion
 
         #region SCA

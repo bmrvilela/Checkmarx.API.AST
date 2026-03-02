@@ -1341,9 +1341,9 @@ namespace Checkmarx.API.AST
             }
         }
 
-        public Scan GetLastScan(Guid projectId, bool fullScanOnly = false, bool completed = true, string branch = null, ScanTypeEnum scanType = ScanTypeEnum.sast, DateTime? maxScanDate = null)
+        public Scan GetLastScan(Guid projectId, bool fullScanOnly = false, bool completed = true, string branch = null, ScanTypeEnum scanType = ScanTypeEnum.sast, DateTime? maxScanDate = null, string engineVersion = null)
         {
-            if (!fullScanOnly && !maxScanDate.HasValue)
+            if (!fullScanOnly && !maxScanDate.HasValue && string.IsNullOrWhiteSpace(engineVersion))
             {
                 var scanStatus = completed ? CompletedStage : null;
 
@@ -1356,7 +1356,7 @@ namespace Checkmarx.API.AST
             }
             else
             {
-                var scans = GetScans(projectId, scanType.ToString(), completed, branch, ScanRetrieveKind.All, maxScanDate);
+                var scans = GetScans(projectId, scanType.ToString(), completed, branch, ScanRetrieveKind.All, maxScanDate, sastEngineVersion: engineVersion);
                 if (fullScanOnly)
                 {
                     var fullScans = scans.Where(x => !IsScanIncremental(x.Id)).OrderByDescending(x => x.CreatedAt);
@@ -1412,7 +1412,14 @@ namespace Checkmarx.API.AST
         /// <param name="maxScanDate">Max scan date, including the date</param>
         /// <param name="minScanDate">Min scan date, including the date</param>
         /// <returns></returns>
-        public IEnumerable<Scan> GetScans(Guid projectId, string engine = null, bool completed = true, string branch = null, ScanRetrieveKind scanKind = ScanRetrieveKind.All, DateTime? maxScanDate = null, DateTime? minScanDate = null, IEnumerable<string> tagKeys = null)
+        public IEnumerable<Scan> GetScans(Guid projectId, 
+            string engine = null, 
+            bool completed = true, 
+            string branch = null, ScanRetrieveKind scanKind = ScanRetrieveKind.All, 
+            DateTime? maxScanDate = null, 
+            DateTime? minScanDate = null, 
+            IEnumerable<string> tagKeys = null,
+            string sastEngineVersion = null)
         {
             var scans = getAllScans(projectId, branch, tagKeys: tagKeys);
 
@@ -1455,6 +1462,15 @@ namespace Checkmarx.API.AST
                     {
                         list.Add(scan);
                     }
+                }
+
+                if (list.Any() && !string.IsNullOrEmpty(sastEngineVersion))
+                {
+                    var scanIds = list.Where(x => x.Engines != null && x.Engines.Any(e => e.Equals(SAST_Engine, StringComparison.InvariantCultureIgnoreCase))).Select(x => x.Id);
+
+                    var scansWithinVersion = GetScanEngineVersionAsync(scanIds).Result.Where(x => x.Value != null && x.Value.StartsWith(sastEngineVersion)).Select(x => x.Key).ToHashSet();
+
+                    return list.Where(x => scansWithinVersion.Contains(x.Id));
                 }
             }
 
