@@ -5,6 +5,7 @@ using Checkmarx.API.AST.Models.SCA;
 using Checkmarx.API.AST.Services;
 using Checkmarx.API.AST.Services.Analytics;
 using Checkmarx.API.AST.Services.Applications;
+using Checkmarx.API.AST.Services.Audit;
 using Checkmarx.API.AST.Services.Configuration;
 using Checkmarx.API.AST.Services.CustomStates;
 using Checkmarx.API.AST.Services.KicsResults;
@@ -338,6 +339,18 @@ namespace Checkmarx.API.AST
                     _applications = new Applications($"{ASTServer.AbsoluteUri}api/applications", _httpClient);
 
                 return _applications;
+            }
+        }
+
+        private Audit _audit;
+        public Audit Audit
+        {
+            get
+            {
+                if (Connected && _audit == null)
+                    _audit = new Audit($"{ASTServer.AbsoluteUri}api/audit", _httpClient);
+
+                return _audit;
             }
         }
 
@@ -886,6 +899,45 @@ namespace Checkmarx.API.AST
         public Services.Applications.Application GetProjectApplication(Guid projectId)
         {
             return GetProjectApplications(projectId)?.FirstOrDefault();
+        }
+
+        #endregion
+
+        #region Audit
+
+        /// <summary>
+        /// Retrieves all audit events for the given date range, including events stored in
+        /// the daily archive links returned by the API.
+        /// </summary>
+        /// <param name="from">Start date in YYYY-MM-DD format. Cannot be more than 365 days in the past.</param>
+        /// <param name="to">End date in YYYY-MM-DD format.</param>
+        /// <returns>Combined list of all audit events from both the inline response and every archive link.</returns>
+        public IList<Services.Audit.AuditEvent> GetAllAuditEvents(string from = null, string to = null)
+        {
+            var result = Audit.GetAuditEventsAsync(from, to).Result;
+            var allEvents = new List<Services.Audit.AuditEvent>();
+
+            if (result.Links != null)
+            {
+                foreach (var link in result.Links)
+                {
+                    if (string.IsNullOrEmpty(link.Url))
+                        continue;
+
+                    var json = Audit.DownloadLinkAsync(link.Url).Result;
+                    if (!string.IsNullOrEmpty(json))
+                    {
+                        var events = JsonConvert.DeserializeObject<List<Services.Audit.AuditEvent>>(json);
+                        if (events != null)
+                            allEvents.AddRange(events);
+                    }
+                }
+            }
+
+            if (result.Events != null)
+                allEvents.AddRange(result.Events);
+
+            return allEvents;
         }
 
         #endregion
