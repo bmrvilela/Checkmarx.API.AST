@@ -18,15 +18,16 @@ namespace Checkmarx.API.AST.Services.Audit
     using Checkmarx.API.AST.Errors;
     using Checkmarx.API.AST.Exceptions;
     using System = global::System;
+    using static Checkmarx.API.AST.ASTClient;
 
     [System.CodeDom.Compiler.GeneratedCode("NSwag", "13.15.10.0 (NJsonSchema v10.6.10.0 (Newtonsoft.Json v12.0.0.0))")]
-    public partial class Audit
+    public partial class AuditTrail
     {
         private string _baseUrl = "/api/audit";
         private System.Net.Http.HttpClient _httpClient;
         private System.Lazy<Newtonsoft.Json.JsonSerializerSettings> _settings;
 
-        public Audit(string baseUrl, System.Net.Http.HttpClient httpClient)
+        public AuditTrail(string baseUrl, System.Net.Http.HttpClient httpClient)
         {
             _baseUrl = baseUrl;
             _httpClient = httpClient;
@@ -98,7 +99,7 @@ namespace Checkmarx.API.AST.Services.Audit
 
                     PrepareRequest(client_, request_, url_);
 
-                    var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                     var response_ = await _retryPolicy.ExecuteAsync(() => client_.SendAsync(CloneHttpRequestMessage(request_), System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken)).ConfigureAwait(false);
                     var disposeResponse_ = true;
                     try
                     {
@@ -196,7 +197,7 @@ namespace Checkmarx.API.AST.Services.Audit
 
                     PrepareRequest(client_, request_, url);
 
-                    var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                     var response_ = await _retryPolicy.ExecuteAsync(() => client_.SendAsync(CloneHttpRequestMessage(request_), System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken)).ConfigureAwait(false);
                     var disposeResponse_ = true;
                     try
                     {

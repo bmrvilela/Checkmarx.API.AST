@@ -342,13 +342,13 @@ namespace Checkmarx.API.AST
             }
         }
 
-        private Audit _audit;
-        public Audit Audit
+        private AuditTrail _audit;
+        public AuditTrail Audit
         {
             get
             {
                 if (Connected && _audit == null)
-                    _audit = new Audit($"{ASTServer.AbsoluteUri}api/audit", _httpClient);
+                    _audit = new AuditTrail($"{ASTServer.AbsoluteUri}api/audit", _httpClient);
 
                 return _audit;
             }
