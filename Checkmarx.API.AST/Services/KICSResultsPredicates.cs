@@ -22,7 +22,9 @@ namespace Checkmarx.API.AST.Services
     using Checkmarx.API.AST.Errors;
     using Checkmarx.API.AST.Exceptions;
     using Checkmarx.API.AST.Services.KicsResults;
+    using Checkmarx.API.AST.Services.SASTResultsPredicates;
     using Newtonsoft.Json;
+    using Newtonsoft.Json.Converters;
     using System;
     using System.Collections.Generic;
     using System.Linq;
@@ -155,30 +157,30 @@ namespace Checkmarx.API.AST.Services
                             return objectResponse_.Object;
                         }
                         else
-                        if (status_ == 400)
-                        {
-                            var objectResponse_ = await ReadObjectResponseAsync<WebError>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
+                            if (status_ == 400)
                             {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                                var objectResponse_ = await ReadObjectResponseAsync<WebError>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                                if (objectResponse_.Object == null)
+                                {
+                                    throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                                }
+                                throw new ApiException<WebError>("Invalid request supplied.", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
                             }
-                            throw new ApiException<WebError>("Invalid request supplied.", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
-                        }
-                        else
-                        if (status_ == 401)
-                        {
-                            var objectResponse_ = await ReadObjectResponseAsync<WebError>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
-                            throw new ApiException<WebError>("Unauthorized.", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
-                        }
-                        else
-                        {
-                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                        }
+                            else
+                                if (status_ == 401)
+                                {
+                                    var objectResponse_ = await ReadObjectResponseAsync<WebError>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                                    if (objectResponse_.Object == null)
+                                    {
+                                        throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                                    }
+                                    throw new ApiException<WebError>("Unauthorized.", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                                }
+                                else
+                                {
+                                    var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                                    throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                                }
                     }
                     finally
                     {
@@ -196,14 +198,31 @@ namespace Checkmarx.API.AST.Services
 
         public virtual async System.Threading.Tasks.Task UpdateAsync(System.Collections.Generic.IEnumerable<Predicate> body, string authorization = null, string accept = null, System.Guid? correlationId = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
         {
-            await UpdateAsync(body.Select(predicate => new POSTPredicate
+            var reqBody = body.Select(predicate =>
             {
-                SimilarityId = predicate.SimilarityId,
-                ProjectId = predicate.ProjectId,
-                Severity = predicate.Severity,
-                Comment = predicate.Comment,
-                State = predicate.State
-            }), authorization, accept, correlationId, cancellationToken);
+                var obj = new POSTPredicate
+                {
+                    SimilarityId = predicate.SimilarityId,
+                    ProjectId = predicate.ProjectId,
+                    Severity = predicate.Severity,
+                    Comment = predicate.Comment
+                };
+
+                if (TryGetKicsState(predicate.State, out var enumState))
+                {
+                    obj.State = enumState;
+                    obj.CustomStateId = null;
+                }
+                else
+                {
+                    obj.State = null;
+                    obj.CustomStateId = predicate.StateId;
+                }
+
+                return obj;
+            });
+
+            await UpdateAsync(reqBody, authorization, accept, correlationId, cancellationToken);
         }
 
         // Workaround after a change the DEV team made to the UpdateAsync where multiple predicates for the same (ProjectId, SimilarityId) will throw an error.
@@ -275,6 +294,25 @@ namespace Checkmarx.API.AST.Services
             }
         }
 
+        public static bool TryGetKicsState(string value, out KicsStateEnum result)
+        {
+            foreach (var field in typeof(KicsStateEnum).GetFields())
+            {
+                var attribute = Attribute.GetCustomAttribute(field,
+                    typeof(System.Runtime.Serialization.EnumMemberAttribute))
+                    as System.Runtime.Serialization.EnumMemberAttribute;
+
+                if (attribute != null && attribute.Value == value)
+                {
+                    result = (KicsStateEnum)field.GetValue(null);
+                    return true;
+                }
+            }
+
+            result = default;
+            return false;
+        }
+
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <summary>
         /// predicate Severity and State by Similiarty ID and Project ID
@@ -342,30 +380,30 @@ namespace Checkmarx.API.AST.Services
                             return;
                         }
                         else
-                        if (status_ == 401)
-                        {
-                            var objectResponse_ = await ReadObjectResponseAsync<WebError>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
+                            if (status_ == 401)
                             {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                                var objectResponse_ = await ReadObjectResponseAsync<WebError>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                                if (objectResponse_.Object == null)
+                                {
+                                    throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                                }
+                                throw new ApiException<WebError>("Unauthorized.", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
                             }
-                            throw new ApiException<WebError>("Unauthorized.", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
-                        }
-                        else
-                        if (status_ == 400)
-                        {
-                            var objectResponse_ = await ReadObjectResponseAsync<Response2>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
-                            {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
-                            }
-                            throw new ApiException<Response2>("Invalid request supplied.", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
-                        }
-                        else
-                        {
-                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                        }
+                            else
+                                if (status_ == 400)
+                                {
+                                    var objectResponse_ = await ReadObjectResponseAsync<Response2>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                                    if (objectResponse_.Object == null)
+                                    {
+                                        throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                                    }
+                                    throw new ApiException<Response2>("Invalid request supplied.", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                                }
+                                else
+                                {
+                                    var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                                    throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                                }
                     }
                     finally
                     {
@@ -551,8 +589,14 @@ namespace Checkmarx.API.AST.Services
         public SeverityEnum Severity { get; set; }
 
         [Newtonsoft.Json.JsonProperty("state", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-        public KicsStateEnum State { get; set; }
+        //[Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+        public string State { get; set; }
+
+        /// <summary>
+        /// ID of the state.
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty("stateId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public int StateId { get; set; }
 
         /// <summary>
         /// comment that describe why the state has predicated. max length is 1024. can be empty.
@@ -651,9 +695,15 @@ namespace Checkmarx.API.AST.Services
         [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
         public SeverityEnum Severity { get; set; }
 
-        [Newtonsoft.Json.JsonProperty("state", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-        public KicsStateEnum State { get; set; }
+        [JsonProperty("state", Required = Required.Default, NullValueHandling = NullValueHandling.Ignore)]
+        [JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+        public KicsStateEnum? State { get; set; }
+
+        /// <summary>
+        /// ID of the custom state (relevant only if custom state feature flag is on). Cannot be used together with state.
+        /// </summary>
+        [JsonProperty("customStateId", Required = Required.Default, NullValueHandling = NullValueHandling.Ignore)]
+        public int? CustomStateId { get; set; }
 
         /// <summary>
         /// comment that describe why the state has predicated

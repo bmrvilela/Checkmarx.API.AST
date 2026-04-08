@@ -1035,17 +1035,7 @@ namespace Checkmarx.API.AST
                 if (_sastStates == null)
                 {
                     _sastStates = EnumUtils.GetStateEnumMemberList<ResultsState>().OfType<SASTResultState>().ToList();
-                    if (AreCustomStatesEnabled)
-                    {
-                        var customStates = GetAllCustomStates();
-                        if (customStates.Any())
-                        {
-                            foreach (var state in customStates)
-                            {
-                                _sastStates.Add(new SASTResultState { Id = state.Id, Name = state.Name });
-                            }
-                        }
-                    }
+                    addCustomStatesIfNeeded(_sastStates);
                 }
 
                 return _sastStates;
@@ -1058,7 +1048,10 @@ namespace Checkmarx.API.AST
             get
             {
                 if (_scaStates == null)
+                {
                     _scaStates = EnumUtils.GetStateEnumMemberList<ScaVulnerabilityStatus>().OfType<SCAResultState>().ToList();
+                    addCustomStatesIfNeeded(_scaStates);
+                }
 
                 return _scaStates;
             }
@@ -1070,9 +1063,32 @@ namespace Checkmarx.API.AST
             get
             {
                 if (_kicsStates == null)
+                {
                     _kicsStates = EnumUtils.GetStateEnumMemberList<KicsStateEnum>().OfType<KicsResultState>().ToList();
+                    addCustomStatesIfNeeded(_kicsStates);
+                }
 
                 return _kicsStates;
+            }
+        }
+
+        private void addCustomStatesIfNeeded<TState>(List<TState> states) where TState : ResultState, new()
+        {
+            if (!AreCustomStatesEnabled)
+                return;
+
+            var customStates = GetAllCustomStates();
+
+            if (!customStates.Any())
+                return;
+
+            foreach (var state in customStates)
+            {
+                states.Add(new TState
+                {
+                    Id = state.Id,
+                    Name = state.Name
+                });
             }
         }
 
@@ -1466,12 +1482,12 @@ namespace Checkmarx.API.AST
         /// <param name="maxScanDate">Max scan date, including the date</param>
         /// <param name="minScanDate">Min scan date, including the date</param>
         /// <returns></returns>
-        public IEnumerable<Scan> GetScans(Guid projectId, 
-            string engine = null, 
-            bool completed = true, 
-            string branch = null, ScanRetrieveKind scanKind = ScanRetrieveKind.All, 
-            DateTime? maxScanDate = null, 
-            DateTime? minScanDate = null, 
+        public IEnumerable<Scan> GetScans(Guid projectId,
+            string engine = null,
+            bool completed = true,
+            string branch = null, ScanRetrieveKind scanKind = ScanRetrieveKind.All,
+            DateTime? maxScanDate = null,
+            DateTime? minScanDate = null,
             IEnumerable<string> tagKeys = null,
             string sastEngineVersion = null)
         {
@@ -1972,7 +1988,7 @@ namespace Checkmarx.API.AST
         /// <param name="projectId"></param>
         /// <returns></returns>
         /// <exception cref="NotSupportedException"></exception>
-        public bool MarkKICSResult(Guid projectId, string similarityId, Services.KicsResults.SeverityEnum severity, KicsStateEnum state, string comment = null)
+        public bool MarkKICSResult(Guid projectId, string similarityId, Services.KicsResults.SeverityEnum severity, string state, string comment = null)
         {
             if (string.IsNullOrWhiteSpace(similarityId))
                 throw new ArgumentNullException(nameof(similarityId));
@@ -1980,15 +1996,30 @@ namespace Checkmarx.API.AST
             if (projectId == Guid.Empty)
                 throw new ArgumentException(nameof(projectId));
 
-            KicsResultsPredicates.UpdateAsync(
-                new[] { new POSTPredicate (){
-                    SimilarityId = similarityId,
-                    ProjectId = projectId,
-                    Severity = severity,
-                    State = state,
-                    Comment = comment
-                }
-            }).Wait();
+            var postPredicate = new POSTPredicate()
+            {
+                SimilarityId = similarityId,
+                ProjectId = projectId,
+                Severity = severity,
+                Comment = comment
+            };
+
+            if (KICSResultsPredicates.TryGetKicsState(state, out var enumState))
+            {
+                postPredicate.State = enumState;
+                postPredicate.CustomStateId = null;
+            }
+            else
+            {
+                var customState = KicsStates.FirstOrDefault(x => x.Name == state);
+                if (customState == null)
+                    throw new Exception($"IaC custom state \"{state}\" not found.");
+
+                postPredicate.State = null;
+                postPredicate.CustomStateId = customState.Id;
+            }
+
+            KicsResultsPredicates.UpdateAsync(new[] { postPredicate }).Wait();
 
             return true;
         }
@@ -2068,6 +2099,13 @@ namespace Checkmarx.API.AST
 
             if (!string.IsNullOrWhiteSpace(vulnerabilityStatus))
             {
+                var state = SCAStates.FirstOrDefault(x => x.Name == vulnerabilityStatus);
+                if (state == null)
+                    throw new Exception($"SCA state \"{vulnerabilityStatus}\" not found.");
+
+                if (state.State == null)
+                    vulnerabilityStatus = state.Id.ToString();
+
                 actions.Add(new ActionType
                 {
                     Type = ActionTypeEnum.ChangeState,
@@ -3404,7 +3442,7 @@ namespace Checkmarx.API.AST
                     if (results.Scans != null)
                     {
                         foreach (var item in results.Scans)
-                            _sastScansMetada.AddOrUpdate(item.ScanId, item, (x,y) => y);
+                            _sastScansMetada.AddOrUpdate(item.ScanId, item, (x, y) => y);
                     }
 
                     if (results.Missing != null)

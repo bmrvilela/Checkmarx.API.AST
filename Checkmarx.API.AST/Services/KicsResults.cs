@@ -75,7 +75,7 @@ namespace Checkmarx.API.AST.Services.KicsResults
         /// <param name="sort">sorting ORDERED array. each string pattern "[-+]field". - mean ASC, + mean DESC.</param>
         /// <returns>successful operation</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<Response> GetKICSResultsByScanAsync(Guid scan_id, int? offset = null, int? limit = null, string authorization = null, string accept = null, System.Guid? correlationId = null,  System.Collections.Generic.IEnumerable<SeverityEnum> severity = null, System.Collections.Generic.IEnumerable<StatusEnum> status = null, string source_file = null, bool? apply_predicates = null,  System.Collections.Generic.IEnumerable<Anonymous> sort = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        public virtual async System.Threading.Tasks.Task<Response> GetKICSResultsByScanAsync(Guid scan_id, int? offset = null, int? limit = null, string authorization = null, string accept = null, System.Guid? correlationId = null, System.Collections.Generic.IEnumerable<SeverityEnum> severity = null, System.Collections.Generic.IEnumerable<StatusEnum> status = null, string source_file = null, bool? apply_predicates = null, System.Collections.Generic.IEnumerable<Anonymous> sort = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
         {
             if (scan_id == null)
                 throw new System.ArgumentNullException("scan_id");
@@ -161,20 +161,20 @@ namespace Checkmarx.API.AST.Services.KicsResults
                             return objectResponse_.Object;
                         }
                         else
-                        if (status_ == 400)
-                        {
-                            var objectResponse_ = await ReadObjectResponseAsync<WebError>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
+                            if (status_ == 400)
                             {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                                var objectResponse_ = await ReadObjectResponseAsync<WebError>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                                if (objectResponse_.Object == null)
+                                {
+                                    throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                                }
+                                throw new ApiException<WebError>("Invalid request supplied.", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
                             }
-                            throw new ApiException<WebError>("Invalid request supplied.", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
-                        }
-                        else
-                        {
-                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                        }
+                            else
+                            {
+                                var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                                throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                            }
                     }
                     finally
                     {
@@ -445,8 +445,14 @@ namespace Checkmarx.API.AST.Services.KicsResults
         /// state enum of a result.
         /// </summary>
         [Newtonsoft.Json.JsonProperty("state", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-        public KicsStateEnum State { get; set; }
+        //[Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+        public string State { get; set; }
+
+        /// <summary>
+        /// ID of the state.
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty("stateId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public int StateId { get; set; }
 
         /// <summary>
         /// Resource type

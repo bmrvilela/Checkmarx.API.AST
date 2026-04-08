@@ -17,11 +17,11 @@ namespace Checkmarx.API.AST.Models
 
     public class SCAResultState : ResultState
     {
-        public ScaVulnerabilityStatus State { get; set; }
+        public ScaVulnerabilityStatus? State { get; set; }
     }
 
     public class KicsResultState : ResultState
     {
-        public KicsStateEnum State { get; set; }
+        public KicsStateEnum? State { get; set; }
     }
 }
