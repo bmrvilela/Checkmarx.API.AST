@@ -526,7 +526,7 @@ namespace Checkmarx.API.AST.Models
 
         private void updateKicsScanResultDetails(ScanResultDetails model, IEnumerable<KicsResult> results)
         {
-            var filtered = results.Where(x => x.State != KicsStateEnum.NOT_EXPLOITABLE);
+            var filtered = results.Where(x => x.State != KicsStateEnum.NOT_EXPLOITABLE.ToString());
 
             int total = 0, critical = 0, high = 0, medium = 0, low = 0, info = 0, toVerify = 0;
 
@@ -543,7 +543,7 @@ namespace Checkmarx.API.AST.Models
                     case Services.KicsResults.SeverityEnum.INFO: info++; break;
                 }
 
-                if (item.State == KicsStateEnum.TO_VERIFY && item.Severity != Services.KicsResults.SeverityEnum.INFO)
+                if (item.State == KicsStateEnum.TO_VERIFY.ToString() && item.Severity != Services.KicsResults.SeverityEnum.INFO)
                     toVerify++;
             }
 
