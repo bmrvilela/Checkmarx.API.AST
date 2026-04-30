@@ -68,6 +68,8 @@ namespace Checkmarx.API.AST
         public const string FastScanConfiguration = "scan.config.sast.fastScanMode";
         public const string RecommendedExclusionsConfiguration = "scan.config.sast.recommendedExclusions";
         public const string IsIncrementalConfiguration = "scan.config.sast.incremental";
+        public const string SettingsResultsScopeLevel = "scan.config.sast.resultsScopeLevel";
+
 
         public const string SAST_Engine = "sast";
         public const string SCA_Engine = "sca";
@@ -2351,6 +2353,22 @@ namespace Checkmarx.API.AST
         public IEnumerable<ScanParameter> GetTenantProjectConfigurations()
         {
             return GetTenantConfigurations().Where(x => x.Value.Key == SettingsProjectConfiguration).Select(x => x.Value);
+        }
+
+        public enum ResultScopeLevel
+        {
+            Project,
+            Application
+        }
+
+        public ResultScopeLevel GetResultsScopeLevel()
+        {
+            switch (GetTenantConfigurations().Single(x => x.Value.Key == SettingsResultsScopeLevel).Value.Value)
+            {
+                case "Project":  return ResultScopeLevel.Project;
+                case "Application": return ResultScopeLevel.Application;
+                default: throw new NotSupportedException();
+            }
         }
 
         public string GetProjectRepoUrl(Guid projectId) => GetProjectConfig(projectId, SettingsProjectRepoUrl);

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
@@ -84,6 +85,23 @@ namespace Checkmarx.API.AST.Tests
             Trace.WriteLine("CxOne:" + engineVersions.CxOne);
             Trace.WriteLine("SAST:" + engineVersions.SAST);
             Trace.WriteLine("IaC:" + engineVersions.KICS);
+        }
+
+
+        [TestMethod]
+        public void ListTenantConfigurationsTest()
+        {
+            foreach (var conf in astclient.GetTenantConfigurations())
+            {
+                Trace.WriteLine($"{conf.Key} = {conf.Value.Value}");
+            }
+        }
+
+
+        [TestMethod]
+        public void GetResultsScopeLevelTest()
+        {
+            Trace.WriteLine($"ResultsScopeLevel = {astclient.GetResultsScopeLevel()}");
         }
 
     }
