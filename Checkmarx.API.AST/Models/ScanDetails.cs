@@ -2,7 +2,6 @@
 using Checkmarx.API.AST.Models.SCA;
 using Checkmarx.API.AST.Services.Configuration;
 using Checkmarx.API.AST.Services.KicsResults;
-using Checkmarx.API.AST.Services.Projects;
 using Checkmarx.API.AST.Services.ResultsSummary;
 using Checkmarx.API.AST.Services.SASTMetadata;
 using Checkmarx.API.AST.Services.SASTResults;
@@ -17,11 +16,9 @@ namespace Checkmarx.API.AST.Models
     public class ScanDetails
     {
         private ASTClient _client;
-        private Services.Scans.Scan _scan;
+        private Scan _scan;
 
-        private readonly static string CompletedStage = Checkmarx.API.AST.Services.Scans.Status.Completed.ToString();
-
-        public ScanDetails(ASTClient client, Services.Scans.Scan scan)
+        public ScanDetails(ASTClient client, Scan scan)
         {
             if (client == null)
                 throw new ArgumentNullException(nameof(client));
@@ -38,9 +35,12 @@ namespace Checkmarx.API.AST.Models
         {
             get
             {
-                if (_scanConfigurations == null)
-                    _scanConfigurations = _client.GetScanConfigurations(_scan.ProjectId, Id);
-
+                if (_scanConfigurations != null) return _scanConfigurations;
+                lock (_scanConfigurationsLock)
+                {
+                    if (_scanConfigurations == null)
+                        _scanConfigurations = _client.GetScanConfigurations(_scan.ProjectId, Id);
+                }
                 return _scanConfigurations;
             }
         }
@@ -60,54 +60,101 @@ namespace Checkmarx.API.AST.Models
         public string RepoUrl => _scan.Metadata?.Handler?.GitHandler?.RepoUrl;
         public string UploadUrl => _scan.Metadata?.Handler?.UploadHandler?.UploadUrl;
 
-        #region SAST
+        private readonly object _loadLock = new object();
+        private readonly object _scanConfigurationsLock = new object();
+        private readonly object _metricsLock = new object();
+        private readonly object _languagesLock = new object();
+        private readonly object _resultsSummaryLock = new object();
+        private readonly object _sastResultsLock = new object();
+        private readonly object _sastVulnerabilitiesLock = new object();
+        private readonly object _scaResultsLock = new object();
+        private readonly object _scaVulnerabilitiesLock = new object();
+        private readonly object _scaRisksLock = new object();
+        private readonly object _kicsResultsLock = new object();
+        private readonly object _isIncrementalLock = new object();
+        private readonly object _engineVersionLock = new object();
+        private bool _loaded = false;
 
+        #region SAST
 
         private Metrics _metrics;
         public Metrics Metrics
         {
             get
             {
-                if (_metrics == null)
-                    _metrics = _client.SASTMetadata.MetricsAsync(Id).Result;
-
+                if (_metrics != null) return _metrics;
+                lock (_metricsLock)
+                {
+                    if (_metrics == null)
+                        _metrics = _client.SASTMetadata.MetricsAsync(Id).Result;
+                }
                 return _metrics;
             }
         }
 
-
-        private string preset;
+        private string _preset;
         public string Preset
         {
             get
             {
-                if (loC == null)
+                if (!_loaded && loC == null && string.IsNullOrWhiteSpace(_preset))
                     loadPresetAndLoc();
 
-                return preset;
+                return _preset;
             }
-            private set { preset = value; }
+            private set => _preset = value;
         }
 
-
-
-
         private long? loC = null;
-
-        /// <summary>
-        /// Returns the LoC of the SAST Engine.
-        /// </summary>
         public long LoC
         {
             get
             {
-                if (loC == null)
-                {
+                if (!_loaded && loC == null)
                     loadPresetAndLoc();
-                }
-                return loC.Value;
+
+                return loC ?? -1;
             }
             private set => loC = value;
+        }
+
+        private void loadPresetAndLoc()
+        {
+            if (_loaded) return;
+
+            lock (_loadLock)
+            {
+                if (_loaded) return;
+
+                try
+                {
+                    var sast = _scan.StatusDetails?.SingleOrDefault(x => x.Name == ASTClient.SAST_Engine);
+                    if (sast != null)
+                        loC = sast.Loc;
+
+                    if (string.IsNullOrWhiteSpace(_preset) && ScanConfigurations.ContainsKey(ASTClient.SettingsProjectPreset))
+                        Preset = ScanConfigurations[ASTClient.SettingsProjectPreset].Value;
+
+                    if (loC == null || string.IsNullOrWhiteSpace(_preset))
+                    {
+                        ScanInfo metadata = _client.SASTMetadata.GetMetadataAsync(Id).Result;
+                        if (metadata != null)
+                        {
+                            Preset = metadata.QueryPreset;
+                            LoC = metadata.Loc;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine($"Error fetching project {_scan.ProjectId} Preset and LoC. Reason {ex.Message.Replace("\n", " ")}");
+                    loC = -1;
+                }
+                finally
+                {
+                    _loaded = true;
+                }
+            }
         }
 
         private string _languages;
@@ -115,21 +162,23 @@ namespace Checkmarx.API.AST.Models
         {
             get
             {
-                if (_languages == null)
+                if (_languages != null) return _languages;
+                lock (_languagesLock)
                 {
-                    try
+                    if (_languages == null)
                     {
-                        // The CxOne API gives 404 when the engines doesn't do anything.
-                        var scannedLanguages = Metrics?.ScannedFilesPerLanguage?.Select(x => x.Key);
-                        if (scannedLanguages != null)
-                            _languages = string.Join(";", scannedLanguages);
-                    }
-                    catch (Exception)
-                    {
-                        _languages = string.Empty;
+                        try
+                        {
+                            // The CxOne API gives 404 when the engines doesn't do anything.
+                            var scannedLanguages = Metrics?.ScannedFilesPerLanguage?.Select(x => x.Key);
+                            _languages = scannedLanguages != null ? string.Join(";", scannedLanguages) : string.Empty;
+                        }
+                        catch (Exception)
+                        {
+                            _languages = string.Empty;
+                        }
                     }
                 }
-
                 return _languages;
             }
         }
@@ -137,11 +186,18 @@ namespace Checkmarx.API.AST.Models
         /// <summary>
         /// Fix this, even if they ask to run as an Incremental it doesn't mean that it ran as incremental...
         /// </summary>
+        private bool? _isIncremental;
         public bool IsIncremental
         {
             get
             {
-                return _client.IsScanIncremental(Id);
+                if (_isIncremental.HasValue) return _isIncremental.Value;
+                lock (_isIncrementalLock)
+                {
+                    if (!_isIncremental.HasValue)
+                        _isIncremental = _client.IsScanIncremental(Id);
+                }
+                return _isIncremental.Value;
             }
         }
 
@@ -163,51 +219,21 @@ namespace Checkmarx.API.AST.Models
             }
         }
 
-
-        private void loadPresetAndLoc()
-        {
-            try
-            {
-                if (loC == null)
-                {
-                    var sast = _scan.StatusDetails?.SingleOrDefault(x => x.Name == ASTClient.SAST_Engine);
-                    if (sast != null)
-                        loC = sast.Loc;
-                }
-
-                if (string.IsNullOrWhiteSpace(preset) && ScanConfigurations.ContainsKey(ASTClient.SettingsProjectPreset))
-                    Preset = ScanConfigurations[ASTClient.SettingsProjectPreset].Value;
-
-                if (loC == null || string.IsNullOrWhiteSpace(preset))
-                {
-                    // Get sast metadata
-                    ScanInfo metadata = _client.SASTMetadata.GetMetadataAsync(Id).Result;
-                    if (metadata != null)
-                    {
-                        Preset = metadata.QueryPreset;
-                        LoC = metadata.Loc;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Trace.WriteLine($"Error fetching project {_scan.ProjectId} Preset and LoC. Reason {ex.Message.Replace("\n", " ")}");
-                LoC = -1;
-            }
-        }
-
         private ResultsSummary _resultsSummary = null;
         private bool _resultsSummaryInitialized = false;
         private ResultsSummary ResultsSummary
         {
             get
             {
-                if (!_resultsSummaryInitialized && _resultsSummary == null)
+                if (_resultsSummaryInitialized) return _resultsSummary;
+                lock (_resultsSummaryLock)
                 {
-                    _resultsSummaryInitialized = true;
-                    _resultsSummary = _client.GetResultsSummaryById(Id).FirstOrDefault();
+                    if (!_resultsSummaryInitialized)
+                    {
+                        _resultsSummary = _client.GetResultsSummaryById(Id).FirstOrDefault();
+                        _resultsSummaryInitialized = true;
+                    }
                 }
-
                 return _resultsSummary;
             }
         }
@@ -217,27 +243,27 @@ namespace Checkmarx.API.AST.Models
         {
             get
             {
-                if (_sastResults != null)
-                    return _sastResults;
-
-                if (!Successful)
-                    return null;
-
-                var sastStatusDetails = _scan.StatusDetails?.SingleOrDefault(x => x.Name == ASTClient.SAST_Engine);
-                if (sastStatusDetails == null)
+                if (_sastResults != null) return _sastResults;
+                lock (_sastResultsLock)
                 {
-                    return null;
+                    if (_sastResults != null) return _sastResults;
+
+                    if (!Successful) return null;
+
+                    var sastStatusDetails = _scan.StatusDetails?.SingleOrDefault(x => x.Name == ASTClient.SAST_Engine);
+                    if (sastStatusDetails == null) return null;
+
+                    var result = new SASTScanResultDetails
+                    {
+                        Id = Id,
+                        Status = sastStatusDetails.Status
+                    };
+
+                    if (result.Successful)
+                        updateSASTScanResultDetails(result);
+
+                    _sastResults = result;
                 }
-
-                _sastResults = new SASTScanResultDetails
-                {
-                    Id = Id,
-                    Status = sastStatusDetails.Status
-                };
-
-                if (_sastResults.Successful)
-                    updateSASTScanResultDetails(_sastResults);
-
                 return _sastResults;
             }
         }
@@ -247,9 +273,12 @@ namespace Checkmarx.API.AST.Models
         {
             get
             {
-                if (_sastVulnerabilities == null)
-                    _sastVulnerabilities = _client.GetSASTScanResultsById(Id, limit: 5000).ToList();
-
+                if (_sastVulnerabilities != null) return _sastVulnerabilities;
+                lock (_sastVulnerabilitiesLock)
+                {
+                    if (_sastVulnerabilities == null)
+                        _sastVulnerabilities = _client.GetSASTScanResultsById(Id, limit: 5000).ToList();
+                }
                 return _sastVulnerabilities;
             }
         }
@@ -263,52 +292,58 @@ namespace Checkmarx.API.AST.Models
         }
 
 
-        public string EngineVersion => this._client.GetScanEngineVersionAsync([Id]).Result.Values.FirstOrDefault();
+        private string _engineVersion;
+        public string EngineVersion
+        {
+            get
+            {
+                if (_engineVersion != null) return _engineVersion;
+                lock (_engineVersionLock)
+                {
+                    if (_engineVersion == null)
+                        _engineVersion = this._client.GetScanEngineVersionAsync([Id]).Result.Values.FirstOrDefault() ?? string.Empty;
+                }
+                return _engineVersion == string.Empty ? null : _engineVersion;
+            }
+        }
 
         #endregion
 
         #region SCA
 
-        public ScanResultDetails _scaResults = null;
+        private ScanResultDetails _scaResults = null;
         public ScanResultDetails ScaResults
         {
             get
             {
-                if (_scaResults != null)
-                    return _scaResults;
-
-                if (!Successful)
-                    return null;
-
-                var scaStatusDetails = _scan.StatusDetails.SingleOrDefault(x => x.Name == ASTClient.SCA_Engine);
-                if (scaStatusDetails == null)
+                if (_scaResults != null) return _scaResults;
+                lock (_scaResultsLock)
                 {
-                    return null;
+                    if (_scaResults != null) return _scaResults;
+
+                    if (!Successful) return null;
+
+                    var scaStatusDetails = _scan.StatusDetails.SingleOrDefault(x => x.Name == ASTClient.SCA_Engine);
+                    if (scaStatusDetails == null) return null;
+
+                    var result = new ScanResultDetails
+                    {
+                        Id = Id,
+                        Status = scaStatusDetails.Status
+                    };
+
+                    if (result.Successful)
+                    {
+                        updateScaScanResultDetails(
+                            result,
+                            SCA_Risks,
+                            severitySelector: x => x.PendingSeverity,
+                            stateSelector: x => x.PendingState
+                        );
+                    }
+
+                    _scaResults = result;
                 }
-
-                _scaResults = new ScanResultDetails
-                {
-                    Id = Id,
-                    Status = scaStatusDetails.Status
-                };
-
-                if (_scaResults.Successful)
-                {
-                    //updateScaScanResultDetails(
-                    //    _scaResults,
-                    //    SCAVulnerabilities,
-                    //    severitySelector: x => x.Severity,
-                    //    stateSelector: x => x.RiskState.ToString()
-                    //);
-
-                    updateScaScanResultDetails(
-                        _scaResults,
-                        SCA_Risks,
-                        severitySelector: x => x.PendingSeverity,
-                        stateSelector: x => x.PendingState
-                    );
-                }
-
                 return _scaResults;
             }
         }
@@ -319,9 +354,12 @@ namespace Checkmarx.API.AST.Models
         {
             get
             {
-                if (_scaVulnerabilities == null)
-                    _scaVulnerabilities = this._client.GetScaScanVulnerabilities(Id, _scaRisks);
-
+                if (_scaVulnerabilities != null) return _scaVulnerabilities;
+                lock (_scaVulnerabilitiesLock)
+                {
+                    if (_scaVulnerabilities == null)
+                        _scaVulnerabilities = this._client.GetScaScanVulnerabilities(Id, _scaRisks);
+                }
                 return _scaVulnerabilities;
             }
         }
@@ -331,12 +369,16 @@ namespace Checkmarx.API.AST.Models
         {
             get
             {
-                if (_scaRisks == null)
+                if (_scaRisks != null) return _scaRisks;
+                lock (_scaRisksLock)
                 {
-                    _scaRisks = this._client.GraphQLClient.GetAllVulnerabilitiesRisksByScanIdAsync(new VulnerabilitiesRisksByScanIdVariables
+                    if (_scaRisks == null)
                     {
-                        ScanId = Id
-                    }).Result;
+                        _scaRisks = this._client.GraphQLClient.GetAllVulnerabilitiesRisksByScanIdAsync(new VulnerabilitiesRisksByScanIdVariables
+                        {
+                            ScanId = Id
+                        }).Result;
+                    }
                 }
                 return _scaRisks;
             }
@@ -346,32 +388,32 @@ namespace Checkmarx.API.AST.Models
 
         #region KICS
 
-        public ScanResultDetails _kicsResults = null;
+        private ScanResultDetails _kicsResults = null;
         public ScanResultDetails KicsResults
         {
             get
             {
-                if (_kicsResults != null)
-                    return _kicsResults;
-
-                if (!Successful)
-                    return null;
-
-                var kicsStatusDetails = _scan.StatusDetails.SingleOrDefault(x => x.Name == ASTClient.KICS_Engine);
-                if (kicsStatusDetails == null)
+                if (_kicsResults != null) return _kicsResults;
+                lock (_kicsResultsLock)
                 {
-                    return null;
+                    if (_kicsResults != null) return _kicsResults;
+
+                    if (!Successful) return null;
+
+                    var kicsStatusDetails = _scan.StatusDetails.SingleOrDefault(x => x.Name == ASTClient.KICS_Engine);
+                    if (kicsStatusDetails == null) return null;
+
+                    var result = new ScanResultDetails
+                    {
+                        Id = Id,
+                        Status = kicsStatusDetails.Status
+                    };
+
+                    if (result.Successful)
+                        updateKicsScanResultDetails(result, _client.GetKicsScanResultsById(Id));
+
+                    _kicsResults = result;
                 }
-
-                _kicsResults = new ScanResultDetails
-                {
-                    Id = Id,
-                    Status = kicsStatusDetails.Status
-                };
-
-                if (_kicsResults.Successful)
-                    updateKicsScanResultDetails(_kicsResults, _client.GetKicsScanResultsById(Id));
-
                 return _kicsResults;
             }
         }
@@ -579,7 +621,5 @@ namespace Checkmarx.API.AST.Models
 
             return TimeSpan.Zero;
         }
-
-
     }
 }
