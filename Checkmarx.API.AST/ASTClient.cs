@@ -436,6 +436,42 @@ namespace Checkmarx.API.AST
             }
         }
 
+        private AIAssets _aiAssets;
+        public AIAssets AIAssets
+        {
+            get
+            {
+                if (Connected && _aiAssets == null)
+                    _aiAssets = new AIAssets(ASTServer, _httpClient);
+
+                return _aiAssets;
+            }
+        }
+
+        private AISupplyChainGlobalInventory _aiSupplyChainGlobalInventory;
+        public AISupplyChainGlobalInventory AISupplyChainGlobalInventory
+        {
+            get
+            {
+                if (Connected && _aiSupplyChainGlobalInventory == null)
+                    _aiSupplyChainGlobalInventory = new AISupplyChainGlobalInventory(ASTServer, _httpClient);
+
+                return _aiSupplyChainGlobalInventory;
+            }
+        }
+
+        private AISupplyChainScanResults _aiSupplyChainScanResults;
+        public AISupplyChainScanResults AISupplyChainScanResults
+        {
+            get
+            {
+                if (Connected && _aiSupplyChainScanResults == null)
+                    _aiSupplyChainScanResults = new AISupplyChainScanResults(ASTServer, _httpClient);
+
+                return _aiSupplyChainScanResults;
+            }
+        }
+
         private SASTResults _SASTResults;
 
         /// <summary>
