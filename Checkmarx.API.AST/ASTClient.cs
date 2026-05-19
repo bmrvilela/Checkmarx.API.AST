@@ -951,7 +951,7 @@ namespace Checkmarx.API.AST
 
         public IEnumerable<Services.Applications.Application> GetProjectApplications(Guid projectId)
         {
-            return Apps.Applications?.Where(x => x.ProjectIds.Contains(projectId));
+            return Apps.Applications?.Where(x => x.ProjectIds != null && x.ProjectIds.Contains(projectId));
         }
 
         public Services.Applications.Application GetProjectApplication(Guid projectId)

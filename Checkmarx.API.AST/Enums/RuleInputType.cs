@@ -1,29 +1,28 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using System.Runtime.Serialization;
 
 namespace Checkmarx.API.AST.Enums
 {
     public enum RuleInputType
     {
+        [EnumMember(Value = @"project.name.in")]
+        Project_name_in = 0,
 
-        [System.Runtime.Serialization.EnumMember(Value = @"project.id.in")]
-        Project_id_in = 0,
+        [EnumMember(Value = @"project.name.starts-with")]
+        Project_name_startsWith = 1,
 
-        [System.Runtime.Serialization.EnumMember(Value = @"project.id.starts-with")]
-        Project_id_startsWith = 1,
+        [EnumMember(Value = @"project.name.contains")]
+        Project_name_contains = 2,
 
-        [System.Runtime.Serialization.EnumMember(Value = @"project.id.contains")]
-        Project_id_contains = 2,
+        [EnumMember(Value = @"project.name.regex")]
+        Project_name_regex = 3,
 
-        [System.Runtime.Serialization.EnumMember(Value = @"project.id.regex")]
-        Project_id_regex = 3,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"project.tag.key.exists")]
+        [EnumMember(Value = @"project.tag.key.exists")]
         Project_tag_key_exists = 4,
 
-        [System.Runtime.Serialization.EnumMember(Value = @"project.tag.value.exists, project.tag.key-value.exists")]
-        Project_tag_value_exists__project_tag_keyValue_exists = 5,
+        [EnumMember(Value = @"project.tag.value.exists")]
+        Project_tag_value_exists = 5,
 
+        [EnumMember(Value = @"project.tag.key-value.exists")]
+        Project_tag_keyValue_exists = 6,
     }
 }
