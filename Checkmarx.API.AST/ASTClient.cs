@@ -472,6 +472,30 @@ namespace Checkmarx.API.AST
             }
         }
 
+        private SASTResourceManagement _sastResourceManagement;
+        public SASTResourceManagement SASTResourceManagement
+        {
+            get
+            {
+                if (Connected && _sastResourceManagement == null)
+                    _sastResourceManagement = new SASTResourceManagement(ASTServer, _httpClient);
+
+                return _sastResourceManagement;
+            }
+        }
+
+        private RepositoryInsights _repositoryInsights;
+        public RepositoryInsights RepositoryInsights
+        {
+            get
+            {
+                if (Connected && _repositoryInsights == null)
+                    _repositoryInsights = new RepositoryInsights(ASTServer, _httpClient);
+
+                return _repositoryInsights;
+            }
+        }
+
         private SASTResults _SASTResults;
 
         /// <summary>
