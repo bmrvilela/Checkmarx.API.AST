@@ -1019,6 +1019,45 @@ namespace Checkmarx.API.AST
             return GetProjectApplications(projectId)?.FirstOrDefault();
         }
 
+        // Invalidate via InvalidateApplicationGroupNamesCache when:
+        //   - AccessManagement.CreateAssignmentAsync  (group assigned to an application)
+        //   - AccessManagement.DeleteAssignmentAsync  (group removed from an application)
+        //   - AccessManagement.CreateMultipleAssignmentsAsync (bulk group-application assignments)
+        private Dictionary<Guid, IEnumerable<string>> _applicationGroupNames;
+
+        public IEnumerable<string> GetApplicationGroupNames(Guid applicationId)
+        {
+            if (_applicationGroupNames == null)
+                _applicationGroupNames = new Dictionary<Guid, IEnumerable<string>>();
+
+            if (!_applicationGroupNames.TryGetValue(applicationId, out var cached))
+            {
+                var assignments = AccessManagement.GetEntitiesForAsync(
+                    applicationId.ToString(),
+                    "application",
+                    "group",
+                    System.Threading.CancellationToken.None).Result;
+
+                cached = assignments?
+                    .Where(a => a.EntityType == AssignmentEntityType.Group)
+                    .Select(a => a.EntityName)
+                    .ToList()
+                    ?? new List<string>();
+
+                _applicationGroupNames[applicationId] = cached;
+            }
+
+            return cached;
+        }
+
+        public void InvalidateApplicationGroupNamesCache(Guid? applicationId = null)
+        {
+            if (applicationId.HasValue)
+                _applicationGroupNames?.Remove(applicationId.Value);
+            else
+                _applicationGroupNames = null;
+        }
+
         #endregion
 
         #region Audit

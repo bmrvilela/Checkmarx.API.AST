@@ -312,6 +312,23 @@ namespace Checkmarx.API.AST.Tests
             }
         }
 
+        [TestMethod]
+        public void GetApplicationGroupNamesTest()
+        {
+            var applicationId = Guid.Parse(Configuration["TestApplicationId"]);
+
+            var groupNames = astclient.GetApplicationGroupNames(applicationId).ToList();
+
+            Assert.IsNotNull(groupNames);
+            Assert.IsTrue(groupNames.Any(), "Expected at least one group associated with the application.");
+
+            foreach (var name in groupNames)
+                Trace.WriteLine($"Group: {name}");
+
+            CollectionAssert.Contains(groupNames, "ASA/ASA Helpdesk Engineers");
+            CollectionAssert.Contains(groupNames, "ASA/ASA Engineers");
+        }
+
         #endregion
 
         #region Users With Resources
