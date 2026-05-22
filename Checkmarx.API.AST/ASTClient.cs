@@ -2091,7 +2091,11 @@ namespace Checkmarx.API.AST
 
                 if (updateState)
                 {
-                    newBody.State = predicate.State;
+                    var predicateState = SASTStates.SingleOrDefault(x => x.Name.Equals(predicate.State, StringComparison.InvariantCultureIgnoreCase));
+                    if (predicateState?.State.HasValue == true)
+                        newBody.State = predicateState.State.Value.ToString();
+                    else if (predicateState != null)
+                        newBody.CustomStateId = predicateState.Id;
                 }
                 else
                 {
