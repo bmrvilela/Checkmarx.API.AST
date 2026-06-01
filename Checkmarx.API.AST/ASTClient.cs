@@ -2468,7 +2468,7 @@ namespace Checkmarx.API.AST
         {
             switch (GetTenantConfigurations().Single(x => x.Value.Key == SettingsResultsScopeLevel).Value.Value)
             {
-                case "Project":  return ResultScopeLevel.Project;
+                case "Project": return ResultScopeLevel.Project;
                 case "Application": return ResultScopeLevel.Application;
                 default: throw new NotSupportedException();
             }
@@ -2631,28 +2631,36 @@ namespace Checkmarx.API.AST
             if (limit <= 0)
                 throw new ArgumentOutOfRangeException(nameof(limit));
 
-            var listPresets = PresetManagement.GetPresetsAsync(Scanner.Sast, limit, include_details: true).Result;
-            if (listPresets.TotalCount > limit)
+            var result = new List<PresetSummary>();
+            var offset = 0;
+
+            while (true)
             {
-                var offset = limit;
-                bool cont = true;
-                do
+                var page = PresetManagement.GetPresetsAsync(Scanner.Sast, limit, offset, include_details: true).Result;
+
+                if (page.Presets != null)
+                    result.AddRange(page.Presets);
+
+                offset += limit;
+
+                if (page.TotalCount == 0 || page.TotalCount == result.Count)
                 {
-                    var next = PresetManagement.GetPresetsAsync(Scanner.Sast, limit, offset, include_details: true).Result;
-                    if (next.Presets.Any())
-                    {
-                        next.Presets.ToList().ForEach(o => listPresets.Presets.Add(o));
-                        offset += limit;
+                    // Found a tenant with duplicated presets (same ID, Name, settings, etc)
+                    // As a workaround, we are grouping by preset ID and taking the first one, since all duplicates have the same details
+                    var dupePresets = result
+                        .GroupBy(p => p.Id)
+                        .Where(g => g.Count() > 1)
+                        .Select(g => g.First().Name)
+                        .ToList();
 
-                        if (listPresets.Presets.Count == listPresets.TotalCount) cont = false;
-                    }
-                    else
-                        cont = false;
+                    if (dupePresets.Any())
+                        Console.WriteLine($"[GetAllPresets] Duplicate presets found with the same Id: {string.Join(", ", dupePresets)}. Please check the tenant's preset configuration.");
 
-                } while (cont);
+                    return result
+                        .GroupBy(p => p.Id)
+                        .Select(g => g.First());
+                }
             }
-
-            return listPresets.Presets;
         }
 
         #endregion
