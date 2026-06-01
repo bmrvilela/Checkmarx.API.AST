@@ -2650,7 +2650,7 @@ namespace Checkmarx.API.AST
                     var dupePresets = result
                         .GroupBy(p => p.Id)
                         .Where(g => g.Count() > 1)
-                        .Select(g => g.First().Name)
+                        .Select(g => $"[{g.Key}] {string.Join(" / ", g.Select(p => p.Name).Distinct())}")
                         .ToList();
 
                     if (dupePresets.Any())
