@@ -12,6 +12,7 @@ using Checkmarx.API.AST.Services.KicsResults;
 using Checkmarx.API.AST.Services.Projects;
 using Checkmarx.API.AST.Services.QueryEditor;
 using Checkmarx.API.AST.Services.Reports;
+using Checkmarx.API.AST.Services.ReportsV2;
 using Checkmarx.API.AST.Services.Repostore;
 using Checkmarx.API.AST.Services.ResultsOverview;
 using Checkmarx.API.AST.Services.ResultsSummary;
@@ -310,6 +311,18 @@ namespace Checkmarx.API.AST
                     _scans = new Scans($"{ASTServer.AbsoluteUri}api/scans", _httpClient);
 
                 return _scans;
+            }
+        }
+
+        private ReportsV2 _reportsV2;
+        public ReportsV2 ReportsV2
+        {
+            get
+            {
+                if (Connected && _reportsV2 == null)
+                    _reportsV2 = new ReportsV2(ASTServer, _httpClient);
+
+                return _reportsV2;
             }
         }
 
