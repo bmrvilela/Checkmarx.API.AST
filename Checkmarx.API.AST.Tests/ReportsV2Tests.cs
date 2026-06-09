@@ -1,3 +1,4 @@
+using Checkmarx.API.AST.Services.Reports;
 using Checkmarx.API.AST.Services.ReportsV2;
 using Microsoft.Extensions.Configuration;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -66,7 +67,7 @@ namespace Checkmarx.API.AST.Tests
                     new ReportV2Entity
                     {
                         Entity = ReportV2EntityType.Scan,
-                        Ids = new List<string> { scanId }
+                        Ids = new List<Guid> { new Guid(scanId) }
                     }
                 },
                 Filters = new ReportV2Filters
@@ -111,7 +112,7 @@ namespace Checkmarx.API.AST.Tests
                     new ReportV2Entity
                     {
                         Entity = ReportV2EntityType.Scan,
-                        Ids = new List<string> { scanId }
+                        Ids = new List<Guid> { new Guid(scanId) }
                     }
                 },
                 Filters = new ReportV2Filters
@@ -155,7 +156,7 @@ namespace Checkmarx.API.AST.Tests
                     new ReportV2Entity
                     {
                         Entity = ReportV2EntityType.Project,
-                        Ids = new List<string> { projectId },
+                        Ids = new List<Guid> { new Guid(projectId) },
                         Tags = new List<string>()
                     }
                 },
@@ -195,7 +196,7 @@ namespace Checkmarx.API.AST.Tests
                     new ReportV2Entity
                     {
                         Entity = ReportV2EntityType.Project,
-                        Ids = new List<string> { projectId },
+                        Ids = new List<Guid> { new Guid(projectId) },
                         Tags = new List<string>()
                     }
                 },
@@ -214,6 +215,77 @@ namespace Checkmarx.API.AST.Tests
             Assert.AreNotEqual(Guid.Empty, response.ReportId);
 
             Trace.WriteLine($"Improved Project Report (multi) created. ReportId: {response.ReportId}");
+        }
+
+
+     
+        [TestMethod]
+        public void CreateApplicationSBOMImprovedScanReportTest()
+        {
+            Guid appId = new Guid("d0f7bde0-2195-4bd7-abac-a9bd5ca53054");
+
+            var request = new CreateScanReportV2Request
+            {
+                ReportName = "application-sbom-cyclonedx-report",
+                ReportType = ReportV2Type.Ui,
+                FileFormat = ScanReportV2FileFormat.Json,
+                Entities = new List<ReportV2Entity>
+                {
+                    new ReportV2Entity
+                    {
+                        Entity = ReportV2EntityType.Application,
+                        Ids = new List<Guid> { appId }
+                    }
+                },
+                Filters = new ReportV2Filters
+                {
+                    Scanners = new List<string> { "sca", "containers" }
+                }
+            };
+
+            var response = astclient.ReportsV2.CreateScanReportAsync(request).Result;
+
+            Assert.IsNotNull(response);
+            Assert.AreNotEqual(Guid.Empty, response.ReportId);
+
+
+            Guid reportId = response.ReportId;
+            string reportStatus = "Requested";
+            string pastReportStatus = reportStatus;
+            double aprox_seconds_passed = 0.0;
+            Report statusResponse = null;
+
+            do
+            {
+                System.Threading.Thread.Sleep(TimeSpan.FromSeconds(1));
+                aprox_seconds_passed += 1.020;
+
+                statusResponse = astclient.Reports.GetReportAsync(reportId, true).Result;
+                reportId = statusResponse.ReportId;
+                reportStatus = statusResponse.Status.ToString();
+
+                if (pastReportStatus != reportStatus)
+                {
+                    pastReportStatus = reportStatus;
+                }
+
+                if (aprox_seconds_passed > 60)
+                {
+                    throw new TimeoutException("AST Scan json report for project {0} is taking a long time! Try again later.");
+                }
+
+                if (reportStatus == "Failed")
+                {
+
+                    throw new Exception("AST Scan API says it could not generate a json report for project {0}. You may want to try again later.");
+                }
+
+            } while (reportStatus != "Completed");
+
+            var reportString = astclient.Reports.DownloadScanReportJsonUrl(statusResponse.Url).Result;
+
+
+            Trace.WriteLine($"Improved Scan Report created. ReportId: {response.ReportId}");
         }
     }
 }

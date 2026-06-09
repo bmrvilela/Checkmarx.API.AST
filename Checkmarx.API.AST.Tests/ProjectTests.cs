@@ -284,6 +284,19 @@ namespace Checkmarx.API.AST.Tests
             }
         }
 
+
+        [TestMethod]
+        public void ListProjectAppIdsTest()
+        {
+            foreach (var item in astclient.GetAllProjectsDetails())
+            {
+                var currentApps = astclient.GetProject(item.Id).ApplicationIds;
+
+                Trace.WriteLine($"{item.Name} -> {string.Join(";", currentApps)}");
+
+            }
+        }
+
         [TestMethod]
         public void BranchesTest()
         {

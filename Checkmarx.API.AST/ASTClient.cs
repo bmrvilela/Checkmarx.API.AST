@@ -994,6 +994,10 @@ namespace Checkmarx.API.AST
 
                 return _apps;
             }
+            set
+            {
+                _apps = value;
+            }
         }
 
         private Services.Applications.ApplicationsCollection getAllApplications(int limit = 20)

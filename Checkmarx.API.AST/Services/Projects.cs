@@ -1333,7 +1333,8 @@ namespace Checkmarx.API.AST.Services.Projects
         /// The applications this project is associated to
         /// </summary>
         [Newtonsoft.Json.JsonProperty("applicationIds", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.ICollection<string> ApplicationIds { get; set; }
+        [Newtonsoft.Json.JsonConverter(typeof(SafeGuidListConverter))]
+        public System.Collections.Generic.ICollection<Guid> ApplicationIds { get; set; }
 
         /// <summary>
         /// The groups authorized for this project

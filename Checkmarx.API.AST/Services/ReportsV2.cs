@@ -391,7 +391,7 @@ namespace Checkmarx.API.AST.Services.ReportsV2
 
         [Newtonsoft.Json.JsonProperty("ids", Required = Newtonsoft.Json.Required.Always)]
         [System.ComponentModel.DataAnnotations.Required]
-        public System.Collections.Generic.ICollection<string> Ids { get; set; } = new System.Collections.ObjectModel.Collection<string>();
+        public System.Collections.Generic.ICollection<Guid> Ids { get; set; } = new System.Collections.ObjectModel.Collection<Guid>();
 
         [Newtonsoft.Json.JsonProperty("tags", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public System.Collections.Generic.ICollection<string> Tags { get; set; }
@@ -410,6 +410,9 @@ namespace Checkmarx.API.AST.Services.ReportsV2
     {
         [Newtonsoft.Json.JsonProperty("scanners", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public System.Collections.Generic.ICollection<string> Scanners { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("hidePrivatePackages", Required = Newtonsoft.Json.Required.AllowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public System.Boolean HidePrivatePackages { get; set; } = default(Boolean);
 
         [Newtonsoft.Json.JsonProperty("severities", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public System.Collections.Generic.ICollection<string> Severities { get; set; }
@@ -493,6 +496,9 @@ namespace Checkmarx.API.AST.Services.ReportsV2
 
         [System.Runtime.Serialization.EnumMember(Value = @"project")]
         Project = 1,
+
+        [System.Runtime.Serialization.EnumMember(Value = @"application")]
+        Application = 2,
     }
 
     public static class ReportV2Sections
