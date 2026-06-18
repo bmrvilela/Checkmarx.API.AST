@@ -2483,11 +2483,16 @@ namespace Checkmarx.API.AST
 
         public ResultScopeLevel GetResultsScopeLevel()
         {
-            switch (GetTenantConfigurations().Single(x => x.Value.Key == SettingsResultsScopeLevel).Value.Value)
+            var value = GetTenantConfigurations().Single(x => x.Value.Key == SettingsResultsScopeLevel).Value.Value;
+
+            switch (value)
             {
+                // In case is not set the default Result Scope is Project
+                case "":
+                case null:
                 case "Project": return ResultScopeLevel.Project;
                 case "Application": return ResultScopeLevel.Application;
-                default: throw new NotSupportedException();
+                default: throw new NotSupportedException($"Value {value} not supported for Result Scope Level");
             }
         }
 
