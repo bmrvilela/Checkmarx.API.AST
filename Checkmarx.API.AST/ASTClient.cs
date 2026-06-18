@@ -2491,6 +2491,21 @@ namespace Checkmarx.API.AST
             }
         }
 
+        public void SetResultsScopeLevel(ResultScopeLevel level)
+        {
+            List<ScanParameter> body = new List<ScanParameter>()
+            {
+                new ScanParameter()
+                {
+                    Key = SettingsResultsScopeLevel,
+                    Value = level.ToString(),
+                    AllowOverride = false
+                }
+            };
+
+            Configuration.UpdateTenantConfigurationAsync(body).Wait();
+        }
+
         public string GetProjectRepoUrl(Guid projectId) => GetProjectConfig(projectId, SettingsProjectRepoUrl);
 
         public string GetProjectConfiguration(Guid projectId) => GetProjectConfig(projectId, SettingsProjectConfiguration);
