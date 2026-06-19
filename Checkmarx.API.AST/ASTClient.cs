@@ -40,6 +40,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Checkmarx.API.AST
@@ -81,6 +82,10 @@ namespace Checkmarx.API.AST
         public const string Query_Level_Cx = "Cx";
         public const string Query_Level_Tenant = "Tenant";
         public const string Query_Level_Project = "Project";
+
+        // Tenant-wide limit is 5 concurrent sessions (shared with UI users). 3 is safe for automation.
+        private static readonly SemaphoreSlim _querySessionGate = new SemaphoreSlim(3, 3);
+        private static readonly TimeSpan _querySessionAcquireTimeout = TimeSpan.FromMinutes(10);
 
         public const string Feature_Flag_CustomStatesEnabled = "CUSTOM_STATES_ENABLED";
 
@@ -2713,9 +2718,15 @@ namespace Checkmarx.API.AST
         public IEnumerable<Services.SASTQueriesAudit.Queries> GetAllQueries()
         {
             var queries = getQueries().ToList();
-            foreach (var project in GetAllProjectsDetails())
+
+            // Project-level queries use plain HTTP (no session) — safe to parallelize.
+            var projectResults = GetAllProjectsDetails()
+                .AsParallel()
+                .Select(p => GetProjectLevelQueries(p.Id).Values)
+                .ToList();
+
+            foreach (var projectQueries in projectResults)
             {
-                var projectQueries = GetProjectLevelQueries(project.Id).Values;
                 if (projectQueries.Any())
                     queries.AddRange(projectQueries);
             }
@@ -3202,22 +3213,52 @@ namespace Checkmarx.API.AST
             if (level != Query_Level_Tenant && level != Query_Level_Project)
                 throw new Exception($"You can only create a query editor session for {Query_Level_Tenant} and {Query_Level_Project} levels.");
 
-            if (level == Query_Level_Tenant)
-            {
-                if (string.IsNullOrWhiteSpace(language))
-                    throw new ArgumentNullException(nameof(language));
+            // Block until a session slot is available or we time out. This is the primary guard
+            // against exceeding the tenant-wide session limit when called from parallel code.
+            if (!_querySessionGate.Wait(_querySessionAcquireTimeout))
+                throw new TimeoutException(
+                    $"Could not acquire a query editor session slot within {_querySessionAcquireTimeout.TotalMinutes} minutes. " +
+                    "The tenant may have reached its maximum concurrent session limit.");
 
-                return createQueryEditorNewSessionId(language);
+            bool sessionCreated = false;
+            try
+            {
+                // Secondary check: ask the API whether it can accept new sessions right now.
+                var sessionAvailability = SASTQueriesAudit.SessionsGETAsync().Result;
+                if (sessionAvailability.Available == false)
+                    throw new InvalidOperationException(
+                        "The CxOne tenant has no available query editor session slots. " +
+                        "Wait for existing sessions to close before retrying.");
+
+                Guid id;
+                if (level == Query_Level_Tenant)
+                {
+                    if (string.IsNullOrWhiteSpace(language))
+                        throw new ArgumentNullException(nameof(language));
+
+                    id = createQueryEditorNewSessionId(language);
+                }
+                else
+                {
+                    if (!projectId.HasValue || projectId == Guid.Empty)
+                        throw new ArgumentNullException(nameof(projectId));
+
+                    if (!scanId.HasValue)
+                        scanId = getProjectScanIdForQueryEditorSession(projectId.Value);
+
+                    id = createQueryEditorNewSessionId(projectId.Value, scanId.Value);
+                }
+
+                // Session exists on the server — ownership transfers to endQueryEditorSession.
+                sessionCreated = true;
+                return id;
             }
-            else
+            catch
             {
-                if (!projectId.HasValue || projectId == Guid.Empty)
-                    throw new ArgumentNullException(nameof(projectId));
-
-                if (!scanId.HasValue)
-                    scanId = getProjectScanIdForQueryEditorSession(projectId.Value);
-
-                return createQueryEditorNewSessionId(projectId.Value, scanId.Value);
+                // Session was never created — release the slot now; endQueryEditorSession won't be called.
+                if (!sessionCreated)
+                    _querySessionGate.Release();
+                throw;
             }
         }
         private Guid createQueryEditorNewSessionId(Guid projectId, Guid scanId)
@@ -3286,7 +3327,20 @@ namespace Checkmarx.API.AST
         }
         private void endQueryEditorSession(Guid session)
         {
-            QueryEditor.DeleteSessionAsync(session).ConfigureAwait(false);
+            try
+            {
+                QueryEditor.DeleteSessionAsync(session).Wait();
+            }
+            catch (Exception ex)
+            {
+                // Log but do not rethrow — a failed DELETE must never mask the original operation's result.
+                // The session will expire on its own via the server-side timeout.
+                System.Diagnostics.Trace.TraceWarning($"[QueryEditor] Failed to delete session {session}: {ex.Message}");
+            }
+            finally
+            {
+                _querySessionGate.Release();
+            }
         }
 
         private QueryResponse getQueryByLanguageAndName(Guid session, string language, string queryName)
