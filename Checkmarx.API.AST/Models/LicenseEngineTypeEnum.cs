@@ -58,6 +58,9 @@ namespace Checkmarx.API.AST.Models
         RepositoryHealth,
 
         [Description("Checkmarx One Assist")]
-        CheckmarxOneAssist
+        CheckmarxOneAssist,
+
+        [Description("AISC")]
+        AISC
     }
 }

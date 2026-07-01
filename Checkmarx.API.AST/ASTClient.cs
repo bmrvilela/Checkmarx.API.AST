@@ -3789,5 +3789,28 @@ namespace Checkmarx.API.AST
         }
 
         #endregion
+
+        #region Contributors
+
+        public async Task<IEnumerable<ContributorInsightsGroup>> GetContributorInsightsAsync()
+        {
+            var url = $"{ASTServer.AbsoluteUri}api/contributors/insights_details";
+
+            using (var request = new HttpRequestMessage(HttpMethod.Get, url))
+            {
+                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                var response = await _retryPolicy.ExecuteAsync(() =>
+                    _httpClient.SendAsync(CloneHttpRequestMessage(request), HttpCompletionOption.ResponseHeadersRead));
+
+                response.EnsureSuccessStatusCode();
+
+                var json = await response.Content.ReadAsStringAsync();
+                var result = JsonConvert.DeserializeObject<ContributorInsightsResponse>(json);
+                return result?.Items ?? Enumerable.Empty<ContributorInsightsGroup>();
+            }
+        }
+
+        #endregion
     }
 }
