@@ -782,6 +782,7 @@ namespace Checkmarx.API.AST
 
         private int _bearerExpiresIn;
         private DateTime _bearerValidTo;
+        private IReadOnlyList<string> _userPermissions;
 
         public bool Connected
         {
@@ -793,8 +794,31 @@ namespace Checkmarx.API.AST
                     _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
                     _httpClient.DefaultRequestHeaders.ConnectionClose = false; // Explicitly ask to keep connection alive
                     _bearerValidTo = DateTime.UtcNow.AddSeconds(_bearerExpiresIn - 300);
+                    _userPermissions = null; // invalidate on token refresh
                 }
                 return true;
+            }
+        }
+
+        /// <summary>
+        /// The list of CxOne permissions (roles_ast) granted to the authenticated user.
+        /// Populated from the JWT token on first access and invalidated on token refresh.
+        /// </summary>
+        public IReadOnlyList<string> UserPermissions
+        {
+            get
+            {
+                if (_userPermissions == null)
+                {
+                    if (!Connected)
+                        throw new Exception("Not connected to AST Server. Please authenticate first.");
+
+                    var claims = JwtUtils.GetTokenClaims(_httpClient.DefaultRequestHeaders.Authorization?.Parameter);
+                    _userPermissions = claims != null && claims.ContainsKey("roles_ast")
+                        ? claims["roles_ast"].AsReadOnly()
+                        : new List<string>().AsReadOnly();
+                }
+                return _userPermissions;
             }
         }
 
@@ -3813,4 +3837,5 @@ namespace Checkmarx.API.AST
 
         #endregion
     }
+
 }
