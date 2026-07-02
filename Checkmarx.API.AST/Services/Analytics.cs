@@ -200,6 +200,116 @@ namespace Checkmarx.API.AST.Services.Analytics
             return await QueryAsync<MeanTimeToResolutionDistribution>(body);
         }
 
+        public async System.Threading.Tasks.Task<ScanKpiDataPoint> GetScanLocAsync(DateTime startDate, DateTime endDate, ScanAnalyticsOptions options = null)
+        {
+            var body = getScanBody(ScanKpiType.Loc, ScanKpiFormat.Point, startDate, endDate, options);
+            return (await QueryScanAsync<ScanKpiPointResult>(body)).Data;
+        }
+
+        public async System.Threading.Tasks.Task<ScanKpiDataPoint> GetScanScannedProjectsAsync(DateTime startDate, DateTime endDate, ScanAnalyticsOptions options = null)
+        {
+            var body = getScanBody(ScanKpiType.ScannedProjects, ScanKpiFormat.Point, startDate, endDate, options);
+            return (await QueryScanAsync<ScanKpiPointResult>(body)).Data;
+        }
+
+        public async System.Threading.Tasks.Task<ScanKpiDataPoint> GetScanScansAsync(DateTime startDate, DateTime endDate, ScanAnalyticsOptions options = null)
+        {
+            var body = getScanBody(ScanKpiType.Scans, ScanKpiFormat.Point, startDate, endDate, options);
+            return (await QueryScanAsync<ScanKpiPointResult>(body)).Data;
+        }
+
+        public async System.Threading.Tasks.Task<ScanKpiDataPoint> GetScanScannedPathsAsync(DateTime startDate, DateTime endDate, ScanAnalyticsOptions options = null)
+        {
+            var body = getScanBody(ScanKpiType.ScannedPaths, ScanKpiFormat.Point, startDate, endDate, options);
+            return (await QueryScanAsync<ScanKpiPointResult>(body)).Data;
+        }
+
+        public async System.Threading.Tasks.Task<ScanKpiCategoryResult> GetScanScansActivationAsync(DateTime startDate, DateTime endDate, ScanAnalyticsOptions options = null)
+        {
+            var body = getScanBody(ScanKpiType.ScansActivation, ScanKpiFormat.Category, startDate, endDate, options);
+            return await QueryScanAsync<ScanKpiCategoryResult>(body);
+        }
+
+        public async System.Threading.Tasks.Task<ScanKpiCategoryResult> GetScanScansByEngineGroupAsync(DateTime startDate, DateTime endDate, ScanAnalyticsOptions options = null)
+        {
+            var body = getScanBody(ScanKpiType.ScansByEngineGroup, ScanKpiFormat.Category, startDate, endDate, options);
+            return await QueryScanAsync<ScanKpiCategoryResult>(body);
+        }
+
+        public async System.Threading.Tasks.Task<ScanKpiCategoryResult> GetScanScansStatusAsync(DateTime startDate, DateTime endDate, ScanAnalyticsOptions options = null)
+        {
+            var body = getScanBody(ScanKpiType.ScansStatus, ScanKpiFormat.Category, startDate, endDate, options);
+            return await QueryScanAsync<ScanKpiCategoryResult>(body);
+        }
+
+        public async System.Threading.Tasks.Task<VulnerabilityStatusResult> GetVulnerabilityStatusAsync(DateTime startDate, DateTime endDate, ScanAnalyticsOptions options = null)
+        {
+            var body = getVulnerabilityBody(VulnerabilityKpiType.Status, startDate, endDate, options);
+            return await QueryVulnerabilityAsync<VulnerabilityStatusResult>(body);
+        }
+
+        public async System.Threading.Tasks.Task<AgingAndSeveritiesResult> GetVulnerabilityAgingAsync(DateTime startDate, DateTime endDate, ScanAnalyticsOptions options = null)
+        {
+            var body = getVulnerabilityBody(VulnerabilityKpiType.VulnerabilitiesByAging, startDate, endDate, options);
+            return await QueryVulnerabilityAsync<AgingAndSeveritiesResult>(body);
+        }
+
+        public async System.Threading.Tasks.Task<TopOldestVulnerabilitiesResult> GetVulnerabilityTopTwentyOldestAsync(DateTime startDate, DateTime endDate, ScanAnalyticsOptions options = null)
+        {
+            var body = getVulnerabilityBody(VulnerabilityKpiType.TopTwentyOldestVulnerabilities, startDate, endDate, options);
+            return await QueryVulnerabilityAsync<TopOldestVulnerabilitiesResult>(body);
+        }
+
+        public async System.Threading.Tasks.Task<TopVulnerabilitiesResult> GetVulnerabilityTopTwentyAsync(DateTime startDate, DateTime endDate, ScanAnalyticsOptions options = null)
+        {
+            var body = getVulnerabilityBody(VulnerabilityKpiType.TopTwentyVulnerabilities, startDate, endDate, options);
+            return await QueryVulnerabilityAsync<TopVulnerabilitiesResult>(body);
+        }
+
+        public async System.Threading.Tasks.Task<MeanTimeToResolutionDistribution> GetVulnerabilityMeanTimeToResolutionAsync(DateTime startDate, DateTime endDate, ScanAnalyticsOptions options = null)
+        {
+            var body = getVulnerabilityBody(VulnerabilityKpiType.MeanTimeToResolution, startDate, endDate, options);
+            return await QueryVulnerabilityAsync<MeanTimeToResolutionDistribution>(body);
+        }
+
+        public async System.Threading.Tasks.Task<StateAndSeverityResult> GetVulnerabilityStateAndSeverityAsync(DateTime startDate, DateTime endDate, ScanAnalyticsOptions options = null)
+        {
+            var body = getVulnerabilityBody(VulnerabilityKpiType.StateAndSeverity, startDate, endDate, options);
+            return await QueryVulnerabilityAsync<StateAndSeverityResult>(body);
+        }
+
+        public async System.Threading.Tasks.Task<ScanKpiCategoryResult> GetExecOverviewApplicationRatingScoreAsync(DateTime startDate, DateTime endDate, ScanAnalyticsOptions options = null)
+        {
+            var body = getExecutiveOverviewBody(ExecutiveOverviewKpiType.ApplicationRatingScore, ScanKpiFormat.Category, startDate, endDate, options);
+            return await QueryExecutiveOverviewAsync<ScanKpiCategoryResult>(body);
+        }
+
+        public async System.Threading.Tasks.Task<List<Top20VulnerableApplicationItem>> GetExecOverviewTop20VulnerableApplicationsAsync(DateTime startDate, DateTime endDate, ScanAnalyticsOptions options = null)
+        {
+            var body = getExecutiveOverviewBody(ExecutiveOverviewKpiType.Top20VulnerableApplications, ScanKpiFormat.Category, startDate, endDate, options);
+            return await QueryExecutiveOverviewAsync<List<Top20VulnerableApplicationItem>>(body);
+        }
+
+        public async System.Threading.Tasks.Task<TrendResult> GetExecOverviewVulnerabilitySeverityLocTrendAsync(DateTime startDate, DateTime endDate, ScanAnalyticsOptions options = null)
+        {
+            var body = getExecutiveOverviewBody(ExecutiveOverviewKpiType.VulnerabilitySeverityLoc, ScanKpiFormat.Trend, startDate, endDate, options);
+            return await QueryExecutiveOverviewAsync<TrendResult>(body);
+        }
+
+        public async System.Threading.Tasks.Task<TrendResult> GetExecOverviewVulnerabilityFixedSeverityTrendAsync(DateTime startDate, DateTime endDate, ScanAnalyticsOptions options = null)
+        {
+            var body = getExecutiveOverviewBody(ExecutiveOverviewKpiType.VulnerabilityFixedSeverity, ScanKpiFormat.Trend, startDate, endDate, options);
+            return await QueryExecutiveOverviewAsync<TrendResult>(body);
+        }
+
+        public async System.Threading.Tasks.Task<KpiSeriesResult> GetExecOverviewVulnerabilitySeverityLocSeriesAsync(DateTime startDate, DateTime endDate, string definedRange = "90d", string step = "1d", ScanAnalyticsOptions options = null)
+        {
+            var body = getExecutiveOverviewBody(ExecutiveOverviewKpiType.VulnerabilitySeverityLoc, ScanKpiFormat.Series, startDate, endDate, options);
+            body.Range = new ExecutiveOverviewRange { DefinedRange = definedRange };
+            body.Step = step;
+            return await QueryExecutiveOverviewAsync<KpiSeriesResult>(body);
+        }
+
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <summary>
         /// Query kpi
@@ -272,22 +382,22 @@ namespace Checkmarx.API.AST.Services.Analytics
                             return objectResponse_.Object;
                         }
                         else
-                        if (status_ == 400)
-                        {
-                            string responseText_ = (response_.Content == null) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                            throw new ApiException("Bad Request", status_, responseText_, headers_, null);
-                        }
-                        else
-                        if (status_ == 401)
-                        {
-                            string responseText_ = (response_.Content == null) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                            throw new ApiException("Unauthorized", status_, responseText_, headers_, null);
-                        }
-                        else
-                        {
-                            var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
-                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                        }
+                            if (status_ == 400)
+                            {
+                                string responseText_ = (response_.Content == null) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                                throw new ApiException("Bad Request", status_, responseText_, headers_, null);
+                            }
+                            else
+                                if (status_ == 401)
+                                {
+                                    string responseText_ = (response_.Content == null) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                                    throw new ApiException("Unauthorized", status_, responseText_, headers_, null);
+                                }
+                                else
+                                {
+                                    var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                                    throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                                }
                     }
                     finally
                     {
@@ -301,6 +411,341 @@ namespace Checkmarx.API.AST.Services.Analytics
                 if (disposeClient_)
                     client_.Dispose();
             }
+        }
+
+        private async System.Threading.Tasks.Task<T> QueryScanAsync<T>(ScanKpiQuery body, System.Threading.CancellationToken cancellationToken = default)
+        {
+            if (body == null)
+                throw new System.ArgumentNullException("body");
+
+            var client_ = _httpClient;
+            try
+            {
+                using (var request_ = new System.Net.Http.HttpRequestMessage())
+                {
+                    var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+
+#if DEBUG
+                    Trace.WriteLine(json_);
+#endif
+
+                    var content_ = new System.Net.Http.StringContent(json_);
+                    content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json; version=1.0");
+                    request_.Content = content_;
+                    request_.Method = new System.Net.Http.HttpMethod("POST");
+                    request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                    var urlBuilder_ = new System.Text.StringBuilder();
+                    if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                    urlBuilder_.Append("kpi/query/scan");
+
+                    PrepareRequest(client_, request_, urlBuilder_);
+
+                    var url_ = urlBuilder_.ToString();
+                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                    PrepareRequest(client_, request_, url_);
+
+                    var response_ = await _retryPolicy.ExecuteAsync(() => client_.SendAsync(CloneHttpRequestMessage(request_), System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken)).ConfigureAwait(false);
+                    try
+                    {
+                        var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                        foreach (var item_ in response_.Headers)
+                            headers_[item_.Key] = item_.Value;
+                        if (response_.Content != null && response_.Content.Headers != null)
+                        {
+                            foreach (var item_ in response_.Content.Headers)
+                                headers_[item_.Key] = item_.Value;
+                        }
+
+                        ProcessResponse(client_, response_);
+
+                        var status_ = (int)response_.StatusCode;
+                        if (status_ == 200)
+                        {
+                            var objectResponse_ = await ReadObjectResponseAsync<T>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                            if (objectResponse_.Object == null)
+                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            return objectResponse_.Object;
+                        }
+                        else if (status_ == 400)
+                        {
+                            string responseText_ = (response_.Content == null) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                            throw new ApiException("Bad Request", status_, responseText_, headers_, null);
+                        }
+                        else if (status_ == 401)
+                        {
+                            string responseText_ = (response_.Content == null) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                            throw new ApiException("Unauthorized", status_, responseText_, headers_, null);
+                        }
+                        else
+                        {
+                            var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        }
+                    }
+                    finally
+                    {
+                        response_.Dispose();
+                    }
+                }
+            }
+            finally { }
+        }
+
+        private ScanKpiQuery getScanBody(ScanKpiType kpi, ScanKpiFormat format, DateTime startDate, DateTime endDate, ScanAnalyticsOptions options = null)
+        {
+            if (endDate <= startDate)
+                throw new Exception("The end date must be superior to the start date");
+
+            if (startDate <= DateTime.UtcNow.AddYears(-1))
+                throw new Exception("The start date must not be less than 1 year from today's date");
+
+            return new ScanKpiQuery
+            {
+                Kpi = kpi,
+                Format = format,
+                StartDate = startDate,
+                EndDate = endDate,
+                Filters = new ScanKpiFilters
+                {
+                    Projects = options?.Projects ?? System.Linq.Enumerable.Empty<string>(),
+                    Applications = options?.Applications ?? System.Linq.Enumerable.Empty<string>(),
+                    Scanners = options?.Scanners ?? System.Linq.Enumerable.Empty<string>(),
+                    BranchNames = options?.Branches ?? System.Linq.Enumerable.Empty<string>(),
+                    Severities = options?.Severities?.Select(s => s.GetEnumMemberValue()).ToList() ?? System.Linq.Enumerable.Empty<string>(),
+                    Groups = options?.Groups ?? System.Linq.Enumerable.Empty<string>(),
+                    Tags = options?.Tags ?? System.Linq.Enumerable.Empty<string>(),
+                    Environments = options?.Environments ?? System.Linq.Enumerable.Empty<string>(),
+                    States = options?.States ?? System.Linq.Enumerable.Empty<string>(),
+                    DastScanType = options?.DastScanType,
+                    QueryNames = options?.QueryNames,
+                }
+            };
+        }
+
+        private async System.Threading.Tasks.Task<T> QueryVulnerabilityAsync<T>(VulnerabilityKpiQuery body, System.Threading.CancellationToken cancellationToken = default)
+        {
+            if (body == null)
+                throw new System.ArgumentNullException("body");
+
+            var client_ = _httpClient;
+            try
+            {
+                using (var request_ = new System.Net.Http.HttpRequestMessage())
+                {
+                    var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+
+#if DEBUG
+                    Trace.WriteLine(json_);
+#endif
+
+                    var content_ = new System.Net.Http.StringContent(json_);
+                    content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json; version=1.0");
+                    request_.Content = content_;
+                    request_.Method = new System.Net.Http.HttpMethod("POST");
+                    request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                    var urlBuilder_ = new System.Text.StringBuilder();
+                    if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                    urlBuilder_.Append("kpi/query/vulnerability");
+
+                    PrepareRequest(client_, request_, urlBuilder_);
+
+                    var url_ = urlBuilder_.ToString();
+                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                    PrepareRequest(client_, request_, url_);
+
+                    var response_ = await _retryPolicy.ExecuteAsync(() => client_.SendAsync(CloneHttpRequestMessage(request_), System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken)).ConfigureAwait(false);
+                    try
+                    {
+                        var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                        foreach (var item_ in response_.Headers)
+                            headers_[item_.Key] = item_.Value;
+                        if (response_.Content != null && response_.Content.Headers != null)
+                        {
+                            foreach (var item_ in response_.Content.Headers)
+                                headers_[item_.Key] = item_.Value;
+                        }
+
+                        ProcessResponse(client_, response_);
+
+                        var status_ = (int)response_.StatusCode;
+                        if (status_ == 200)
+                        {
+                            var objectResponse_ = await ReadObjectResponseAsync<T>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                            if (objectResponse_.Object == null)
+                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            return objectResponse_.Object;
+                        }
+                        else if (status_ == 400)
+                        {
+                            string responseText_ = (response_.Content == null) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                            throw new ApiException("Bad Request", status_, responseText_, headers_, null);
+                        }
+                        else if (status_ == 401)
+                        {
+                            string responseText_ = (response_.Content == null) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                            throw new ApiException("Unauthorized", status_, responseText_, headers_, null);
+                        }
+                        else
+                        {
+                            var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        }
+                    }
+                    finally
+                    {
+                        response_.Dispose();
+                    }
+                }
+            }
+            finally { }
+        }
+
+        private async System.Threading.Tasks.Task<T> QueryExecutiveOverviewAsync<T>(ExecutiveOverviewKpiQuery body, System.Threading.CancellationToken cancellationToken = default)
+        {
+            if (body == null)
+                throw new System.ArgumentNullException("body");
+
+            var client_ = _httpClient;
+            try
+            {
+                using (var request_ = new System.Net.Http.HttpRequestMessage())
+                {
+                    var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+
+#if DEBUG
+                    Trace.WriteLine(json_);
+#endif
+
+                    var content_ = new System.Net.Http.StringContent(json_);
+                    content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json; version=1.0");
+                    request_.Content = content_;
+                    request_.Method = new System.Net.Http.HttpMethod("POST");
+                    request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                    var urlBuilder_ = new System.Text.StringBuilder();
+                    if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                    urlBuilder_.Append("kpi/query/executiveOverview");
+
+                    PrepareRequest(client_, request_, urlBuilder_);
+
+                    var url_ = urlBuilder_.ToString();
+                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                    PrepareRequest(client_, request_, url_);
+
+                    var response_ = await _retryPolicy.ExecuteAsync(() => client_.SendAsync(CloneHttpRequestMessage(request_), System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken)).ConfigureAwait(false);
+                    try
+                    {
+                        var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                        foreach (var item_ in response_.Headers)
+                            headers_[item_.Key] = item_.Value;
+                        if (response_.Content != null && response_.Content.Headers != null)
+                        {
+                            foreach (var item_ in response_.Content.Headers)
+                                headers_[item_.Key] = item_.Value;
+                        }
+
+                        ProcessResponse(client_, response_);
+
+                        var status_ = (int)response_.StatusCode;
+                        if (status_ == 200)
+                        {
+                            var objectResponse_ = await ReadObjectResponseAsync<T>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                            if (objectResponse_.Object == null)
+                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            return objectResponse_.Object;
+                        }
+                        else if (status_ == 400)
+                        {
+                            string responseText_ = (response_.Content == null) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                            throw new ApiException("Bad Request", status_, responseText_, headers_, null);
+                        }
+                        else if (status_ == 401)
+                        {
+                            string responseText_ = (response_.Content == null) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                            throw new ApiException("Unauthorized", status_, responseText_, headers_, null);
+                        }
+                        else
+                        {
+                            var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                        }
+                    }
+                    finally
+                    {
+                        response_.Dispose();
+                    }
+                }
+            }
+            finally { }
+        }
+
+        private ExecutiveOverviewKpiQuery getExecutiveOverviewBody(ExecutiveOverviewKpiType kpi, ScanKpiFormat format, DateTime startDate, DateTime endDate, ScanAnalyticsOptions options = null)
+        {
+            if (endDate <= startDate)
+                throw new Exception("The end date must be superior to the start date");
+
+            if (startDate <= DateTime.UtcNow.AddYears(-1))
+                throw new Exception("The start date must not be less than 1 year from today's date");
+
+            ScanKpiFilters filters = options == null ? new ScanKpiFilters() : new ScanKpiFilters
+            {
+                Projects = options.Projects,
+                Applications = options.Applications,
+                Scanners = options.Scanners,
+                BranchNames = options.Branches,
+                Severities = options.Severities?.Select(s => s.GetEnumMemberValue()).ToList(),
+                Groups = options.Groups,
+                Tags = options.Tags,
+                Environments = options.Environments,
+                States = options.States,
+                DastScanType = options.DastScanType,
+                QueryNames = options.QueryNames,
+            };
+
+            return new ExecutiveOverviewKpiQuery
+            {
+                Kpi = kpi,
+                Format = format,
+                StartDate = startDate,
+                EndDate = endDate,
+                Filters = filters,
+            };
+        }
+
+        private VulnerabilityKpiQuery getVulnerabilityBody(VulnerabilityKpiType kpi, DateTime startDate, DateTime endDate, ScanAnalyticsOptions options = null)
+        {
+            if (endDate <= startDate)
+                throw new Exception("The end date must be superior to the start date");
+
+            if (startDate <= DateTime.UtcNow.AddYears(-1))
+                throw new Exception("The start date must not be less than 1 year from today's date");
+
+            return new VulnerabilityKpiQuery
+            {
+                Kpi = kpi,
+                Format = ScanKpiFormat.Category,
+                StartDate = startDate,
+                EndDate = endDate,
+                Filters = new ScanKpiFilters
+                {
+                    Projects = options?.Projects ?? System.Linq.Enumerable.Empty<string>(),
+                    Applications = options?.Applications ?? System.Linq.Enumerable.Empty<string>(),
+                    Scanners = options?.Scanners ?? System.Linq.Enumerable.Empty<string>(),
+                    BranchNames = options?.Branches ?? System.Linq.Enumerable.Empty<string>(),
+                    Severities = options?.Severities?.Select(s => s.GetEnumMemberValue()).ToList() ?? System.Linq.Enumerable.Empty<string>(),
+                    Groups = options?.Groups ?? System.Linq.Enumerable.Empty<string>(),
+                    Tags = options?.Tags ?? System.Linq.Enumerable.Empty<string>(),
+                    Environments = options?.Environments ?? System.Linq.Enumerable.Empty<string>(),
+                    States = options?.States ?? System.Linq.Enumerable.Empty<string>(),
+                    DastScanType = options?.DastScanType,
+                    QueryNames = options?.QueryNames,
+                }
+            };
         }
 
         private AnalyticsKpiQuery getBody(
@@ -1504,6 +1949,426 @@ namespace Checkmarx.API.AST.Services.Analytics
         [System.Runtime.Serialization.EnumMember(Value = @"urgent")]
         Urgent = 4,
 
+    }
+
+    public class ScanAnalyticsOptions
+    {
+        public IEnumerable<string> Projects { get; set; }
+        public IEnumerable<string> Applications { get; set; }
+        public IEnumerable<string> Branches { get; set; }
+        public IEnumerable<string> Scanners { get; set; }
+        public IEnumerable<SeverityType> Severities { get; set; }
+        public IEnumerable<string> Groups { get; set; }
+        public IEnumerable<string> Tags { get; set; }
+        public IEnumerable<string> Environments { get; set; }
+        public IEnumerable<string> States { get; set; }
+        public string DastScanType { get; set; }
+        public IEnumerable<string> QueryNames { get; set; }
+    }
+
+    public class ScanKpiFilters
+    {
+        [Newtonsoft.Json.JsonProperty("projects")]
+        public IEnumerable<string> Projects { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("applications")]
+        public IEnumerable<string> Applications { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("scanners")]
+        public IEnumerable<string> Scanners { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("branchNames")]
+        public IEnumerable<string> BranchNames { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("severities")]
+        public IEnumerable<string> Severities { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("groups")]
+        public IEnumerable<string> Groups { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("tags")]
+        public IEnumerable<string> Tags { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("environments")]
+        public IEnumerable<string> Environments { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("states")]
+        public IEnumerable<string> States { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("dastScanType", NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string DastScanType { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("queryNames", NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public IEnumerable<string> QueryNames { get; set; }
+    }
+
+    public class ScanKpiQuery
+    {
+        [Newtonsoft.Json.JsonProperty("kpi")]
+        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+        public ScanKpiType Kpi { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("format")]
+        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+        public ScanKpiFormat Format { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("filters")]
+        public ScanKpiFilters Filters { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("startDate")]
+        public DateTime StartDate { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("endDate")]
+        public DateTime EndDate { get; set; }
+    }
+
+    public class ScanKpiPointResult
+    {
+        [Newtonsoft.Json.JsonProperty("data")]
+        public ScanKpiDataPoint Data { get; set; }
+    }
+
+    public class ScanKpiDataPoint
+    {
+        [Newtonsoft.Json.JsonProperty("time")]
+        public long? Time { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("value")]
+        public double? Value { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("count")]
+        public int? Count { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("index")]
+        public int Index { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("date")]
+        public System.DateTimeOffset? Date { get; set; }
+    }
+
+    public class ScanKpiCategoryResult
+    {
+        [Newtonsoft.Json.JsonProperty("data")]
+        public List<ScanKpiCategoryDataPoint> Data { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("total")]
+        public double Total { get; set; }
+    }
+
+    public class ScanKpiCategoryDataPoint
+    {
+        [Newtonsoft.Json.JsonProperty("time")]
+        public long? Time { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("value")]
+        public double? Value { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("count")]
+        public int? Count { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("index")]
+        public int Index { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("date")]
+        public System.DateTimeOffset? Date { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("category")]
+        public string Category { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("percentage")]
+        public double? Percentage { get; set; }
+    }
+
+    public class VulnerabilityKpiQuery
+    {
+        [Newtonsoft.Json.JsonProperty("kpi")]
+        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+        public VulnerabilityKpiType Kpi { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("format")]
+        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+        public ScanKpiFormat Format { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("filters")]
+        public ScanKpiFilters Filters { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("startDate")]
+        public DateTime StartDate { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("endDate")]
+        public DateTime EndDate { get; set; }
+    }
+
+    public class ExecutiveOverviewKpiQuery
+    {
+        [Newtonsoft.Json.JsonProperty("kpi")]
+        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+        public ExecutiveOverviewKpiType Kpi { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("format")]
+        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+        public ScanKpiFormat Format { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("filters")]
+        public ScanKpiFilters Filters { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("startDate")]
+        public DateTime StartDate { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("endDate")]
+        public DateTime EndDate { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("range", NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public ExecutiveOverviewRange Range { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("step", NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string Step { get; set; }
+    }
+
+    public class ExecutiveOverviewRange
+    {
+        [Newtonsoft.Json.JsonProperty("definedRange")]
+        public string DefinedRange { get; set; }
+    }
+
+    public enum ExecutiveOverviewKpiType
+    {
+        [System.Runtime.Serialization.EnumMember(Value = "application_rating_score")]
+        ApplicationRatingScore = 0,
+
+        [System.Runtime.Serialization.EnumMember(Value = "top_20_vulnerable_applications")]
+        Top20VulnerableApplications = 1,
+
+        [System.Runtime.Serialization.EnumMember(Value = "vulnerability_severity_loc")]
+        VulnerabilitySeverityLoc = 2,
+
+        [System.Runtime.Serialization.EnumMember(Value = "vulnerability_fixed_severity")]
+        VulnerabilityFixedSeverity = 3,
+    }
+
+    public class Top20VulnerableApplicationItem
+    {
+        [Newtonsoft.Json.JsonProperty("value")]
+        public double Value { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("trendValue")]
+        public double TrendValue { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("trendPercentage")]
+        public double TrendPercentage { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("index")]
+        public int Index { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("categoryName")]
+        public string CategoryName { get; set; }
+    }
+
+    public class TrendResult
+    {
+        [Newtonsoft.Json.JsonProperty("total")]
+        public double Total { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("trend")]
+        public double Trend { get; set; }
+    }
+
+    public class KpiSeriesResult
+    {
+        [Newtonsoft.Json.JsonProperty("resultType")]
+        public string ResultType { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("series")]
+        public List<KpiSeriesItem> Series { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("total")]
+        public double Total { get; set; }
+    }
+
+    public class KpiSeriesItem
+    {
+        [Newtonsoft.Json.JsonProperty("metric")]
+        public string Metric { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("values")]
+        public List<KpiSeriesValue> Values { get; set; }
+    }
+
+    public class KpiSeriesValue
+    {
+        [Newtonsoft.Json.JsonProperty("time")]
+        public string Time { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("value")]
+        public double Value { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("count")]
+        public double? Count { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("index")]
+        public int Index { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("date")]
+        public string Date { get; set; }
+    }
+
+    public enum VulnerabilityKpiType
+    {
+        [System.Runtime.Serialization.EnumMember(Value = "status")]
+        Status = 0,
+
+        [System.Runtime.Serialization.EnumMember(Value = "vulnerabilitiesByAging")]
+        VulnerabilitiesByAging = 1,
+
+        [System.Runtime.Serialization.EnumMember(Value = "topTwentyOldestVulnerabilities")]
+        TopTwentyOldestVulnerabilities = 2,
+
+        [System.Runtime.Serialization.EnumMember(Value = "topTwentyVulnerabilities")]
+        TopTwentyVulnerabilities = 3,
+
+        [System.Runtime.Serialization.EnumMember(Value = "meanTimeToResolution")]
+        MeanTimeToResolution = 4,
+
+        [System.Runtime.Serialization.EnumMember(Value = "stateAndSeverity")]
+        StateAndSeverity = 5,
+    }
+
+    public class EngineDistributionItem
+    {
+        [Newtonsoft.Json.JsonProperty("engine")]
+        public string Engine { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("loc")]
+        public long Loc { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("total")]
+        public int Total { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("distribution")]
+        public List<EngineDistributionEntry> Distribution { get; set; }
+    }
+
+    public class EngineDistributionEntry
+    {
+        [Newtonsoft.Json.JsonProperty("label")]
+        public string Label { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("results")]
+        public int Results { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("percentage")]
+        public double Percentage { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("density")]
+        public double Density { get; set; }
+    }
+
+    public class VulnerabilityStatusResult
+    {
+        [Newtonsoft.Json.JsonProperty("enginesDistribution")]
+        public List<EngineDistributionItem> EnginesDistribution { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("totals")]
+        public EngineDistributionItem Totals { get; set; }
+    }
+
+    public class AgingAndSeveritiesResult
+    {
+        [Newtonsoft.Json.JsonProperty("agingAndSeverities")]
+        public List<AgingSeverityItem> AgingAndSeverities { get; set; }
+    }
+
+    public class TopOldestVulnerabilitiesResult
+    {
+        [Newtonsoft.Json.JsonProperty("topOldestVulnerabilities")]
+        public List<MostAgingVulnerabilitiesItem> TopOldestVulnerabilities { get; set; }
+    }
+
+    public class TopVulnerabilitiesItem
+    {
+        [Newtonsoft.Json.JsonProperty("vulnerabilityName")]
+        public string VulnerabilityName { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("scanner")]
+        public string Scanner { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("total")]
+        public int Total { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("severities")]
+        public List<Severities3> Severities { get; set; }
+    }
+
+    public class TopVulnerabilitiesResult
+    {
+        [Newtonsoft.Json.JsonProperty("topVulnerabilities")]
+        public List<TopVulnerabilitiesItem> TopVulnerabilities { get; set; }
+    }
+
+    public class StatesAndSeveritiesItem
+    {
+        [Newtonsoft.Json.JsonProperty("label")]
+        public string Label { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("results")]
+        public int Results { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("severities")]
+        public List<Severities2> Severities { get; set; }
+    }
+
+    public class StateAndSeverityResult
+    {
+        [Newtonsoft.Json.JsonProperty("statesAndSeverities")]
+        public List<StatesAndSeveritiesItem> StatesAndSeverities { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("vulnerabilityBySeverity")]
+        public EngineDistributionItem VulnerabilityBySeverity { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("vulnerabilityByState")]
+        public EngineDistributionItem VulnerabilityByState { get; set; }
+    }
+
+    public enum ScanKpiType
+    {
+        [System.Runtime.Serialization.EnumMember(Value = "loc")]
+        Loc = 0,
+
+        [System.Runtime.Serialization.EnumMember(Value = "scanned_projects")]
+        ScannedProjects = 1,
+
+        [System.Runtime.Serialization.EnumMember(Value = "scans")]
+        Scans = 2,
+
+        [System.Runtime.Serialization.EnumMember(Value = "scanned_paths")]
+        ScannedPaths = 3,
+
+        [System.Runtime.Serialization.EnumMember(Value = "scans_activation")]
+        ScansActivation = 4,
+
+        [System.Runtime.Serialization.EnumMember(Value = "scans_by_engine_group")]
+        ScansByEngineGroup = 5,
+
+        [System.Runtime.Serialization.EnumMember(Value = "scans_status")]
+        ScansStatus = 6,
+    }
+
+    public enum ScanKpiFormat
+    {
+        [System.Runtime.Serialization.EnumMember(Value = "point")]
+        Point = 0,
+
+        [System.Runtime.Serialization.EnumMember(Value = "overtime")]
+        Overtime = 1,
+
+        [System.Runtime.Serialization.EnumMember(Value = "category")]
+        Category = 2,
+
+        [System.Runtime.Serialization.EnumMember(Value = "trend")]
+        Trend = 3,
+
+        [System.Runtime.Serialization.EnumMember(Value = "series")]
+        Series = 4,
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.6.0.0 (NJsonSchema v11.5.0.0 (Newtonsoft.Json v13.0.0.0))")]

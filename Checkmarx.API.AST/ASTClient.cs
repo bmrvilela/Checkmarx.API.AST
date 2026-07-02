@@ -782,6 +782,7 @@ namespace Checkmarx.API.AST
 
         private int _bearerExpiresIn;
         private DateTime _bearerValidTo;
+        private IReadOnlyList<string> _userPermissions;
 
         public bool Connected
         {
@@ -793,8 +794,31 @@ namespace Checkmarx.API.AST
                     _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
                     _httpClient.DefaultRequestHeaders.ConnectionClose = false; // Explicitly ask to keep connection alive
                     _bearerValidTo = DateTime.UtcNow.AddSeconds(_bearerExpiresIn - 300);
+                    _userPermissions = null; // invalidate on token refresh
                 }
                 return true;
+            }
+        }
+
+        /// <summary>
+        /// The list of CxOne permissions (roles_ast) granted to the authenticated user.
+        /// Populated from the JWT token on first access and invalidated on token refresh.
+        /// </summary>
+        public IReadOnlyList<string> UserPermissions
+        {
+            get
+            {
+                if (_userPermissions == null)
+                {
+                    if (!Connected)
+                        throw new Exception("Not connected to AST Server. Please authenticate first.");
+
+                    var claims = JwtUtils.GetTokenClaims(_httpClient.DefaultRequestHeaders.Authorization?.Parameter);
+                    _userPermissions = claims != null && claims.ContainsKey("roles_ast")
+                        ? claims["roles_ast"].AsReadOnly()
+                        : new List<string>().AsReadOnly();
+                }
+                return _userPermissions;
             }
         }
 
@@ -3789,5 +3813,29 @@ namespace Checkmarx.API.AST
         }
 
         #endregion
+
+        #region Contributors
+
+        public async Task<IEnumerable<ContributorInsightsGroup>> GetContributorInsightsAsync()
+        {
+            var url = $"{ASTServer.AbsoluteUri}api/contributors/insights_details";
+
+            using (var request = new HttpRequestMessage(HttpMethod.Get, url))
+            {
+                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                var response = await _retryPolicy.ExecuteAsync(() =>
+                    _httpClient.SendAsync(CloneHttpRequestMessage(request), HttpCompletionOption.ResponseHeadersRead));
+
+                response.EnsureSuccessStatusCode();
+
+                var json = await response.Content.ReadAsStringAsync();
+                var result = JsonConvert.DeserializeObject<ContributorInsightsResponse>(json);
+                return result?.Items ?? Enumerable.Empty<ContributorInsightsGroup>();
+            }
+        }
+
+        #endregion
     }
+
 }
