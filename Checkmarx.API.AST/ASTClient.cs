@@ -81,6 +81,7 @@ namespace Checkmarx.API.AST
 
         public const string Query_Level_Cx = "Cx";
         public const string Query_Level_Tenant = "Tenant";
+        public const string Query_Level_Application = "Application";
         public const string Query_Level_Project = "Project";
 
         // Tenant-wide limit is 5 concurrent sessions (shared with UI users). 3 is safe for automation.
@@ -2743,16 +2744,30 @@ namespace Checkmarx.API.AST
         {
             var queries = getQueries().ToList();
 
-            // Project-level queries use plain HTTP (no session) — safe to parallelize.
-            var projectResults = GetAllProjectsDetails()
+            // One project per Application is needed to see its Application-level override
+            // (invisible via any unscoped call). Since every project is fetched below anyway for
+            // its Project-level queries, that same per-project response also supplies the
+            // Application-level entry when the project happens to be an Application's
+            // representative — avoiding a second round of calls to the same ~200 projects.
+            var representativeProjectIds = (Apps?.Applications ?? Enumerable.Empty<Services.Applications.Application>())
+                .Select(a => a.ProjectIds?.FirstOrDefault())
+                .Where(id => id.HasValue && id.Value != Guid.Empty)
+                .Select(id => id.Value)
+                .ToHashSet();
+
+            // Each project's full effective query set (Cx/Tenant/Application/Project all mixed
+            // together) is fetched exactly once here — plain HTTP, no session, safe to parallelize.
+            var perProjectResults = GetAllProjectsDetails()
                 .AsParallel()
-                .Select(p => GetProjectLevelQueries(p.Id).Values)
+                .Select(p => (ProjectId: p.Id, Queries: getQueries(p.Id).ToList()))
                 .ToList();
 
-            foreach (var projectQueries in projectResults)
+            foreach (var (projectId, projectQueries) in perProjectResults)
             {
-                if (projectQueries.Any())
-                    queries.AddRange(projectQueries);
+                queries.AddRange(projectQueries.Where(q => q.Level == Query_Level_Project));
+
+                if (representativeProjectIds.Contains(projectId))
+                    queries.AddRange(projectQueries.Where(q => q.Level == Query_Level_Application));
             }
 
             return queries;
@@ -2790,6 +2805,38 @@ namespace Checkmarx.API.AST
         public Dictionary<string, Services.SASTQueriesAudit.Queries> GetTenantLevelQueries()
         {
             return getQueriesDictionary(getQueries(predicate: x => x.Level == ASTClient.Query_Level_Tenant));
+        }
+
+        /// <summary>
+        /// Retrieves a dictionary of Application Level queries, tenant-wide.
+        /// Application-level overrides are not visible via any unscoped or tenant-wide query
+        /// listing — they only show up in the *effective* query set of a project that belongs to
+        /// that Application. Since an Application-level override applies identically to every
+        /// project within the Application, this samples exactly one project per Application
+        /// rather than crawling every project in the tenant.
+        /// </summary>
+        /// <returns>
+        /// A dictionary mapping query IDs to queries at an Application level.
+        /// </returns>
+        public Dictionary<string, Services.SASTQueriesAudit.Queries> GetApplicationLevelQueries()
+        {
+            var applications = Apps?.Applications;
+            if (applications == null)
+                return new Dictionary<string, Services.SASTQueriesAudit.Queries>();
+
+            var result = new Dictionary<string, Services.SASTQueriesAudit.Queries>();
+
+            foreach (var app in applications)
+            {
+                var representativeProjectId = app.ProjectIds?.FirstOrDefault();
+                if (representativeProjectId == null || representativeProjectId == Guid.Empty)
+                    continue;
+
+                foreach (var query in getQueries(representativeProjectId, x => x.Level == Query_Level_Application))
+                    result[query.Id] = query;
+            }
+
+            return result;
         }
 
         /// <summary>
