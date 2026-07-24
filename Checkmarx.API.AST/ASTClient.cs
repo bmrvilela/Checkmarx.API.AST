@@ -2762,12 +2762,24 @@ namespace Checkmarx.API.AST
                 .Select(p => (ProjectId: p.Id, Queries: getQueries(p.Id).ToList()))
                 .ToList();
 
+            // Tracks Application-level QueryIds already added — CxOne is inconsistent about
+            // whether an override gets a new Id or keeps its parent's, so two different
+            // representative projects (different Applications) can otherwise surface the same
+            // Application-level query twice.
+            var addedApplicationQueryIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
             foreach (var (projectId, projectQueries) in perProjectResults)
             {
                 queries.AddRange(projectQueries.Where(q => q.Level == Query_Level_Project));
 
                 if (representativeProjectIds.Contains(projectId))
-                    queries.AddRange(projectQueries.Where(q => q.Level == Query_Level_Application));
+                {
+                    foreach (var q in projectQueries.Where(q => q.Level == Query_Level_Application))
+                    {
+                        if (addedApplicationQueryIds.Add(q.Id))
+                            queries.Add(q);
+                    }
+                }
             }
 
             return queries;
