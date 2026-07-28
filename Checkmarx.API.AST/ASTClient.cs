@@ -1359,12 +1359,14 @@ namespace Checkmarx.API.AST
 
             var groups = project.Groups != null && project.Groups.Any() ? project.Groups : null;
 
+            // Trying to update RepoUrl on a imported project will result in a 400 Bad Request error "cannot update repo_url for an imported project"
+            // Removed from input body to avoid this error. It will not change the value of RepoUrl if it is not included in the request body.
             ProjectInput input = new ProjectInput
             {
                 Tags = tags,
                 Name = project.Name,
                 Groups = groups,
-                RepoUrl = project.RepoUrl,
+                //RepoUrl = project.RepoUrl,
                 MainBranch = project.MainBranch,
                 Origin = project.Origin,
                 AdditionalProperties = project.AdditionalProperties
