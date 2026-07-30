@@ -431,6 +431,18 @@ namespace Checkmarx.API.AST
             }
         }
 
+        private AuditEventProcessor _auditEventProcessor;
+        public AuditEventProcessor AuditEventProcessor
+        {
+            get
+            {
+                if (Connected && _auditEventProcessor == null)
+                    _auditEventProcessor = new AuditEventProcessor($"{ASTServer.AbsoluteUri}api/audit-events", _httpClient);
+
+                return _auditEventProcessor;
+            }
+        }
+
         private Versions _engineVersions;
         public Versions EngineVersions
         {
@@ -1142,6 +1154,36 @@ namespace Checkmarx.API.AST
                 allEvents.AddRange(result.Events);
 
             return allEvents;
+        }
+
+        public ICollection<Services.AuditEvent> GetAllAuditEventProcessor(DateTime? from = null, DateTime? to = null, int startAt = 0, int limit = 1000)
+        {
+            if (limit <= 0)
+                throw new ArgumentOutOfRangeException(nameof(limit));
+
+            var result = new List<Services.AuditEvent>();
+
+            while (true)
+            {
+                var resultPage = AuditEventProcessor
+                    .GetAllAsync(limit, startAt, from, to)
+                    .GetAwaiter()
+                    .GetResult();
+
+                var events = resultPage.Events;
+
+                if (events == null || events.Count == 0)
+                    break;
+
+                result.AddRange(events);
+
+                if (events.Count < limit)
+                    break;
+
+                startAt += limit;
+            }
+
+            return result;
         }
 
         #endregion
