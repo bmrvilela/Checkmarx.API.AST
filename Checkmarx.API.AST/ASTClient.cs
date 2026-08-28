@@ -109,7 +109,15 @@ namespace Checkmarx.API.AST
 
         #region HttpClient and Policies
 
-        private readonly HttpClient _httpClient = new HttpClient()
+        private readonly HttpClient _httpClient = new HttpClient(new SocketsHttpHandler
+        {
+            // Proactively recycle pooled connections instead of holding them open indefinitely.
+            // Long-running exports (many hours) were hitting "connection forcibly closed by remote
+            // host" / "response ended prematurely" because a server-side proxy/gateway was killing
+            // connections the pool still thought were alive.
+            PooledConnectionLifetime = TimeSpan.FromMinutes(3),
+            PooledConnectionIdleTimeout = TimeSpan.FromMinutes(1)
+        })
         {
             // We don’t want HttpClient controlling timeouts — we want Polly to control them
             // We are just adding a big timeout just as a safety net in case Polly somehow fails to cancel
