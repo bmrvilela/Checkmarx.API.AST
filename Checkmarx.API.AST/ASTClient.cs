@@ -1103,39 +1103,32 @@ namespace Checkmarx.API.AST
         //   - AccessManagement.CreateAssignmentAsync  (group assigned to an application)
         //   - AccessManagement.DeleteAssignmentAsync  (group removed from an application)
         //   - AccessManagement.CreateMultipleAssignmentsAsync (bulk group-application assignments)
-        private Dictionary<Guid, IEnumerable<string>> _applicationGroupNames;
+        private ConcurrentDictionary<Guid, IEnumerable<string>> _applicationGroupNames = new();
 
         public IEnumerable<string> GetApplicationGroupNames(Guid applicationId)
         {
-            if (_applicationGroupNames == null)
-                _applicationGroupNames = new Dictionary<Guid, IEnumerable<string>>();
-
-            if (!_applicationGroupNames.TryGetValue(applicationId, out var cached))
+            return _applicationGroupNames.GetOrAdd(applicationId, id =>
             {
                 var assignments = AccessManagement.GetEntitiesForAsync(
-                    applicationId.ToString(),
+                    id.ToString(),
                     "application",
                     "group",
                     System.Threading.CancellationToken.None).Result;
 
-                cached = assignments?
+                return assignments?
                     .Where(a => a.EntityType == AssignmentEntityType.Group)
                     .Select(a => a.EntityName)
                     .ToList()
                     ?? new List<string>();
-
-                _applicationGroupNames[applicationId] = cached;
-            }
-
-            return cached;
+            });
         }
 
         public void InvalidateApplicationGroupNamesCache(Guid? applicationId = null)
         {
             if (applicationId.HasValue)
-                _applicationGroupNames?.Remove(applicationId.Value);
+                _applicationGroupNames.TryRemove(applicationId.Value, out _);
             else
-                _applicationGroupNames = null;
+                _applicationGroupNames = new();
         }
 
         #endregion
