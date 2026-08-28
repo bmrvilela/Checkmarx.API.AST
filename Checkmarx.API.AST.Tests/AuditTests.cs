@@ -50,18 +50,52 @@ namespace Checkmarx.API.AST.Tests
 
         }
 
+        // Run this alongside ListCxQueriesTest, ListTenantQueriesTest, ListApplicationLevelQueriesTest
+        // and ListProjectQueriesTest, one by one: Cx and Tenant are genuinely tenant-wide scopes, so
+        // their counts here must match those individual tests exactly. Application and Project here
+        // are summed across every project in the tenant, while the individual tests below are scoped
+        // to just the one known `projectId` — those two only match if that project is the sole
+        // contributor for that level tenant-wide; otherwise this total is expected to be higher.
         [TestMethod]
         public void ListAllQueriesTest()
         {
-            astclient.GetQueries(projectId);
+            var allQueries = astclient.GetAllQueries().Values;
 
-            var queries = astclient.GetAllQueries();
-            Trace.WriteLine($"List of ALL queries ({queries.Count()}):");
-            Trace.WriteLine("");
-            foreach (var query in queries)
-                Trace.WriteLine($"ID: {query.Id} | Level: {query.Level} | Language: {query.Lang} | Name: {query.Name}");
+            int cxCount = allQueries.Count(q => q.Level == ASTClient.Query_Level_Cx);
+            int tenantCount = allQueries.Count(q => q.Level == ASTClient.Query_Level_Tenant);
+            int applicationCount = allQueries.Count(q => q.Level == ASTClient.Query_Level_Application);
+            int projectCount = allQueries.Count(q => q.Level == ASTClient.Query_Level_Project);
+
+            Trace.WriteLine($"Total queries: {allQueries.Count()}");
+            Trace.WriteLine($"Cx: {cxCount}");
+            Trace.WriteLine($"Tenant: {tenantCount}");
+            Trace.WriteLine($"Application: {applicationCount}");
+            Trace.WriteLine($"Project: {projectCount}");
         }
 
+        [TestMethod]
+        public void ListCxQueriesTest()
+        {
+            var cxQueries = astclient.GetCxLevelQueries().Values;
+
+            Trace.WriteLine($"Cx queries: {cxQueries.Count()}");
+        }
+
+        [TestMethod]
+        public void ListTenantQueriesTest()
+        {
+            var tenantQueries = astclient.GetTenantLevelQueries().Values;
+
+            Trace.WriteLine($"Tenant queries: {tenantQueries.Count()}");
+        }
+
+        [TestMethod]
+        public void ListApplicationLevelQueriesTest()
+        {
+            var applicationQueries = astclient.GetApplicationLevelQueries(projectId).Values;
+
+            Trace.WriteLine($"Application queries visible through project {projectId}: {applicationQueries.Count()}");
+        }
 
         [TestMethod]
         public void ListCxAndTenantQueriesTest()
@@ -110,26 +144,20 @@ namespace Checkmarx.API.AST.Tests
             Assert.AreEqual(allProjectQueriesLogForging.Single().Level, ASTClient.Query_Level_Project);
         }
 
+        // Tenant-wide Application-level discovery (ranking candidate projects per Application,
+        // retrying across sessions, etc.) is business logic, not a wrapper concern — it lives in
+        // Checkmarx.Model.CxOne.CxOneInstance.GetApplicationLevelQueries(), not here. This test only
+        // exercises the low-level primitive ASTClient itself is responsible for: reading the
+        // Application-level branch visible through a single, known project's session.
         [TestMethod]
-        public void ListCxQueriesTest()
+        public void ListApplicationQueriesTest()
         {
-            var cxQueries = astclient.GetCxLevelQueries().Values;
+            var applicationQueries = astclient.GetApplicationLevelQueriesFromSession(projectId);
 
-            Trace.WriteLine($"List of Cx queries ({cxQueries.Count()}):");
+            Trace.WriteLine($"List of Application queries visible through project {projectId} ({applicationQueries.Count()}):");
             Trace.WriteLine("");
-            foreach (var query in cxQueries)
-                Trace.WriteLine($"ID: {query.Id} | Level: {query.Level} | Language: {query.Lang} | Name: {query.Name}");
-        }
-
-        [TestMethod]
-        public void ListTenantQueriesTest()
-        {
-            var tenantQueries = astclient.GetTenantLevelQueries().Values;
-
-            Trace.WriteLine($"List of Tenant queries ({tenantQueries.Count()}):");
-            Trace.WriteLine("");
-            foreach (var query in tenantQueries)
-                Trace.WriteLine($"ID: {query.Id} | Level: {query.Level} | Language: {query.Lang} | Name: {query.Name}");
+            foreach (var query in applicationQueries)
+                Trace.WriteLine($"ID: {query.Id} | Level: {query.Level} | Language: {query.Metadata?.Language} | Name: {query.Name} | Has Source: {!string.IsNullOrEmpty(query.Source)}");
         }
 
         [TestMethod]
@@ -137,10 +165,7 @@ namespace Checkmarx.API.AST.Tests
         {
             var projectQueries = astclient.GetProjectLevelQueries(projectId).Values;
 
-            Trace.WriteLine($"List of Project queries ({projectQueries.Count()}):");
-            Trace.WriteLine("");
-            foreach (var query in projectQueries)
-                Trace.WriteLine($"ID: {query.Id} | Level: {query.Level} | Language: {query.Lang} | Name: {query.Name}");
+            Trace.WriteLine($"Project queries for {projectId}: {projectQueries.Count()}");
         }
 
         [TestMethod]
@@ -161,6 +186,16 @@ namespace Checkmarx.API.AST.Tests
             string querySource = "result = base.Check_HSTS_Configuration();";
 
             astclient.OverrideTenantQuerySource(language, name, querySource);
+        }
+
+        [TestMethod]
+        public void OverrideQueryForApplicationTest()
+        {
+            string language = "CSharp";
+            string name = "Heap_Inspection";
+            string querySource = "result = base.Heap_Inspection(); // Test";
+
+            astclient.OverrideApplicationQuerySource(projectId, language, name, querySource);
         }
 
         [TestMethod]
