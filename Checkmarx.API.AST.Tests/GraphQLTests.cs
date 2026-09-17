@@ -34,6 +34,15 @@ public class GraphQLTests
     }
 
     [TestMethod]
+    public void GetAllPackagesFromScanTest()
+    {
+        var result = astclient.GraphQLClient.GetAllPackagesAsync(new Guid("40a3367d-e741-4072-9738-d648ea97fcf5")).Result;
+
+        foreach (var relation in result.GroupBy(x => x.Relation))
+            Trace.WriteLine($"Relation: {relation.Key} - Packages: {relation.Count()}");
+    }
+
+    [TestMethod]
     public void GetSCAVulnerabilityHistoryTest()
     {
         var variables = new Models.SCA.PackageVulnerabilityStateAndScoreActionsVariables
