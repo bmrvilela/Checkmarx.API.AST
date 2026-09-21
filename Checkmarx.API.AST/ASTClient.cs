@@ -2613,9 +2613,9 @@ namespace Checkmarx.API.AST
         /// Mirrors the CxOne UI/team script flow: discover the rule breakdown per engine via
         /// the "groups/ruleId" endpoint, then pull the entries for each rule.
         /// </summary>
-        public Dictionary<SSCSGroup, IEnumerable<EngineResults>> GetSSCSResults(Guid projectId, Guid scanId)
+        public Dictionary<SSCSGroup, IEnumerable<EngineResult>> GetSSCSResults(Guid projectId, Guid scanId)
         {
-            var results = new Dictionary<SSCSGroup, IEnumerable<EngineResults>>();
+            var results = new Dictionary<SSCSGroup, IEnumerable<EngineResult>>();
 
             foreach (var engine in SSCSEngines)
             {
@@ -2631,7 +2631,7 @@ namespace Checkmarx.API.AST
                         projectId, scanId, engine, filters, pageSize: group.Count)
                         .GetAwaiter().GetResult();
 
-                    results[group] = new[] { engineResults };
+                    results[group] = engineResults.Entries;
                 }
             }
 

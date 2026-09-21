@@ -301,8 +301,8 @@ namespace Checkmarx.API.AST.Models
             }
         }
 
-        public Dictionary<SSCSGroup, IEnumerable<EngineResults>> _sscsVulnerabilities;
-        public Dictionary<SSCSGroup, IEnumerable<EngineResults>> SSCSVulnerabilities
+        public Dictionary<SSCSGroup, IEnumerable<EngineResult>> _sscsVulnerabilities;
+        public Dictionary<SSCSGroup, IEnumerable<EngineResult>> SSCSVulnerabilities
         {
             get
             {

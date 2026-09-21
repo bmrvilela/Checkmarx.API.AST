@@ -55,7 +55,7 @@ namespace Checkmarx.API.AST.Tests
 
             foreach (var (group, pages) in results)
             {
-                var totalCount = pages.Sum(p => p.TotalCount);
+                var totalCount = pages.Count();
                 Console.WriteLine($"{group.ColumnValue}: {totalCount} entries");
             }
         }
