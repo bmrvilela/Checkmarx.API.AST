@@ -137,6 +137,88 @@ namespace Checkmarx.API.AST.Services
             );
         }
 
+        public async Task<ICollection<PackageItem>> GetAllPackagesAsync(Guid scanId)
+        {
+            // The GraphQL query string
+            string query = @"
+            query ($where: PackageRowModelFilterInput, $take: Int!, $skip: Int!, $order: [PackagesSort!], $isExploitablePathEnabled: Boolean!, $includeDependencyPaths: Boolean!, $scanId: UUID!) { 
+                packagesRows (
+                    where: $where, 
+                    take: $take, 
+                    skip: $skip, 
+                    order: $order, 
+                    isExploitablePathEnabled: $isExploitablePathEnabled, 
+                    includeDependencyPaths: $includeDependencyPaths, 
+                    scanId: $scanId
+                ) { 
+            items { dummyRiskyVersion, isPotentialRiskyPackage, pendingChanges, morEntityProfilesApplied, status, pendingStatus, statusValue, pendingStatusValue, packageId, name, version, isViolatingPolicy, isMalicious, dependencyPathCount, violatedPoliciesCount, violatedPolicies, relation, matchType, legalRiskLevel, isDev, remediationTaskId, isTest, isNpmVerified, isPluginDependency, isFramework, packageRepository, packageUsage, releaseDate, isPrivateDependency, isUnresolved, cxScore, remediationAdvisory { nextVersionWithoutVulnerabilities, latestVersionWithoutVulnerabilities }, outdatedModel { newestVersion, versionsInBetween, newestLibraryDate }, saasProviderInfo { name, key, type }, effectiveLicenses { name, riskLevel }, risks { vulnerabilities { critical, high, medium, low, none }, legalRisk { critical, high, medium, low, none }, supplyChainRisks { critical, high, medium, low, none }, vulnerabilitiesWithoutIgnored { critical, high, medium, low, none }, supplyChainRisksWithoutIgnored { critical, high, medium, low, none } }, suggestedFix { type, targetVersion, vulnerabilityCounters { critical, high, medium, low } } }, totalCount } }";
+
+            var allItems = new List<PackageItem>();
+
+            int skip = 0;
+            int take = 100;
+            int totalCount = int.MaxValue; // unknown at start
+
+            try
+            {
+                while (skip < totalCount)
+                {
+                    var variables = new PackagesVariables
+                    {
+                        ScanId = scanId,
+                        Take = take,
+                        Skip = skip,
+                        IsExploitablePathEnabled = true,
+                        IncludeDependencyPaths = false,
+                        Order = new Models.SCA.Order() { Risks = "DESC" }
+                    };
+
+                    var requestBody = new GraphQLRequest<PackagesVariables>
+                    {
+                        Query = query,
+                        Variables = variables
+                    };
+
+                    var content = JsonContent.Create(
+                        requestBody,
+                        options: new JsonSerializerOptions
+                        {
+                            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+                        });
+
+                    var response = await _retryPolicy
+                        .ExecuteAsync(() => _httpClient.PostAsync(BaseUrl, content))
+                        .ConfigureAwait(false);
+
+                    response.EnsureSuccessStatusCode();
+
+                    var responseBody = await response.Content.ReadAsStringAsync();
+
+                    var graphQlResponse = JsonConvert.DeserializeObject<PackagesDetails>(responseBody);
+
+                    var page = graphQlResponse?.Data?.PackagesRows;
+
+                    if (page == null || page.Items == null || page.Items.Count == 0)
+                        break; // safety exit
+
+                    // set total count from first response
+                    totalCount = page.TotalCount;
+
+                    allItems.AddRange(page.Items);
+
+                    // move to next page
+                    skip += take;
+                }
+
+                return allItems;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+                throw;
+            }
+        }
+
         /// <summary>
         /// Calls the GraphQL API to search for package vulnerability state and score actions.
         /// </summary>
@@ -457,20 +539,20 @@ namespace Checkmarx.API.AST.Services
                             return objectResponse_.Object;
                         }
                         else
-                        if (status_ == 400)
-                        {
-                            var objectResponse_ = await ReadObjectResponseAsync<WebError>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
+                            if (status_ == 400)
                             {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                                var objectResponse_ = await ReadObjectResponseAsync<WebError>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                                if (objectResponse_.Object == null)
+                                {
+                                    throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                                }
+                                throw new ApiException<WebError>("Invalid request supplied.", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
                             }
-                            throw new ApiException<WebError>("Invalid request supplied.", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
-                        }
-                        else
-                        {
-                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                        }
+                            else
+                            {
+                                var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                                throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                            }
                     }
                     finally
                     {
