@@ -43,6 +43,8 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
+using DASTResults = Checkmarx.API.AST.Services.DASTResults.DASTResults;
+using DASTScansManager = Checkmarx.API.AST.Services.DASTScansManager.DASTScansManager;
 
 namespace Checkmarx.API.AST
 {
@@ -551,6 +553,30 @@ namespace Checkmarx.API.AST
                     _aiSupplyChainScanResults = new AISupplyChainScanResults(ASTServer, _httpClient);
 
                 return _aiSupplyChainScanResults;
+            }
+        }
+
+        private DASTResults _dastResults;
+        public DASTResults DASTResults
+        {
+            get
+            {
+                if (Connected && _dastResults == null)
+                    _dastResults = new DASTResults($"{ASTServer.AbsoluteUri}api/dast/mfe-results", _httpClient);
+
+                return _dastResults;
+            }
+        }
+
+        private DASTScansManager _dastScansManager;
+        public DASTScansManager DASTScansManager
+        {
+            get
+            {
+                if (Connected && _dastScansManager == null)
+                    _dastScansManager = new DASTScansManager($"{ASTServer.AbsoluteUri}api/dast/scans", _httpClient);
+
+                return _dastScansManager;
             }
         }
 
