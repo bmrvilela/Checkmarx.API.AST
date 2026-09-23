@@ -2650,7 +2650,7 @@ namespace Checkmarx.API.AST
             foreach (var engine in SSCSEngines)
             {
                 var groups = SSCS.GetGroupsByProjectScanAsync(
-                    projectId.ToString(), scanId.ToString(), engine, "ruleId", "", null)
+                    projectId, scanId, engine, "ruleId", "", null)
                     .GetAwaiter().GetResult();
 
                 foreach (var group in groups.Entries)
