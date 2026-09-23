@@ -21,6 +21,9 @@ namespace Checkmarx.API.AST.Enums
         apisec,
 
         [Description("microengines")]
-        microengines
+        microengines,
+
+        [Description("aisc")]
+        aisc
     }
 }

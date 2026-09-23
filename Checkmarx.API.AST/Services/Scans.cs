@@ -2314,6 +2314,7 @@ namespace Checkmarx.API.AST.Services.Scans
         public bool HasKicsScan => Engines != null && Engines.Contains(ScanTypeEnum.kics.ToString());
         public bool HasApiSecScan => Engines != null && Engines.Contains(ScanTypeEnum.apisec.ToString());
         public bool HasMicroEnginesScan => Engines != null && Engines.Contains(ScanTypeEnum.microengines.ToString());
+        public bool HasAISCScan => Engines != null && Engines.Contains(ScanTypeEnum.aisc.ToString());
     }
 
     public class Metadata
