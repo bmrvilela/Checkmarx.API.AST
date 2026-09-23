@@ -81,6 +81,11 @@ namespace Checkmarx.API.AST.Services
         // GET /scans/{scanId}/results
         // ──────────────────────────────────────────────────────────
 
+        /// <param name="assetStatus">Comma-separated asset-level triage statuses. Requires <paramref name="projectId"/> so triage enrichment runs.</param>
+        /// <param name="evidenceStatus">Comma-separated evidence-level triage statuses. Requires <paramref name="projectId"/> so triage enrichment runs.</param>
+        /// <param name="riskSeverities">Comma-separated severity labels (CRITICAL, HIGH, MEDIUM, LOW).</param>
+        /// <param name="projectId">Project GUID required to enrich the results with triage state.</param>
+        /// <param name="offset">1-based page number (page 1 returns the first <paramref name="limit"/> results).</param>
         /// <returns>Ok</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
         public virtual System.Threading.Tasks.Task<AISCSR_PaginatedScanResultsResponse> GetScanResultsAsync(
@@ -90,15 +95,18 @@ namespace Checkmarx.API.AST.Services
             string assetNames = null,
             string providers = null,
             string version = null,
-            System.DateTimeOffset? firstDetectionDateTime = null,
-            System.Collections.Generic.IEnumerable<string> state = null,
+            System.DateTimeOffset? assetFirstDetectionDate = null,
+            string assetStatus = null,
+            string evidenceStatus = null,
             string path = null,
+            string riskSeverities = null,
+            Guid? projectId = null,
             int? limit = null,
             int? offset = null,
             AISCSR_OrderColumn? orderColumn = null,
             AISCSR_OrderDirection? orderDirection = null)
         {
-            return GetScanResultsAsync(scanId, search, assetTypeIds, assetNames, providers, version, firstDetectionDateTime, state, path, limit, offset, orderColumn, orderDirection, System.Threading.CancellationToken.None);
+            return GetScanResultsAsync(scanId, search, assetTypeIds, assetNames, providers, version, assetFirstDetectionDate, assetStatus, evidenceStatus, path, riskSeverities, projectId, limit, offset, orderColumn, orderDirection, System.Threading.CancellationToken.None);
         }
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -111,9 +119,12 @@ namespace Checkmarx.API.AST.Services
             string assetNames,
             string providers,
             string version,
-            System.DateTimeOffset? firstDetectionDateTime,
-            System.Collections.Generic.IEnumerable<string> state,
+            System.DateTimeOffset? assetFirstDetectionDate,
+            string assetStatus,
+            string evidenceStatus,
             string path,
+            string riskSeverities,
+            Guid? projectId,
             int? limit,
             int? offset,
             AISCSR_OrderColumn? orderColumn,
@@ -146,15 +157,18 @@ namespace Checkmarx.API.AST.Services
                         urlBuilder_.Append(System.Uri.EscapeDataString("providers")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(providers, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
                     if (version != null)
                         urlBuilder_.Append(System.Uri.EscapeDataString("version")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(version, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
-                    if (firstDetectionDateTime != null)
-                        urlBuilder_.Append(System.Uri.EscapeDataString("firstDetectionDateTime")).Append('=').Append(System.Uri.EscapeDataString(firstDetectionDateTime.Value.ToString("o", System.Globalization.CultureInfo.InvariantCulture))).Append('&');
-                    if (state != null)
-                    {
-                        foreach (var item_ in state)
-                            urlBuilder_.Append(System.Uri.EscapeDataString("state")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(item_, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
-                    }
+                    if (assetFirstDetectionDate != null)
+                        urlBuilder_.Append(System.Uri.EscapeDataString("assetFirstDetectionDate")).Append('=').Append(System.Uri.EscapeDataString(assetFirstDetectionDate.Value.ToString("o", System.Globalization.CultureInfo.InvariantCulture))).Append('&');
+                    if (assetStatus != null)
+                        urlBuilder_.Append(System.Uri.EscapeDataString("asset-status")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(assetStatus, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
+                    if (evidenceStatus != null)
+                        urlBuilder_.Append(System.Uri.EscapeDataString("evidence-status")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(evidenceStatus, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
                     if (path != null)
                         urlBuilder_.Append(System.Uri.EscapeDataString("path")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(path, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
+                    if (riskSeverities != null)
+                        urlBuilder_.Append(System.Uri.EscapeDataString("risk-severities")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(riskSeverities, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
+                    if (projectId != null)
+                        urlBuilder_.Append(System.Uri.EscapeDataString("projectId")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(projectId, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
                     if (limit != null)
                         urlBuilder_.Append(System.Uri.EscapeDataString("limit")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(limit, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
                     if (offset != null)
@@ -249,11 +263,13 @@ namespace Checkmarx.API.AST.Services
             string assetNames = null,
             string providers = null,
             string version = null,
-            System.DateTimeOffset? firstDetectionDateTime = null,
-            System.Collections.Generic.IEnumerable<string> state = null,
-            string path = null)
+            System.DateTimeOffset? assetFirstDetectionDate = null,
+            string assetStatus = null,
+            string evidenceStatus = null,
+            string path = null,
+            Guid? projectId = null)
         {
-            return GetAggregateScanResultsGroupsAsync(scanId, groupBy, search, assetTypeIds, assetNames, providers, version, firstDetectionDateTime, state, path, System.Threading.CancellationToken.None);
+            return GetAggregateScanResultsGroupsAsync(scanId, groupBy, search, assetTypeIds, assetNames, providers, version, assetFirstDetectionDate, assetStatus, evidenceStatus, path, projectId, System.Threading.CancellationToken.None);
         }
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -267,9 +283,11 @@ namespace Checkmarx.API.AST.Services
             string assetNames,
             string providers,
             string version,
-            System.DateTimeOffset? firstDetectionDateTime,
-            System.Collections.Generic.IEnumerable<string> state,
+            System.DateTimeOffset? assetFirstDetectionDate,
+            string assetStatus,
+            string evidenceStatus,
             string path,
+            Guid? projectId,
             System.Threading.CancellationToken cancellationToken)
         {
             if (groupBy == null)
@@ -302,15 +320,16 @@ namespace Checkmarx.API.AST.Services
                         urlBuilder_.Append(System.Uri.EscapeDataString("providers")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(providers, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
                     if (version != null)
                         urlBuilder_.Append(System.Uri.EscapeDataString("version")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(version, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
-                    if (firstDetectionDateTime != null)
-                        urlBuilder_.Append(System.Uri.EscapeDataString("firstDetectionDateTime")).Append('=').Append(System.Uri.EscapeDataString(firstDetectionDateTime.Value.ToString("o", System.Globalization.CultureInfo.InvariantCulture))).Append('&');
-                    if (state != null)
-                    {
-                        foreach (var item_ in state)
-                            urlBuilder_.Append(System.Uri.EscapeDataString("state")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(item_, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
-                    }
+                    if (assetFirstDetectionDate != null)
+                        urlBuilder_.Append(System.Uri.EscapeDataString("assetFirstDetectionDate")).Append('=').Append(System.Uri.EscapeDataString(assetFirstDetectionDate.Value.ToString("o", System.Globalization.CultureInfo.InvariantCulture))).Append('&');
+                    if (assetStatus != null)
+                        urlBuilder_.Append(System.Uri.EscapeDataString("asset-status")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(assetStatus, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
+                    if (evidenceStatus != null)
+                        urlBuilder_.Append(System.Uri.EscapeDataString("evidence-status")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(evidenceStatus, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
                     if (path != null)
                         urlBuilder_.Append(System.Uri.EscapeDataString("path")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(path, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
+                    if (projectId != null)
+                        urlBuilder_.Append(System.Uri.EscapeDataString("projectId")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(projectId, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
                     urlBuilder_.Length--;
 
                     PrepareRequest(client_, request_, urlBuilder_);
@@ -489,30 +508,29 @@ namespace Checkmarx.API.AST.Services
     // Enums
     // ──────────────────────────────────────────────────────────────
 
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.4.0.0 (NJsonSchema v11.3.2.0 (Newtonsoft.Json v13.0.0.0))")]
-    public enum AISCSR_AssetTypeName
+    /// <summary>
+    /// Known asset type names. The service returns display names ("AI Model", "AI SDK", ...) rather
+    /// than these schema values, so response payloads keep <c>assetType</c> as a plain string; these
+    /// constants exist for the request-side <c>asset-type-ids</c>/filter values only.
+    /// </summary>
+    public static class AISCSR_AssetTypeName
     {
-        [System.Runtime.Serialization.EnumMember(Value = @"model")]
-        Model = 0,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"sdk")]
-        Sdk = 1,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"framework")]
-        Framework = 2,
+        public const string Model = "model";
+        public const string Sdk = "sdk";
+        public const string Framework = "framework";
     }
 
-    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.4.0.0 (NJsonSchema v11.3.2.0 (Newtonsoft.Json v13.0.0.0))")]
-    public enum AISCSR_State
+    /// <summary>
+    /// Known triage statuses. Kept as constants rather than an enum because the service has already
+    /// changed this vocabulary once (the former "Unresolved" is now "Monitored"/"Mixed") and an
+    /// unknown value would break deserialization of the whole response.
+    /// </summary>
+    public static class AISCSR_Status
     {
-        [System.Runtime.Serialization.EnumMember(Value = @"Snoozed")]
-        Snoozed = 0,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"Muted")]
-        Muted = 1,
-
-        [System.Runtime.Serialization.EnumMember(Value = @"Unresolved")]
-        Unresolved = 2,
+        public const string Snoozed = "Snoozed";
+        public const string Muted = "Muted";
+        public const string Monitored = "Monitored";
+        public const string Mixed = "Mixed";
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.4.0.0 (NJsonSchema v11.3.2.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -530,11 +548,14 @@ namespace Checkmarx.API.AST.Services
         [System.Runtime.Serialization.EnumMember(Value = @"version")]
         Version = 3,
 
-        [System.Runtime.Serialization.EnumMember(Value = @"firstDetectionDateTime")]
-        FirstDetectionDateTime = 4,
+        [System.Runtime.Serialization.EnumMember(Value = @"assetFirstDetectionDate")]
+        AssetFirstDetectionDate = 4,
 
         [System.Runtime.Serialization.EnumMember(Value = @"state")]
         State = 5,
+
+        [System.Runtime.Serialization.EnumMember(Value = @"riskSummary")]
+        RiskSummary = 6,
     }
 
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.4.0.0 (NJsonSchema v11.3.2.0 (Newtonsoft.Json v13.0.0.0))")]
@@ -579,12 +600,25 @@ namespace Checkmarx.API.AST.Services
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.4.0.0 (NJsonSchema v11.3.2.0 (Newtonsoft.Json v13.0.0.0))")]
     public partial class AISCSR_ScanResult
     {
+        /// <summary>
+        /// A unique identifier for a scan result. Declared as a uuid4 by the schema, but the service
+        /// currently returns an empty string for every row, so it is kept as a string.
+        /// </summary>
         [Newtonsoft.Json.JsonProperty("id", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public Guid? Id { get; set; }
+        public string Id { get; set; }
 
+        /// <summary>
+        /// Stable, content-based evidence identity. Use this to reference the same logical detection
+        /// across rescans instead of path/startLine.
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty("evidenceKey", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string EvidenceKey { get; set; }
+
+        /// <summary>
+        /// Asset type display name, e.g. "AI Model". See <see cref="AISCSR_AssetTypeName"/>.
+        /// </summary>
         [Newtonsoft.Json.JsonProperty("assetType", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-        public AISCSR_AssetTypeName? AssetType { get; set; }
+        public string AssetType { get; set; }
 
         [Newtonsoft.Json.JsonProperty("assetTypeId", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public Guid? AssetTypeId { get; set; }
@@ -592,18 +626,32 @@ namespace Checkmarx.API.AST.Services
         [Newtonsoft.Json.JsonProperty("assetName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string AssetName { get; set; }
 
+        /// <summary>
+        /// Discovery asset identifier, e.g. "anthropic##anthropic##claude-3-haiku". Declared as a
+        /// uuid4 by the schema, but the service returns a composite string.
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty("assetId", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string AssetId { get; set; }
+
         [Newtonsoft.Json.JsonProperty("provider", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string Provider { get; set; }
 
         [Newtonsoft.Json.JsonProperty("version", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string Version { get; set; }
 
-        [Newtonsoft.Json.JsonProperty("firstDetectionDateTime", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.DateTimeOffset? FirstDetectionDateTime { get; set; }
+        [Newtonsoft.Json.JsonProperty("assetFirstDetectionDate", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public System.DateTimeOffset? AssetFirstDetectionDate { get; set; }
 
-        [Newtonsoft.Json.JsonProperty("state", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-        public AISCSR_State? State { get; set; }
+        /// <summary>
+        /// Evidence triage status, only populated when a projectId is supplied.
+        /// See <see cref="AISCSR_Status"/>.
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty("status", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string Status { get; set; }
+
+        /// <summary>Evidence snooze end date from triage when a projectId is supplied.</summary>
+        [Newtonsoft.Json.JsonProperty("snoozeDate", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public System.DateTimeOffset? SnoozeDate { get; set; }
 
         [Newtonsoft.Json.JsonProperty("path", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string Path { get; set; }
@@ -619,6 +667,19 @@ namespace Checkmarx.API.AST.Services
 
         [Newtonsoft.Json.JsonProperty("endColumn", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public int? EndColumn { get; set; }
+
+        /// <summary>
+        /// Aggregated risk counts for the asset, shared across all evidence rows with the same
+        /// <see cref="AssetId"/>. Omitted when no risk data is available.
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty("riskSummary", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public AISCSR_RiskSummary RiskSummary { get; set; }
+
+        /// <summary>
+        /// Evidence- and asset-level triage, only populated when a projectId is supplied.
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty("triage", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public AISCSR_TriageInfo Triage { get; set; }
 
         private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
 
@@ -652,9 +713,11 @@ namespace Checkmarx.API.AST.Services
         [Newtonsoft.Json.JsonProperty("assetTypeId", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public Guid? AssetTypeId { get; set; }
 
+        /// <summary>
+        /// Asset type display name, e.g. "AI Model". See <see cref="AISCSR_AssetTypeName"/>.
+        /// </summary>
         [Newtonsoft.Json.JsonProperty("assetType", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-        public AISCSR_AssetTypeName? AssetType { get; set; }
+        public string AssetType { get; set; }
 
         [Newtonsoft.Json.JsonProperty("assetName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string AssetName { get; set; }
@@ -665,12 +728,103 @@ namespace Checkmarx.API.AST.Services
         [Newtonsoft.Json.JsonProperty("version", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string Version { get; set; }
 
-        [Newtonsoft.Json.JsonProperty("state", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-        public AISCSR_State? State { get; set; }
+        /// <summary>See <see cref="AISCSR_Status"/>.</summary>
+        [Newtonsoft.Json.JsonProperty("status", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string Status { get; set; }
 
         [Newtonsoft.Json.JsonProperty("count", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public int? Count { get; set; }
+
+        private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
+
+        [Newtonsoft.Json.JsonExtensionData]
+        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        {
+            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+            set { _additionalProperties = value; }
+        }
+    }
+
+    /// <summary>Aggregated risk counts for an asset, keyed by assetId.</summary>
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.4.0.0 (NJsonSchema v11.3.2.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class AISCSR_RiskSummary
+    {
+        [Newtonsoft.Json.JsonProperty("assetId", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string AssetId { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("totalRisks", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public int? TotalRisks { get; set; }
+
+        /// <summary>Count of risks keyed by severity label, e.g. CRITICAL, HIGH.</summary>
+        [Newtonsoft.Json.JsonProperty("riskCountBySeverity", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public System.Collections.Generic.IDictionary<string, int> RiskCountBySeverity { get; set; }
+
+        private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
+
+        [Newtonsoft.Json.JsonExtensionData]
+        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        {
+            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+            set { _additionalProperties = value; }
+        }
+    }
+
+    /// <summary>Resolved triage state for one scan result row (evidence and asset scope only).</summary>
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.4.0.0 (NJsonSchema v11.3.2.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class AISCSR_TriageInfo
+    {
+        [Newtonsoft.Json.JsonProperty("evidence", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public AISCSR_EvidenceTriageInfo Evidence { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("asset", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public AISCSR_AssetTriageInfo Asset { get; set; }
+
+        private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
+
+        [Newtonsoft.Json.JsonExtensionData]
+        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        {
+            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+            set { _additionalProperties = value; }
+        }
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.4.0.0 (NJsonSchema v11.3.2.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class AISCSR_EvidenceTriageInfo
+    {
+        [Newtonsoft.Json.JsonProperty("status", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string Status { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("scope", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string Scope { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("snoozeEndDate", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public System.DateTimeOffset? SnoozeEndDate { get; set; }
+
+        private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
+
+        [Newtonsoft.Json.JsonExtensionData]
+        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        {
+            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+            set { _additionalProperties = value; }
+        }
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.4.0.0 (NJsonSchema v11.3.2.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class AISCSR_AssetTriageInfo
+    {
+        [Newtonsoft.Json.JsonProperty("status", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string Status { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("scope", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string Scope { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("snoozeEndDate", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public System.DateTimeOffset? SnoozeEndDate { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("isSuppressed", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public bool? IsSuppressed { get; set; }
 
         private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
 

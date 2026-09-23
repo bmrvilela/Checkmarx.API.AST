@@ -7,11 +7,11 @@ namespace Checkmarx.API.AST
     // generated default is "currentPage = 1"), so the loop starts there.
     public partial class SSCSReader
     {
-        public virtual async System.Threading.Tasks.Task<System.Collections.Generic.List<SCSSProject>> GetAllProjectsAsync(
+        public virtual async System.Threading.Tasks.Task<System.Collections.Generic.List<SSCSReaderProject>> GetAllProjectsAsync(
             int pageSize = 100, string filters = null, string sort = null, string search = null,
             System.Threading.CancellationToken cancellationToken = default)
         {
-            var all = new System.Collections.Generic.List<SCSSProject>();
+            var all = new System.Collections.Generic.List<SSCSReaderProject>();
 
             var currentPage = 1;
             while (true)
@@ -30,16 +30,16 @@ namespace Checkmarx.API.AST
             return all;
         }
 
-        public virtual async System.Threading.Tasks.Task<System.Collections.Generic.List<EngineResult>> GetAllEngineResultsByProjectAsync(
+        public virtual async System.Threading.Tasks.Task<System.Collections.Generic.List<SSCSReaderEngineResult>> GetAllEngineResultsByProjectAsync(
             System.Guid projectId, string engine, System.Guid scan, string filters, int pageSize = 100, string sort = null, string search = null,
             System.Threading.CancellationToken cancellationToken = default)
         {
-            var all = new System.Collections.Generic.List<EngineResult>();
+            var all = new System.Collections.Generic.List<SSCSReaderEngineResult>();
 
             var currentPage = 1;
             while (true)
             {
-                var page = await GetEngineResultsByProjectAsync(projectId, engine, scan, filters, pageSize, currentPage, sort, search, cancellationToken).ConfigureAwait(false);
+                var page = await GetEngineResultsByProjectAsync(projectId, scan, engine, filters, pageSize, currentPage, sort, search, cancellationToken).ConfigureAwait(false);
                 if (page.Entries != null)
                     all.AddRange(page.Entries);
 

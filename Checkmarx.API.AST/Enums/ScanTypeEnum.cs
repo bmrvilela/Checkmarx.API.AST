@@ -18,6 +18,12 @@ namespace Checkmarx.API.AST.Enums
         sca,
 
         [Description("apisec")]
-        apisec
+        apisec,
+
+        [Description("microengines")]
+        microengines,
+
+        [Description("aisc")]
+        aisc
     }
 }

@@ -43,6 +43,12 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
+using DASTResults = Checkmarx.API.AST.Services.DASTResults.DASTResults;
+using DASTScansManager = Checkmarx.API.AST.Services.DASTScansManager.DASTScansManager;
+using EnvWithStatus = Checkmarx.API.AST.Services.DASTScansManager.EnvWithStatus;
+using ScanWithStatus = Checkmarx.API.AST.Services.DASTScansManager.ScanWithStatus;
+using ResultSummarized = Checkmarx.API.AST.Services.DASTResults.ResultSummarized;
+using ResultSummarizedList = Checkmarx.API.AST.Services.DASTResults.ResultSummarizedList;
 
 namespace Checkmarx.API.AST
 {
@@ -490,8 +496,24 @@ namespace Checkmarx.API.AST
             }
         }
 
+        private SSCS _sscs;
+        public SSCS SSCS
+        {
+            get
+            {
+                if (Connected && _sscs == null)
+                    _sscs = new SSCS(ASTServer, _httpClient);
+
+                return _sscs;
+            }
+        }
+
         private SSCSReader _sscsReader;
-        public SSCSReader SSCS
+
+        /// <summary>
+        /// SSCS API - Reader ("/read/..." routes; richer per-result state/status/similarityId than SSCS)
+        /// </summary>
+        public SSCSReader SSCSReader
         {
             get
             {
@@ -535,6 +557,30 @@ namespace Checkmarx.API.AST
                     _aiSupplyChainScanResults = new AISupplyChainScanResults(ASTServer, _httpClient);
 
                 return _aiSupplyChainScanResults;
+            }
+        }
+
+        private DASTResults _dastResults;
+        public DASTResults DASTResults
+        {
+            get
+            {
+                if (Connected && _dastResults == null)
+                    _dastResults = new DASTResults($"{ASTServer.AbsoluteUri}api/dast/mfe-results", _httpClient);
+
+                return _dastResults;
+            }
+        }
+
+        private DASTScansManager _dastScansManager;
+        public DASTScansManager DASTScansManager
+        {
+            get
+            {
+                if (Connected && _dastScansManager == null)
+                    _dastScansManager = new DASTScansManager($"{ASTServer.AbsoluteUri}api/dast/scans", _httpClient);
+
+                return _dastScansManager;
             }
         }
 
@@ -2568,6 +2614,273 @@ namespace Checkmarx.API.AST
             SASTResultsPredicates.RecalculateSummaryCountersAsync(new RecalculateBody { ProjectId = projectId, ScanId = scanId })
                 .GetAwaiter()
                 .GetResult();
+        }
+
+        #endregion
+
+        #region SSCS
+
+        // Raw values of the SSCS Engine enum (see Services/SSCS.cs), not display names.
+        private static readonly string[] SSCSEngines = new[] { "2ms", "Scorecard" };
+
+        // "/results/{project}/{scan}/{engine}" rejects requests without a ruleId filter
+        // ("missing ruleID in filters") - there is no "give me everything" call.
+        private static string BuildSSCSRuleIdFilter(string ruleId)
+        {
+            var filter = new JObject
+            {
+                ["ruleId"] = new JObject
+                {
+                    ["values"] = new JArray(ruleId),
+                    ["operator"] = "eq"
+                }
+            };
+            return filter.ToString(Formatting.None);
+        }
+
+        /// <summary>
+        /// Fetches all SSCS (2ms/Scorecard micro-engine) results for a scan, grouped by rule.
+        /// Mirrors the CxOne UI/team script flow: discover the rule breakdown per engine via
+        /// the "groups/ruleId" endpoint, then pull the entries for each rule.
+        /// </summary>
+        public Dictionary<SSCSGroup, IEnumerable<EngineResult>> GetSSCSResults(Guid projectId, Guid scanId)
+        {
+            var results = new Dictionary<SSCSGroup, IEnumerable<EngineResult>>();
+
+            foreach (var engine in SSCSEngines)
+            {
+                var groups = SSCS.GetGroupsByProjectScanAsync(
+                    projectId.ToString(), scanId.ToString(), engine, "ruleId", "", null)
+                    .GetAwaiter().GetResult();
+
+                foreach (var group in groups.Entries)
+                {
+                    var filters = BuildSSCSRuleIdFilter(group.ColumnValue);
+
+                    var engineResults = SSCS.GetEngineResultsByProjectAsync(
+                        projectId, scanId, engine, filters, pageSize: group.Count)
+                        .GetAwaiter().GetResult();
+
+                    results[group] = engineResults.Entries;
+                }
+            }
+
+            return results;
+        }
+
+        #endregion
+
+        #region DAST
+
+        /// <summary>
+        /// Gets every DAST environment, walking the pages of the /environments endpoint.
+        /// </summary>
+        /// <param name="limit">Number of environments requested per call.</param>
+        public IEnumerable<EnvWithStatus> GetEnviroments(int limit = 100)
+        {
+            if (limit <= 0)
+                throw new ArgumentOutOfRangeException(nameof(limit));
+
+            var result = new List<EnvWithStatus>();
+
+            // "from"/"to" are 1-based and inclusive, and from=0 makes the endpoint ignore the window entirely.
+            int startAt = 1;
+
+            while (true)
+            {
+                var resultPage = DASTScansManager.EnvironmentsAsync(from: startAt, to: startAt + limit - 1).GetAwaiter().GetResult();
+
+                var environments = resultPage.Environments;
+
+                if (environments == null || environments.Count == 0)
+                    return result;
+
+                result.AddRange(environments);
+
+                // The endpoint answers with the whole collection whenever it decides to ignore the window.
+                if (environments.Count > limit)
+                    return result;
+
+                startAt += environments.Count;
+
+                if (environments.Count < limit)
+                    return result;
+
+                if (resultPage.TotalItems.HasValue && startAt > resultPage.TotalItems.Value)
+                    return result;
+            }
+        }
+
+        /// <summary>
+        /// Gets every DAST scan of an environment, walking the pages of the /scans endpoint.
+        /// </summary>
+        /// <param name="environmentId">Environment Id</param>
+        /// <param name="minScanDate">Min scan date, including the date</param>
+        /// <param name="maxScanDate">Max scan date, including the date</param>
+        /// <param name="limit">Number of scans requested per call.</param>
+        public IEnumerable<ScanWithStatus> GetDASTScans(Guid environmentId, bool completed = true, DateTime? minScanDate = null, DateTime? maxScanDate = null, int limit = 100)
+        {
+            if (limit <= 0)
+                throw new ArgumentOutOfRangeException(nameof(limit));
+
+            var result = new List<ScanWithStatus>();
+
+            // "from"/"to" are 1-based and inclusive, and from=0 makes the endpoint ignore the window entirely.
+            // The response carries no usable total, so the walk stops on the first short or empty page.
+            int startAt = 1;
+
+            while (true)
+            {
+                ICollection<ScanWithStatus> scans;
+
+                try
+                {
+                    scans = DASTScansManager.ScansAsync(environmentId, from: startAt, to: startAt + limit - 1).GetAwaiter().GetResult().Scans;
+                }
+                catch (Exceptions.ApiException ex) when (ex.StatusCode == 404 && startAt > 1)
+                {
+                    // A window starting past the last scan answers 404 instead of an empty page. On the
+                    // very first window a 404 is a genuine "environment not found", so it is left to bubble up.
+                    break;
+                }
+
+                if (scans == null || scans.Count == 0)
+                    break;
+
+                result.AddRange(scans);
+
+                // The endpoint answers with the whole collection whenever it decides to ignore the window.
+                if (scans.Count > limit)
+                    break;
+
+                startAt += scans.Count;
+
+                if (scans.Count < limit)
+                    break;
+            }
+
+            // The endpoint takes no date parameters, so the range is applied here.
+            return result.Where(x =>
+                (!completed || x.Statistics == "Completed") &&
+                (maxScanDate == null || (x.Created != null && x.Created.Value.DateTime < maxScanDate)) &&
+                (minScanDate == null || (x.Created != null && x.Created.Value.DateTime >= minScanDate))
+            );
+        }
+
+        /// <summary>
+        /// Gets every result of a DAST scan, walking the pages of the /results endpoint.
+        /// A scan that produced no results answers 404 and comes back as an empty list.
+        /// </summary>
+        /// <param name="scanId">Scan Id</param>
+        /// <param name="limit">Number of results requested per call.</param>
+        public IEnumerable<ResultSummarized> GetDASTScanResults(Guid scanId, int limit = 1000)
+        {
+            if (limit <= 0)
+                throw new ArgumentOutOfRangeException(nameof(limit));
+
+            var result = new List<ResultSummarized>();
+
+            // Unlike the scans-manager endpoints this one pages with a 1-based "page" plus "per_page",
+            // and both are mandatory.
+            int page = 1;
+
+            while (true)
+            {
+                ResultSummarizedList resultPage;
+
+                try
+                {
+                    resultPage = DASTResults.GetResultsAsync(scanId.ToString(), page, limit).GetAwaiter().GetResult();
+                }
+                catch (Exceptions.ApiException ex) when (ex.StatusCode == 404)
+                {
+                    // A scan holding no results answers 404 instead of an empty page, which is the normal
+                    // outcome for failed and cancelled scans. An unknown scan id is answered the same way.
+                    break;
+                }
+
+                var results = resultPage.Results;
+
+                if (results == null || results.Count == 0)
+                    break;
+
+                result.AddRange(results);
+
+                // Guards against a page larger than the one asked for, which would mean "per_page" was ignored.
+                if (results.Count > limit)
+                    break;
+
+                if (resultPage.Pages_number.HasValue && page >= resultPage.Pages_number.Value)
+                    break;
+
+                if (resultPage.Total.HasValue && result.Count >= resultPage.Total.Value)
+                    break;
+
+                if (results.Count < limit)
+                    break;
+
+                page++;
+            }
+
+            return result;
+        }
+
+        #endregion
+
+        #region AI Suply Chain
+
+        public IEnumerable<Scan> GetAISupplyChainScans(Guid projectId,
+            bool completed = true,
+            string branch = null,
+            ScanRetrieveKind scanKind = ScanRetrieveKind.All,
+            DateTime? maxScanDate = null,
+            DateTime? minScanDate = null,
+            IEnumerable<string> tagKeys = null)
+        {
+            return GetScans(projectId, "aisc", completed, branch, scanKind, maxScanDate, minScanDate, tagKeys);
+        }
+
+        public IEnumerable<AISCSR_ScanResult> GetAISupplyChainScanResults(Guid scanId, int limit = 100)
+        {
+            if (limit <= 0)
+                throw new ArgumentOutOfRangeException(nameof(limit));
+
+            var result = new List<AISCSR_ScanResult>();
+
+            int page = 1;
+
+            while (true)
+            {
+                AISCSR_PaginatedScanResultsResponse resultPage;
+
+                try
+                {
+                    resultPage = AISupplyChainScanResults
+                        .GetScanResultsAsync(scanId, offset: page, limit: limit)
+                        .GetAwaiter()
+                        .GetResult();
+                }
+                catch (Exceptions.ApiException ex) when (ex.StatusCode == 404)
+                {
+                    // A scan holding no results answers 404 instead of an empty page, which is the normal
+                    // outcome for failed and cancelled scans. An unknown scan id is answered the same way.
+                    break;
+                }
+
+                var results = resultPage.Data;
+
+                if (results == null || results.Count == 0)
+                    break;
+
+                result.AddRange(results);
+
+                if (resultPage.LastPage.HasValue && page >= resultPage.LastPage.Value)
+                    break;
+
+                page++;
+            }
+
+            return result;
         }
 
         #endregion
