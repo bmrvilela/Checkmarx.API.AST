@@ -628,7 +628,7 @@ namespace Checkmarx.API.AST
         /// <param name="filters">string valid</param>
         /// <returns>Ok</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual System.Threading.Tasks.Task<SSCSGroups> GetGroupsByProjectScanAsync(string project, string scan, string engine, string column, string search, string filters)
+        public virtual System.Threading.Tasks.Task<SSCSGroups> GetGroupsByProjectScanAsync(Guid project, Guid scan, string engine, string column, string search, string filters)
         {
             return GetGroupsByProjectScanAsync(project, scan, engine, column, search, filters, System.Threading.CancellationToken.None);
         }
@@ -642,7 +642,7 @@ namespace Checkmarx.API.AST
         /// <param name="filters">string valid</param>
         /// <returns>Ok</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<SSCSGroups> GetGroupsByProjectScanAsync(string project, string scan, string engine, string column, string search, string filters, System.Threading.CancellationToken cancellationToken)
+        public virtual async System.Threading.Tasks.Task<SSCSGroups> GetGroupsByProjectScanAsync(Guid project, Guid scan, string engine, string column, string search, string filters, System.Threading.CancellationToken cancellationToken)
         {
             if (project == null)
                 throw new System.ArgumentNullException("project");

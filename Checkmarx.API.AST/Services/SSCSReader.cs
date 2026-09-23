@@ -485,8 +485,14 @@ namespace Checkmarx.API.AST
         /// <exception cref="ApiException">A server side error occurred.</exception>
         public virtual async System.Threading.Tasks.Task<SSCSReaderEngineResults> GetEngineResultsByProjectAsync(Guid project, Guid scan, string engine, string filters = null, int? pageSize = null, int? currentPage = null, string sort = null, string search = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
         {
+            if (project == null)
+                throw new System.ArgumentNullException("project");
+
             if (engine == null)
                 throw new System.ArgumentNullException("engine");
+
+            if (scan == null)
+                throw new System.ArgumentNullException("scan");
 
             var client_ = _httpClient;
             var disposeClient_ = false;
@@ -1165,7 +1171,7 @@ namespace Checkmarx.API.AST
         public string Comment { get; set; }
 
         [Newtonsoft.Json.JsonProperty("createdAt", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string CreatedAt { get; set; }
+        public DateTimeOffset CreatedAt { get; set; }
 
         [Newtonsoft.Json.JsonProperty("createdBy", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string CreatedBy { get; set; }
@@ -1285,7 +1291,7 @@ namespace Checkmarx.API.AST
         public Guid Id { get; set; }
 
         [Newtonsoft.Json.JsonProperty("lastScanMetadata", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public ScanInfo LastScanMetadata { get; set; }
+        public LastScanMetadata LastScanMetadata { get; set; }
 
         [Newtonsoft.Json.JsonProperty("name", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string Name { get; set; }
@@ -1306,6 +1312,26 @@ namespace Checkmarx.API.AST
         public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
         {
             get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+            set { _additionalProperties = value; }
+        }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "13.15.10.0 (NJsonSchema v10.6.10.0 (Newtonsoft.Json v12.0.0.0))")]
+    public partial class LastScanMetadata
+    {
+        [Newtonsoft.Json.JsonProperty("id", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public Guid Id { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("scannedAt", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public DateTimeOffset ScannedAt { get; set; }
+
+        private System.Collections.Generic.IDictionary<string, object> _additionalProperties = new System.Collections.Generic.Dictionary<string, object>();
+
+        [Newtonsoft.Json.JsonExtensionData]
+        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        {
+            get { return _additionalProperties; }
             set { _additionalProperties = value; }
         }
 
