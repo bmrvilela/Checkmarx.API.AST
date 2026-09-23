@@ -2761,7 +2761,7 @@ namespace Checkmarx.API.AST
 
             // The endpoint takes no date parameters, so the range is applied here.
             return result.Where(x =>
-                (completed && x.Statistics == "Completed") &&
+                (!completed || x.Statistics == "Completed") &&
                 (maxScanDate == null || (x.Created != null && x.Created.Value.DateTime < maxScanDate)) &&
                 (minScanDate == null || (x.Created != null && x.Created.Value.DateTime >= minScanDate))
             );
