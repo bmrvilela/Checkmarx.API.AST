@@ -2827,6 +2827,64 @@ namespace Checkmarx.API.AST
 
         #endregion
 
+        #region AI Suply Chain
+
+        public IEnumerable<Scan> GetAISupplyChainScans(Guid projectId,
+            bool completed = true,
+            string branch = null,
+            ScanRetrieveKind scanKind = ScanRetrieveKind.All,
+            DateTime? maxScanDate = null,
+            DateTime? minScanDate = null,
+            IEnumerable<string> tagKeys = null)
+        {
+            return GetScans(projectId, "aisc", completed, branch, scanKind, maxScanDate, minScanDate, tagKeys);
+        }
+
+        public IEnumerable<AISCSR_ScanResult> GetAISupplyChainScanResults(Guid scanId, int limit = 100)
+        {
+            if (limit <= 0)
+                throw new ArgumentOutOfRangeException(nameof(limit));
+
+            var result = new List<AISCSR_ScanResult>();
+
+            int page = 1;
+
+            while (true)
+            {
+                AISCSR_PaginatedScanResultsResponse resultPage;
+
+                try
+                {
+                    resultPage = AISupplyChainScanResults
+                        .GetScanResultsAsync(scanId, offset: page, limit: limit)
+                        .GetAwaiter()
+                        .GetResult();
+                }
+                catch (Exceptions.ApiException ex) when (ex.StatusCode == 404)
+                {
+                    // A scan holding no results answers 404 instead of an empty page, which is the normal
+                    // outcome for failed and cancelled scans. An unknown scan id is answered the same way.
+                    break;
+                }
+
+                var results = resultPage.Data;
+
+                if (results == null || results.Count == 0)
+                    break;
+
+                result.AddRange(results);
+
+                if (resultPage.LastPage.HasValue && page >= resultPage.LastPage.Value)
+                    break;
+
+                page++;
+            }
+
+            return result;
+        }
+
+        #endregion
+
         #region Configurations
 
         public void SetProjectConfig(Guid projectId, string key, object value)

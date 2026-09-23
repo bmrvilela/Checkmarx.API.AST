@@ -42,7 +42,35 @@ namespace Checkmarx.API.AST.Tests
             }
         }
 
-        private static Guid GetLatestScanWithAIResults()
+        [TestMethod]
+        public void GetProjectsScanResultsTest()
+        {
+            var projects = astclient.GetAllProjectsDetails();
+            foreach (var project in projects)
+            {
+                var aiscScans = astclient.GetAISupplyChainScans(project.Id);
+                if (aiscScans.Any())
+                {
+                    foreach (var scan in aiscScans)
+                    {
+                        try
+                        {
+                            var results = astclient.GetAISupplyChainScanResults(scan.Id);
+                            if (results.Any())
+                            {
+                                Trace.WriteLine($"Project {project.Id} - Scan {scan.Id} - {results.Count()}");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Trace.WriteLine($"ERROR Project {project.Id} - Scan {scan.Id}: {ex.Message}");
+                        }
+                    }
+                }
+            }
+        }
+
+        private static Services.Scans.Scan GetLatestScanWithAIResultsDetails()
         {
             // Retrieve a recent completed scan to use as test fixture.
             // Adjust the filter if needed (e.g. scan type that includes AI supply chain).
@@ -50,7 +78,12 @@ namespace Checkmarx.API.AST.Tests
             var scan = scans?.Scans?.FirstOrDefault(s => s.Status == Services.Scans.Status.Completed);
             if (scan == null)
                 Assert.Inconclusive("No completed scans found in the tenant.");
-            return scan.Id;
+            return scan;
+        }
+
+        private static Guid GetLatestScanWithAIResults()
+        {
+            return GetLatestScanWithAIResultsDetails().Id;
         }
 
         [TestMethod]
@@ -68,11 +101,11 @@ namespace Checkmarx.API.AST.Tests
             {
                 foreach (var item in result.Data)
                 {
-                    Trace.WriteLine($"Result: {item.Id}" +
+                    Trace.WriteLine($"Result: {item.EvidenceKey}" +
                         $" | Asset: {item.AssetName} ({item.AssetType})" +
                         $" | Provider: {item.Provider}" +
                         $" | Version: {item.Version}" +
-                        $" | State: {item.State}" +
+                        $" | Status: {item.Status}" +
                         $" | Path: {item.Path}:{item.StartLine}");
                 }
             }
@@ -96,33 +129,64 @@ namespace Checkmarx.API.AST.Tests
             {
                 foreach (var item in result.Data)
                 {
-                    Trace.WriteLine($"Result: {item.Id}" +
+                    Trace.WriteLine($"Result: {item.EvidenceKey}" +
                         $" | Asset: {item.AssetName} ({item.AssetType})" +
                         $" | Provider: {item.Provider}" +
                         $" | Version: {item.Version}" +
-                        $" | State: {item.State}");
+                        $" | Status: {item.Status}");
                 }
             }
         }
 
         [TestMethod]
-        public void GetScanResultsFilterByStateTest()
+        public void GetScanResultsFilterByStatusTest()
         {
-            var scanId = GetLatestScanWithAIResults();
+            var scan = GetLatestScanWithAIResultsDetails();
 
+            // The triage status filters only work when a projectId is supplied, since that is what
+            // triggers the triage enrichment on the server side.
             var result = astclient.AISupplyChainScanResults.GetScanResultsAsync(
-                scanId,
-                state: new List<string> { "Unresolved" },
+                scan.Id,
+                evidenceStatus: AISCSR_Status.Monitored,
+                projectId: scan.ProjectId,
                 limit: 10).Result;
 
-            Trace.WriteLine($"Unresolved results: {result.Total}");
+            Trace.WriteLine($"Monitored results: {result.Total}");
 
             if (result.Data != null)
             {
                 foreach (var item in result.Data)
                 {
-                    Assert.AreEqual(AISCSR_State.Unresolved, item.State, "All returned results should be Unresolved.");
+                    Assert.AreEqual(AISCSR_Status.Monitored, item.Status, "All returned results should be Monitored.");
                     Trace.WriteLine($"  {item.AssetName} | {item.Provider} | {item.Version}");
+                }
+            }
+        }
+
+        [TestMethod]
+        public void GetScanResultsWithTriageAndRisksTest()
+        {
+            var scan = GetLatestScanWithAIResultsDetails();
+
+            var result = astclient.AISupplyChainScanResults.GetScanResultsAsync(
+                scan.Id,
+                projectId: scan.ProjectId,
+                limit: 10).Result;
+
+            Trace.WriteLine($"Total results: {result.Total}");
+
+            if (result.Data != null)
+            {
+                foreach (var item in result.Data)
+                {
+                    var severities = item.RiskSummary?.RiskCountBySeverity == null
+                        ? "-"
+                        : string.Join(", ", item.RiskSummary.RiskCountBySeverity.Select(x => $"{x.Key}={x.Value}"));
+
+                    Trace.WriteLine($"  {item.AssetName} ({item.AssetId})" +
+                        $" | Risks: {item.RiskSummary?.TotalRisks} [{severities}]" +
+                        $" | Evidence triage: {item.Triage?.Evidence?.Status}" +
+                        $" | Asset triage: {item.Triage?.Asset?.Status}");
                 }
             }
         }
@@ -135,7 +199,7 @@ namespace Checkmarx.API.AST.Tests
             var result = astclient.AISupplyChainScanResults.GetScanResultsAsync(
                 scanId,
                 limit: 10,
-                orderColumn: AISCSR_OrderColumn.FirstDetectionDateTime,
+                orderColumn: AISCSR_OrderColumn.AssetFirstDetectionDate,
                 orderDirection: AISCSR_OrderDirection.Desc).Result;
 
             Trace.WriteLine($"Total results: {result.Total}");
@@ -144,7 +208,7 @@ namespace Checkmarx.API.AST.Tests
             {
                 foreach (var item in result.Data)
                 {
-                    Trace.WriteLine($"  {item.AssetName} | Detected: {item.FirstDetectionDateTime:yyyy-MM-dd HH:mm}");
+                    Trace.WriteLine($"  {item.AssetName} | Detected: {item.AssetFirstDetectionDate:yyyy-MM-dd HH:mm}");
                 }
             }
         }
@@ -254,7 +318,7 @@ namespace Checkmarx.API.AST.Tests
                     Trace.WriteLine($"  [{group.AssetType}] {group.AssetName}" +
                         $" | Provider: {group.Provider}" +
                         $" | Version: {group.Version}" +
-                        $" | State: {group.State}" +
+                        $" | Status: {group.Status}" +
                         $" | Count: {group.Count}");
                 }
             }
