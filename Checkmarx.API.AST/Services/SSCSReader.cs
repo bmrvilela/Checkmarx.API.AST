@@ -476,7 +476,7 @@ namespace Checkmarx.API.AST
         /// <param name="search">string valid</param>
         /// <returns>Ok</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual async System.Threading.Tasks.Task<EngineResults> GetEngineResultsByProjectAsync(Guid projectId, string engine, Guid scan, string filters, 
+        public virtual async System.Threading.Tasks.Task<EngineResults> GetEngineResultsByProjectAsync(Guid projectId, string engine, Guid scan, string filters,
             int? pageSize = null, int? currentPage = null, string sort = null, string search = null, System.Threading.CancellationToken cancellationToken = default)
         {
             if (projectId == null)
@@ -1237,6 +1237,9 @@ namespace Checkmarx.API.AST
         public System.Collections.Generic.ICollection<PredicateHistoryPerProject> Projects { get; set; }
 
 
+
+
+
         [Newtonsoft.Json.JsonProperty("totalCount", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public int TotalCount { get; set; }
 
@@ -1265,6 +1268,9 @@ namespace Checkmarx.API.AST
 
         [Newtonsoft.Json.JsonProperty("totalCount", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public int TotalCount { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("originalSeverity", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string OriginalSeverity { get; set; }
 
         private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
 
