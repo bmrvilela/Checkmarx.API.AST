@@ -87,6 +87,7 @@ namespace Checkmarx.API.AST
         public const string KICS_Engine = "kics";
         public const string API_Security_Engine = "apisec";
         public const string SCA_Container_Engine = "sca-container";
+        public const string AISC_Engine = "aisc";
 
         public const string Query_Level_Cx = "Cx";
         public const string Query_Level_Tenant = "Tenant";
@@ -2837,10 +2838,10 @@ namespace Checkmarx.API.AST
             DateTime? minScanDate = null,
             IEnumerable<string> tagKeys = null)
         {
-            return GetScans(projectId, "aisc", completed, branch, scanKind, maxScanDate, minScanDate, tagKeys);
+            return GetScans(projectId, AISC_Engine, completed, branch, scanKind, maxScanDate, minScanDate, tagKeys);
         }
 
-        public IEnumerable<AISCSR_ScanResult> GetAISupplyChainScanResults(Guid scanId, int limit = 100)
+        public IEnumerable<AISCSR_ScanResult> GetAISupplyChainScanResults(Guid scanId, Guid? projectId = null, int limit = 100)
         {
             if (limit <= 0)
                 throw new ArgumentOutOfRangeException(nameof(limit));
@@ -2856,7 +2857,7 @@ namespace Checkmarx.API.AST
                 try
                 {
                     resultPage = AISupplyChainScanResults
-                        .GetScanResultsAsync(scanId, offset: page, limit: limit)
+                        .GetScanResultsAsync(scanId, projectId: projectId, offset: page, limit: limit)
                         .GetAwaiter()
                         .GetResult();
                 }
