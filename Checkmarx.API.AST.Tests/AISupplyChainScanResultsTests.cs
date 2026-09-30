@@ -53,17 +53,19 @@ namespace Checkmarx.API.AST.Tests
                 {
                     foreach (var scan in aiscScans)
                     {
+                        var scanStatus = scan.StatusDetails.FirstOrDefault(x => x.Name == "aisc")?.Status;
+
                         try
                         {
-                            var results = astclient.GetAISupplyChainScanResults(scan.Id);
+                            var results = astclient.GetAISupplyChainScanResults(scan.Id, project.Id);
                             if (results.Any())
                             {
-                                Trace.WriteLine($"Project {project.Id} - Scan {scan.Id} - {results.Count()}");
+                                Trace.WriteLine($"Project {project.Id} Scan {scan.Id} - Status: {scanStatus} - Count: {results.Count()}");
                             }
                         }
                         catch (Exception ex)
                         {
-                            Trace.WriteLine($"ERROR Project {project.Id} - Scan {scan.Id}: {ex.Message}");
+                            Trace.WriteLine($"ERROR Project {project.Id} Scan {scan.Id} - Status: {scanStatus}: {ex.Message}");
                         }
                     }
                 }

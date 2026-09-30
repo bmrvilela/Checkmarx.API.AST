@@ -24,8 +24,10 @@ namespace Checkmarx.API.AST.Services.Analytics
 {
     using Checkmarx.API.AST.Exceptions;
     using Checkmarx.API.AST.Models;
+    using Checkmarx.API.AST.Services.DASTResults;
     using Checkmarx.API.AST.Utils;
     using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
     using System;
     using System.Collections.Generic;
     using System.ComponentModel;
@@ -308,6 +310,30 @@ namespace Checkmarx.API.AST.Services.Analytics
             body.Range = new ExecutiveOverviewRange { DefinedRange = definedRange };
             body.Step = step;
             return await QueryExecutiveOverviewAsync<KpiSeriesResult>(body);
+        }
+
+        public async System.Threading.Tasks.Task<DevAssistSuggestedAndFixedUsageScannerResults> GetDevAssistSuggestedAndFixedUsageScannerAsync(DateTime startDate, DateTime endDate, DevAssistAnalyticsOptions options = null)
+        {
+            var body = getDevAssistBody(DevAssistKpiType.SuggestedAndFixedUsageScanner, startDate, endDate, DevAssistFormatype.Series, options);
+            return await QueryDevAssistAsync<DevAssistSuggestedAndFixedUsageScannerResults>(body);
+        }
+
+        public async System.Threading.Tasks.Task<DevAssistFixedByScannerResponse> GetDevAssistFixedByScannerAsync(DateTime startDate, DateTime endDate, DevAssistAnalyticsOptions options = null)
+        {
+            var body = getDevAssistBody(DevAssistKpiType.FixedByScanner, startDate, endDate, DevAssistFormatype.Category, options);
+            return await QueryDevAssistAsync<DevAssistFixedByScannerResponse>(body);
+        }
+
+        public async System.Threading.Tasks.Task<DevAssistUniqueDevelopersResponse> GetDevAssistUniqueDevelopersAsync(DateTime startDate, DateTime endDate, DevAssistAnalyticsOptions options = null)
+        {
+            var body = getDevAssistBody(DevAssistKpiType.UniqueUsers, startDate, endDate, DevAssistFormatype.Category, options);
+            return await QueryDevAssistAsync<DevAssistUniqueDevelopersResponse>(body);
+        }
+
+        public async System.Threading.Tasks.Task<DevAssistRealTimeDetectionResponse> GetDevAssistRealTimeDetectionAsync(DateTime startDate, DateTime endDate, DevAssistAnalyticsOptions options = null)
+        {
+            var body = getDevAssistBody(DevAssistKpiType.RealTimeDetection, startDate, endDate, DevAssistFormatype.Breakdown, options);
+            return await QueryDevAssistAsync<DevAssistRealTimeDetectionResponse>(body);
         }
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
@@ -684,6 +710,99 @@ namespace Checkmarx.API.AST.Services.Analytics
             finally { }
         }
 
+        private async System.Threading.Tasks.Task<T> QueryDevAssistAsync<T>(DevAssistKpiQuery body, System.Threading.CancellationToken cancellationToken = default)
+        {
+            if (body == null)
+                throw new System.ArgumentNullException("body");
+
+            var client_ = _httpClient;
+            var disposeClient_ = false;
+            try
+            {
+                using (var request_ = new System.Net.Http.HttpRequestMessage())
+                {
+                    var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                    var content_ = new System.Net.Http.StringContent(json_);
+                    content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json; version=1.0");
+                    request_.Content = content_;
+                    request_.Method = new System.Net.Http.HttpMethod("POST");
+                    request_.Headers.Accept.Add(System.Net.Http.Headers.MediaTypeWithQualityHeaderValue.Parse("application/json"));
+
+                    var urlBuilder_ = new System.Text.StringBuilder();
+                    if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                    // Operation Path: "analyticsAPI/v1/devAssist"
+                    urlBuilder_.Append("devAssist");
+
+                    PrepareRequest(client_, request_, urlBuilder_);
+
+                    var url_ = urlBuilder_.ToString();
+                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                    PrepareRequest(client_, request_, url_);
+
+                    var response_ = await _retryPolicy.ExecuteAsync(() => client_.SendAsync(CloneHttpRequestMessage(request_), System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken)).ConfigureAwait(false);
+                    var disposeResponse_ = true;
+                    try
+                    {
+                        var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                        foreach (var item_ in response_.Headers)
+                            headers_[item_.Key] = item_.Value;
+                        if (response_.Content != null && response_.Content.Headers != null)
+                        {
+                            foreach (var item_ in response_.Content.Headers)
+                                headers_[item_.Key] = item_.Value;
+                        }
+
+                        ProcessResponse(client_, response_);
+
+                        var status_ = (int)response_.StatusCode;
+                        if (status_ == 200)
+                        {
+                            var objectResponse_ = await ReadObjectResponseAsync<T>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                            if (objectResponse_.Object == null)
+                            {
+                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            }
+                            return objectResponse_.Object;
+                        }
+                        else
+                            if (status_ == 400)
+                            {
+                                string responseText_ = (response_.Content == null) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                                throw new ApiException("Bad Request", status_, responseText_, headers_, null);
+                            }
+                            else
+                                if (status_ == 401)
+                                {
+                                    string responseText_ = (response_.Content == null) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                                    throw new ApiException("Unauthorized", status_, responseText_, headers_, null);
+                                }
+                                else
+                                    if (status_ == 404)
+                                    {
+                                        string responseText_ = (response_.Content == null) ? string.Empty : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                                        throw new ApiException("Not Found", status_, responseText_, headers_, null);
+                                    }
+                                    else
+                                    {
+                                        var responseData_ = response_.Content == null ? null : await ReadAsStringAsync(response_.Content, cancellationToken).ConfigureAwait(false);
+                                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                                    }
+                    }
+                    finally
+                    {
+                        if (disposeResponse_)
+                            response_.Dispose();
+                    }
+                }
+            }
+            finally
+            {
+                if (disposeClient_)
+                    client_.Dispose();
+            }
+        }
+
         private ExecutiveOverviewKpiQuery getExecutiveOverviewBody(ExecutiveOverviewKpiType kpi, ScanKpiFormat format, DateTime startDate, DateTime endDate, ScanAnalyticsOptions options = null)
         {
             if (endDate <= startDate)
@@ -745,6 +864,25 @@ namespace Checkmarx.API.AST.Services.Analytics
                     DastScanType = options?.DastScanType,
                     QueryNames = options?.QueryNames,
                 }
+            };
+        }
+
+        private DevAssistKpiQuery getDevAssistBody(DevAssistKpiType kpi, DateTime startDate, DateTime endDate, DevAssistFormatype format, DevAssistAnalyticsOptions options = null)
+        {
+            if (endDate <= startDate)
+                throw new Exception("The end date must be superior to the start date");
+
+            if (startDate <= DateTime.UtcNow.AddYears(-1))
+                throw new Exception("The start date must not be less than 1 year from today's date");
+
+            return new DevAssistKpiQuery
+            {
+                Kpi = kpi,
+                StartDate = startDate,
+                EndDate = endDate,
+                Format = format,
+                Scanners = options?.Scanners ?? System.Linq.Enumerable.Empty<DevAssistScannerType>(),
+                Severities = options?.Severities ?? System.Linq.Enumerable.Empty<SeverityType>()
             };
         }
 
@@ -1966,6 +2104,12 @@ namespace Checkmarx.API.AST.Services.Analytics
         public IEnumerable<string> QueryNames { get; set; }
     }
 
+    public class DevAssistAnalyticsOptions
+    {
+        public IEnumerable<DevAssistScannerType> Scanners { get; set; }
+        public IEnumerable<SeverityType> Severities { get; set; }
+    }
+
     public class ScanKpiFilters
     {
         [Newtonsoft.Json.JsonProperty("projects")]
@@ -2391,6 +2535,344 @@ namespace Checkmarx.API.AST.Services.Analytics
         Information = 4,
 
     }
+
+
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.7.1.0 (NJsonSchema v11.6.1.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class DevAssistKpiQueryBase
+    {
+
+        /// <summary>
+        /// A valid timezone identifier. This will convert the input and output dates to the selected timezone
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty("timezone", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string Timezone { get; set; }
+
+        /// <summary>
+        /// date-time in format yyyy-MM-ddTHH:mm:ss
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty("startDate", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [System.ComponentModel.DataAnnotations.RegularExpression(@"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$")]
+        public System.DateTimeOffset StartDate { get; set; }
+
+        /// <summary>
+        /// date-time in format yyyy-MM-ddTHH:mm:ss
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty("endDate", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [System.ComponentModel.DataAnnotations.RegularExpression(@"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$")]
+        public System.DateTimeOffset EndDate { get; set; }
+
+        private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
+
+        [Newtonsoft.Json.JsonExtensionData]
+        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        {
+            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+            set { _additionalProperties = value; }
+        }
+
+    }
+
+    /// <summary>
+    /// Severity display label returned in responses
+    /// </summary>
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.7.1.0 (NJsonSchema v11.6.1.0 (Newtonsoft.Json v13.0.0.0))")]
+    public enum SeverityLabelType
+    {
+
+        [System.Runtime.Serialization.EnumMember(Value = @"Critical")]
+        Critical = 0,
+
+        [System.Runtime.Serialization.EnumMember(Value = @"High")]
+        High = 1,
+
+        [System.Runtime.Serialization.EnumMember(Value = @"Medium")]
+        Medium = 2,
+
+        [System.Runtime.Serialization.EnumMember(Value = @"Low")]
+        Low = 3,
+
+        [System.Runtime.Serialization.EnumMember(Value = @"Information")]
+        Information = 4,
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.7.1.0 (NJsonSchema v11.6.1.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class DevAssistKpiQuery : DevAssistKpiQueryBase
+    {
+        [Newtonsoft.Json.JsonProperty("format", Required = Newtonsoft.Json.Required.Always)]
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+        public DevAssistFormatype Format { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("severities", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore, ItemConverterType = typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+        public System.Collections.Generic.IEnumerable<SeverityType> Severities { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("scanners", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore, ItemConverterType = typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+        public System.Collections.Generic.IEnumerable<DevAssistScannerType> Scanners { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("kpi", Required = Newtonsoft.Json.Required.Always)]
+        [System.ComponentModel.DataAnnotations.Required(AllowEmptyStrings = true)]
+        [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+        public DevAssistKpiType Kpi { get; set; }
+
+    }
+
+    /// <summary>
+    /// Scanner code accepted in devAssist request filters
+    /// </summary>
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.7.1.0 (NJsonSchema v11.6.1.0 (Newtonsoft.Json v13.0.0.0))")]
+    public enum DevAssistScannerType
+    {
+
+        [System.Runtime.Serialization.EnumMember(Value = @"iac")]
+        Iac = 0,
+
+        [System.Runtime.Serialization.EnumMember(Value = @"containers")]
+        Containers = 1,
+
+        [System.Runtime.Serialization.EnumMember(Value = @"secretdetection")]
+        Secretdetection = 2,
+
+        [System.Runtime.Serialization.EnumMember(Value = @"asca")]
+        Asca = 3,
+
+        [System.Runtime.Serialization.EnumMember(Value = @"oss")]
+        Oss = 4,
+
+    }
+
+    /// <summary>
+    /// Scanner display label returned in devAssist responses
+    /// </summary>
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.7.1.0 (NJsonSchema v11.6.1.0 (Newtonsoft.Json v13.0.0.0))")]
+    public enum DevAssistScannerLabelType
+    {
+
+        [System.Runtime.Serialization.EnumMember(Value = @"IaC Security")]
+        IaC_Security = 0,
+
+        [System.Runtime.Serialization.EnumMember(Value = @"Container Security")]
+        Container_Security = 1,
+
+        [System.Runtime.Serialization.EnumMember(Value = @"Secret Detection")]
+        Secret_Detection = 2,
+
+        [System.Runtime.Serialization.EnumMember(Value = @"ASCA")]
+        ASCA = 3,
+
+        [System.Runtime.Serialization.EnumMember(Value = @"Open Source Security")]
+        Open_Source_Security = 4,
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.7.1.0 (NJsonSchema v11.6.1.0 (Newtonsoft.Json v13.0.0.0))")]
+    public enum DevAssistKpiType
+    {
+        //[System.Runtime.Serialization.EnumMember(Value = @"aiSuggestions")]
+        //AiSuggestions = 0,
+
+        //[System.Runtime.Serialization.EnumMember(Value = @"aiSuggestionsOvertime")]
+        //AiSuggestionsOvertime = 1,
+
+        //[System.Runtime.Serialization.EnumMember(Value = @"fixClicked")]
+        //FixClicked = 2,
+
+        //[System.Runtime.Serialization.EnumMember(Value = @"fixClickedOvertime")]
+        //FixClickedOvertime = 3,
+
+        //[System.Runtime.Serialization.EnumMember(Value = @"uniqueDevelopers")]
+        //UniqueDevelopers = 4,
+
+        //[System.Runtime.Serialization.EnumMember(Value = @"assistUsageByScanner")]
+        //AssistUsageByScanner = 5,
+
+        //[System.Runtime.Serialization.EnumMember(Value = @"assistUsageByScannerOvertime")]
+        //AssistUsageByScannerOvertime = 6,
+
+        //[System.Runtime.Serialization.EnumMember(Value = @"realTimeDetectionByScanner")]
+        //RealTimeDetectionByScanner = 7,
+
+        //[System.Runtime.Serialization.EnumMember(Value = @"realTimeDetectionByScannerOvertime")]
+        //RealTimeDetectionByScannerOvertime = 8,
+
+
+        [System.Runtime.Serialization.EnumMember(Value = @"suggested_and_fixed_usage_scanner")]
+        SuggestedAndFixedUsageScanner = 0,
+
+        [System.Runtime.Serialization.EnumMember(Value = @"suggested_and_fixed_usage_severity")]
+        SuggestedAndFixedUsageSeverity = 1,
+
+        [System.Runtime.Serialization.EnumMember(Value = @"real_time_detection")]
+        RealTimeDetection = 2,
+
+        [System.Runtime.Serialization.EnumMember(Value = @"unique_users")]
+        UniqueUsers = 3,
+
+        [System.Runtime.Serialization.EnumMember(Value = @"fixed_by_scanner")]
+        FixedByScanner = 4
+    }
+
+    public enum DevAssistFormatype
+    {
+        [System.Runtime.Serialization.EnumMember(Value = @"point")]
+        Point = 0,
+
+        [System.Runtime.Serialization.EnumMember(Value = @"trend")]
+        Trend = 1,
+
+        [System.Runtime.Serialization.EnumMember(Value = @"category")]
+        Category = 2,
+
+        [System.Runtime.Serialization.EnumMember(Value = @"series")]
+        Series = 3,
+
+        [System.Runtime.Serialization.EnumMember(Value = @"aggregate")]
+        Aggregate = 4,
+
+        [System.Runtime.Serialization.EnumMember(Value = @"table")]
+        Table = 5,
+
+        [System.Runtime.Serialization.EnumMember(Value = @"engineeringTable")]
+        EngineeringTable = 6,
+
+        [System.Runtime.Serialization.EnumMember(Value = @"breakdown")]
+        Breakdown = 7,
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.7.1.0 (NJsonSchema v11.6.1.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class DevAssistUniqueDevelopersResponse
+    {
+
+        [Newtonsoft.Json.JsonProperty("total", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public long Total { get; set; }
+
+        private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
+
+        [Newtonsoft.Json.JsonExtensionData]
+        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        {
+            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+            set { _additionalProperties = value; }
+        }
+
+    }
+
+    public partial class DevAssistSuggestedAndFixedUsageScannerResults
+    {
+        [Newtonsoft.Json.JsonProperty("resultType")]
+        public string ResultType { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("series")]
+        public List<DevAssistSuggestedAndFixedUsageScannerSeries> Series { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("totalFixed")]
+        public int TotalFixed { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("totalSuggestions")]
+        public int TotalSuggestions { get; set; }
+    }
+
+    public class DevAssistSuggestedAndFixedUsageScannerSeries
+    {
+        [Newtonsoft.Json.JsonProperty("metric")]
+        public string Metric { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("values")]
+        public List<DevAssistSuggestedAndFixedUsageScannerSeriesValue> Values { get; set; }
+    }
+
+    public class DevAssistSuggestedAndFixedUsageScannerSeriesValue
+    {
+        [Newtonsoft.Json.JsonProperty("count")]
+        public double Count { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("countPercentage")]
+        public double CountPercentage { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("date")]
+        public string Date { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("distribution")]
+        public List<object> Distribution { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("index")]
+        public int Index { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("time")]
+        public string Time { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("value")]
+        public double Value { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("valuePercentage")]
+        public double ValuePercentage { get; set; }
+    }
+
+    public class DevAssistFixedByScannerResponse
+    {
+        [Newtonsoft.Json.JsonProperty("data")]
+        public List<DevAssistFixedByScannerData> Data { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("total")]
+        public int Total { get; set; }
+    }
+
+    public class DevAssistFixedByScannerData
+    {
+        [Newtonsoft.Json.JsonProperty("category")]
+        public string Category { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("count")]
+        public int? Count { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("date")]
+        public DateTimeOffset? Date { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("index")]
+        public int Index { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("percentage")]
+        public double Percentage { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("time")]
+        public string Time { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("value")]
+        public double Value { get; set; }
+    }
+
+    public class DevAssistRealTimeDetectionResponse
+    {
+        [Newtonsoft.Json.JsonProperty("data")]
+        public List<RealTimeDetectionResponseData> Data { get; set; }
+    }
+
+    public class RealTimeDetectionResponseData
+    {
+        [Newtonsoft.Json.JsonProperty("distribution")]
+        public List<RealTimeDetectionResponseDataDistribution> Distribution { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("name")]
+        public string Name { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("total")]
+        public int Total { get; set; }
+    }
+
+    public class RealTimeDetectionResponseDataDistribution
+    {
+        [Newtonsoft.Json.JsonProperty("label")]
+        public string Label { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("percentage")]
+        public double Percentage { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("value")]
+        public double Value { get; set; }
+    }
+
+
 }
 
 #pragma warning restore 108
