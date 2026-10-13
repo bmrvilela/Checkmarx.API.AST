@@ -326,6 +326,18 @@ namespace Checkmarx.API.AST
             }
         }
 
+        private Credits _credits;
+        public Credits Credits
+        {
+            get
+            {
+                if (Connected && _credits == null)
+                    _credits = new Credits(ASTServer, _httpClient);
+
+                return _credits;
+            }
+        }
+
         private Integrations _integrations;
         public Integrations Integrations
         {
