@@ -891,17 +891,36 @@ namespace Checkmarx.API.AST
         private DateTime _bearerValidTo;
         private IReadOnlyList<string> _userPermissions;
 
+        // Parallel workers all go through Connected; without this lock several of them refresh at once and
+        // mutate _httpClient.DefaultRequestHeaders while other threads are sending requests with it.
+        private readonly object _connectLock = new object();
+        private bool _defaultAcceptSet;
+
+        private bool tokenNeedsRefresh() => (_bearerValidTo - DateTime.UtcNow).TotalMinutes < 5;
+
         public bool Connected
         {
             get
             {
-                if (_httpClient == null || (_bearerValidTo - DateTime.UtcNow).TotalMinutes < 5)
+                if (tokenNeedsRefresh())
                 {
-                    var token = authenticate();
-                    _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                    _httpClient.DefaultRequestHeaders.ConnectionClose = false; // Explicitly ask to keep connection alive
-                    _bearerValidTo = DateTime.UtcNow.AddSeconds(_bearerExpiresIn - 300);
-                    _userPermissions = null; // invalidate on token refresh
+                    lock (_connectLock)
+                    {
+                        // Another thread may have refreshed while this one waited for the lock.
+                        if (tokenNeedsRefresh())
+                        {
+                            var token = authenticate();
+                            if (!_defaultAcceptSet)
+                            {
+                                _httpClient.DefaultRequestHeaders.Add("Accept", "*/*");
+                                _defaultAcceptSet = true;
+                            }
+                            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                            _httpClient.DefaultRequestHeaders.ConnectionClose = false; // Explicitly ask to keep connection alive
+                            _userPermissions = null; // invalidate on token refresh
+                            _bearerValidTo = DateTime.UtcNow.AddSeconds(_bearerExpiresIn - 300);
+                        }
+                    }
                 }
                 return true;
             }
@@ -985,7 +1004,9 @@ namespace Checkmarx.API.AST
             var req = new HttpRequestMessage(HttpMethod.Post, identityURL) { Content = new FormUrlEncodedContent(kv) };
             req.Headers.UserAgent.Add(new ProductInfoHeaderValue("ASAProgramTracker", "1.0"));
 
-            _httpClient.DefaultRequestHeaders.Add("Accept", "*/*");
+            // Per-request Accept: adding it to DefaultRequestHeaders on every refresh duplicated the header
+            // and mutated the shared collection while other threads were sending.
+            req.Headers.TryAddWithoutValidation("Accept", "*/*");
             return _httpClient.SendAsync(req).Result;
         }
 
