@@ -1992,6 +1992,8 @@ namespace Checkmarx.API.AST
             VisibleColumnsEnum.Nodes,
             VisibleColumnsEnum.State,
             VisibleColumnsEnum.ChangeDetails,
+            VisibleColumnsEnum.ChangedBy,
+            VisibleColumnsEnum.IsAiGenerated,
             VisibleColumnsEnum.ProjectId,
             VisibleColumnsEnum.TenantId,
             VisibleColumnsEnum.CvssScore,
