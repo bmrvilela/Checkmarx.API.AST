@@ -1256,7 +1256,7 @@ namespace Checkmarx.API.AST
     public partial class PredicateHistory
     {
         [Newtonsoft.Json.JsonProperty("predicates", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.ICollection<PredicateAPI> Predicates { get; }
+        public System.Collections.Generic.ICollection<PredicateAPI> Predicates { get; } = new System.Collections.ObjectModel.Collection<PredicateAPI>();
 
         [Newtonsoft.Json.JsonProperty("projectId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string ProjectId { get; set; }

@@ -1080,7 +1080,7 @@ namespace Checkmarx.API.AST
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.4.0.0 (NJsonSchema v11.3.2.0 (Newtonsoft.Json v13.0.0.0))")]
     public partial class SSCSReaderEngineResults
     {
-        [Newtonsoft.Json.JsonProperty("entries", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [Newtonsoft.Json.JsonProperty("entries", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public System.Collections.Generic.ICollection<SSCSReaderEngineResult> Entries { get; } = new System.Collections.ObjectModel.Collection<SSCSReaderEngineResult>();
 
         [Newtonsoft.Json.JsonProperty("scanType", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
@@ -1126,7 +1126,7 @@ namespace Checkmarx.API.AST
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.4.0.0 (NJsonSchema v11.3.2.0 (Newtonsoft.Json v13.0.0.0))")]
     public partial class SSCSReaderGroups
     {
-        [Newtonsoft.Json.JsonProperty("entries", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [Newtonsoft.Json.JsonProperty("entries", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public System.Collections.Generic.ICollection<SSCSReaderGroup> Entries { get; } = new System.Collections.ObjectModel.Collection<SSCSReaderGroup>();
 
         private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
@@ -1209,7 +1209,7 @@ namespace Checkmarx.API.AST
         public string OriginalSeverity { get; set; }
 
         [Newtonsoft.Json.JsonProperty("predicates", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.ICollection<SSCSReaderPredicateAPI> Predicates { get; }
+        public System.Collections.Generic.ICollection<SSCSReaderPredicateAPI> Predicates { get; } = new System.Collections.ObjectModel.Collection<SSCSReaderPredicateAPI>();
 
         [Newtonsoft.Json.JsonProperty("projectId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public string ProjectId { get; set; }
@@ -1235,7 +1235,7 @@ namespace Checkmarx.API.AST
     public partial class SSCSReaderPredicateHistoryCollection
     {
         [Newtonsoft.Json.JsonProperty("predicateHistoryPerProject", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Collections.Generic.ICollection<SSCSReaderPredicateHistory> PredicateHistoryPerProject { get; }
+        public System.Collections.Generic.ICollection<SSCSReaderPredicateHistory> PredicateHistoryPerProject { get; } = new System.Collections.ObjectModel.Collection<SSCSReaderPredicateHistory>();
 
         [Newtonsoft.Json.JsonProperty("totalCount", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public int TotalCount { get; set; }
@@ -1340,7 +1340,7 @@ namespace Checkmarx.API.AST
     [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.4.0.0 (NJsonSchema v11.3.2.0 (Newtonsoft.Json v13.0.0.0))")]
     public partial class SSCSReaderProjects
     {
-        [Newtonsoft.Json.JsonProperty("entries", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [Newtonsoft.Json.JsonProperty("entries", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
         public System.Collections.Generic.ICollection<SSCSReaderProject> Entries { get; set; }
 
         [Newtonsoft.Json.JsonProperty("totalCount", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
