@@ -2725,6 +2725,29 @@ namespace Checkmarx.API.AST
             return results;
         }
 
+        // The predicates history endpoint is one call per finding. Without a cap, many projects processed in
+        // parallel flood it with concurrent calls; it then stops answering and the calls time out.
+        // The slot is held for the whole logical call (Polly retries included).
+        private const int SSCSPredicatesHistoryMaxConcurrency = 10;
+        private readonly SemaphoreSlim _sscsPredicatesHistorySemaphore = new SemaphoreSlim(SSCSPredicatesHistoryMaxConcurrency);
+
+        /// <summary>
+        /// Gets the predicates history (state/severity/comment changes) of a single SSCS finding,
+        /// limiting how many of these calls run at the same time across all threads.
+        /// </summary>
+        public async Task<SSCSReaderPredicateHistoryCollection> GetSSCSPredicatesHistoryAsync(string similarityId, Guid projectId, CancellationToken cancellationToken = default)
+        {
+            await _sscsPredicatesHistorySemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+            try
+            {
+                return await SSCSReader.GetPredicatesHistoryAsync(similarityId, [projectId], cancellationToken).ConfigureAwait(false);
+            }
+            finally
+            {
+                _sscsPredicatesHistorySemaphore.Release();
+            }
+        }
+
         #endregion
 
         #region DAST
