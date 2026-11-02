@@ -966,9 +966,41 @@ namespace Checkmarx.API.AST
                 JObject accessToken = JsonConvert.DeserializeObject<JObject>(response.Content.ReadAsStringAsync().Result);
                 string authToken = ((JProperty)accessToken.First).Value.ToString();
                 _bearerExpiresIn = (int)accessToken["expires_in"];
+
+                if (_resolveAstServerFromToken)
+                    resolveAstServerFromToken(authToken);
+
                 return authToken;
             }
             throw new Exception(response.Content.ReadAsStringAsync().Result);
+        }
+
+        // Only set by the API-key-only constructor, which has just a guess for the AST server.
+        // The guess stays when the token has no usable 'ast-base-url'.
+        private bool _resolveAstServerFromToken;
+
+        private void resolveAstServerFromToken(string accessToken)
+        {
+            try
+            {
+                var claims = JwtUtils.GetTokenClaims(accessToken);
+                if (claims == null || !claims.TryGetValue("ast-base-url", out var values))
+                    return;
+
+                var url = values.FirstOrDefault();
+                if (!Uri.TryCreate(url, UriKind.Absolute, out var astServer))
+                    return;
+
+                // Endpoints are appended to AbsoluteUri, so it must end with a slash
+                if (!astServer.AbsoluteUri.EndsWith("/"))
+                    astServer = new Uri(astServer.AbsoluteUri + "/");
+
+                ASTServer = astServer;
+            }
+            catch (Exception)
+            {
+                // A token that can't be read must not break signing in: the server guessed from the key stays.
+            }
         }
 
         public HttpResponseMessage TestConnection()
@@ -1044,6 +1076,19 @@ namespace Checkmarx.API.AST
             Tenant = tenant;
             KeyApi = apiKey;
 
+        }
+
+        /// <summary>
+        /// Connects using only an API key: the Access Control server and tenant are read from the key's issuer,
+        /// and the AST server from the <c>ast-base-url</c> claim of the access token, on the first authentication.
+        /// Nothing is sent over the network until the client is used.
+        /// </summary>
+        /// <exception cref="InvalidApiKeyException">The key is empty, is not a token, or is not a CxOne API key.</exception>
+        public ASTClient(string apiKey) : this(ApiKeyInfo.Parse(apiKey)) { }
+
+        private ASTClient(ApiKeyInfo apiKey) : this(apiKey.ASTServer, apiKey.AccessControlServer, apiKey.Tenant, apiKey.ApiKey)
+        {
+            _resolveAstServerFromToken = true;
         }
 
         public ASTClient(Uri astServer, Uri accessControlServer, string tenant, string clientId, string clientSecret)
