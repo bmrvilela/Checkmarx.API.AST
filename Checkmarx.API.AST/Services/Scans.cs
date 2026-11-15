@@ -601,18 +601,445 @@ namespace Checkmarx.API.AST.Services.Scans
             }
         }
 
+        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <summary>
-        /// Set for last scan need recalculation flag
+        /// Get a list of lean scans, with detailed information about each scan. You can limit the results by using pagination and/or setting filters.
         /// </summary>
         /// <param name="authorization">JWT access token (REQUIRED)</param>
         /// <param name="accept">The API version should be appended to this header</param>
         /// <param name="correlationId">This ID is used to keep track of a flow if many APIs are involved</param>
+        /// <param name="offset">The number of results to skip before returning results</param>
+        /// <param name="limit">The maximum number of results to return</param>
+        /// <param name="scan_ids">Filter results by scan IDs. Only exact matches are returned. (OR operator is used for multiple IDs.)</param>
+        /// <param name="groups">Filter results by groups assigned to the project. Only exact matches are returned. (OR operator is used for multiple groups.)</param>
+        /// <param name="tags_keys">Filter by tag keys (of the key:value pairs) associated with your scans. (OR operator is used for multiple keys.)</param>
+        /// <param name="tags_values">Filter by tag keys (of the key:value pairs) associated with your scans. (OR operator is used for multiple values.)</param>
+        /// <param name="statuses">Filter results by scans' execution status. (Case insensitive, OR operator for multiple statuses.)</param>
+        /// <param name="project_id">Filter results for scans of a single project, specified by project ID. (Exact match, case sensitive, mutually exclusive to 'project-ids'.)</param>
+        /// <param name="project_ids">Filter results for scans of multiple projects, specified by project IDs. (Exact match, case sensitive, OR operator for multiple IDs, mutually exclusive to 'project-id'.)</param>
+        /// <param name="source_types">source_type from scans table. return zip or github</param>
+        /// <param name="source_origins">source_origin from scans table. return webapp or jenkins or etc.</param>
+        /// <param name="from_date">Filter for the earliest date and time of a scan for which you would like to show results. Time must be entered in RFC3339 Date (Extend) format (e.g. 2021-06-02T12:14:18.028555Z)</param>
+        /// <param name="sort">Sort results by the specified parameter. Enter '-/+' for ascending/descending order, followed by the parameter.</param>
+        /// <param name="field">The filter</param>
+        /// <param name="search">The scan searching with substring in all scan columns</param>
+        /// <param name="to_date">Filter for the latest date and time of a scan for which you would like to show results. Time must be entered in RFC3339 Date (Extend) format (e.g. 2021-06-02T12:14:18.028555Z)</param>
+        /// <param name="project_names">Filter scans by their project name</param>
+        /// <param name="initiators">Filter scans by their initiator</param>
+        /// <param name="branch">Filter results by the name of the Git branch. Old naming.</param>
+        /// <param name="branches">Filter results by the name of the Git branches</param>
         /// <returns>OK</returns>
         /// <exception cref="ApiException">A server side error occurred.</exception>
-        public virtual System.Threading.Tasks.Task<NeedRecalculationOutput> NeedRecalculationAsync(string authorization, string accept, System.Guid? correlationId, NeedRecalculationInput body)
+        public virtual async System.Threading.Tasks.Task<ScansBriefCollection> GetListOfScansBriefAsync(Guid? project_id = null, string project_ids = null, string authorization = null, string accept = null, System.Guid? correlationId = null,
+            int? offset = null, int? limit = null,
+            System.Collections.Generic.IEnumerable<Guid> scan_ids = null,
+            System.Collections.Generic.IEnumerable<string> groups = null,
+            System.Collections.Generic.IEnumerable<string> tags_keys = null,
+            System.Collections.Generic.IEnumerable<string> tags_values = null,
+            System.Collections.Generic.IEnumerable<Status> statuses = null,
+            string[] source_types = null, string[] source_origins = null,
+            System.DateTimeOffset? from_date = null,
+            System.Collections.Generic.IEnumerable<Anonymous> sort = null,
+            System.Collections.Generic.IEnumerable<FieldFilter> field = null,
+            string search = null,
+            System.DateTimeOffset? to_date = null,
+            System.Collections.Generic.IEnumerable<string> project_names = null,
+            System.Collections.Generic.IEnumerable<string> initiators = null,
+            string branch = null,
+            System.Collections.Generic.IEnumerable<string> branches = null,
+            System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
         {
-            return NeedRecalculationAsync(authorization, accept, correlationId, body, System.Threading.CancellationToken.None);
+            var client_ = _httpClient;
+            var disposeClient_ = false;
+            try
+            {
+                using (var request_ = new System.Net.Http.HttpRequestMessage())
+                {
+
+                    if (authorization != null)
+                        request_.Headers.TryAddWithoutValidation("Authorization", ConvertToString(authorization, System.Globalization.CultureInfo.InvariantCulture));
+
+                    if (accept != null)
+                        request_.Headers.TryAddWithoutValidation("Accept", ConvertToString(accept, System.Globalization.CultureInfo.InvariantCulture));
+
+                    if (correlationId != null)
+                        request_.Headers.TryAddWithoutValidation("CorrelationId", ConvertToString(correlationId, System.Globalization.CultureInfo.InvariantCulture));
+                    request_.Method = new System.Net.Http.HttpMethod("GET");
+
+                    var urlBuilder_ = new System.Text.StringBuilder();
+                    if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                    // Operation Path: "scansBrief"
+                    urlBuilder_.Append("scansBrief");
+                    urlBuilder_.Append('?');
+                    if (offset != null)
+                    {
+                        urlBuilder_.Append(System.Uri.EscapeDataString("offset")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(offset, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
+                    }
+                    if (limit != null)
+                    {
+                        urlBuilder_.Append(System.Uri.EscapeDataString("limit")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(limit, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
+                    }
+                    if (scan_ids != null)
+                    {
+                        urlBuilder_.Append(System.Uri.EscapeDataString("scan-ids") + "=");
+                        foreach (var item_ in scan_ids)
+                        {
+                            urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(item_, System.Globalization.CultureInfo.InvariantCulture))).Append(",");
+                        }
+                        urlBuilder_.Length--;
+                        urlBuilder_.Append("&");
+                    }
+                    if (groups != null)
+                    {
+                        urlBuilder_.Append(System.Uri.EscapeDataString("groups") + "=");
+                        foreach (var item_ in groups)
+                        {
+                            urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(item_, System.Globalization.CultureInfo.InvariantCulture))).Append(",");
+                        }
+                        urlBuilder_.Length--;
+                        urlBuilder_.Append("&");
+                    }
+                    if (tags_keys != null)
+                    {
+                        urlBuilder_.Append(System.Uri.EscapeDataString("tags-keys") + "=");
+                        foreach (var item_ in tags_keys)
+                        {
+                            urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(item_, System.Globalization.CultureInfo.InvariantCulture))).Append(",");
+                        }
+                        urlBuilder_.Length--;
+                        urlBuilder_.Append("&");
+                    }
+                    if (tags_values != null)
+                    {
+                        urlBuilder_.Append(System.Uri.EscapeDataString("tags-values") + "=");
+                        foreach (var item_ in tags_values)
+                        {
+                            urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(item_, System.Globalization.CultureInfo.InvariantCulture))).Append(",");
+                        }
+                        urlBuilder_.Length--;
+                        urlBuilder_.Append("&");
+                    }
+                    if (statuses != null)
+                    {
+                        urlBuilder_.Append(System.Uri.EscapeDataString("statuses") + "=");
+                        foreach (var item_ in statuses)
+                        {
+                            urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(item_, System.Globalization.CultureInfo.InvariantCulture))).Append(",");
+                        }
+                        urlBuilder_.Length--;
+                        urlBuilder_.Append("&");
+                    }
+                    if (project_id != null)
+                    {
+                        urlBuilder_.Append(System.Uri.EscapeDataString("project-id")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(project_id, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
+                    }
+                    if (project_ids != null)
+                    {
+                        urlBuilder_.Append(System.Uri.EscapeDataString("project-ids")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(project_ids, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
+                    }
+                    if (source_types != null)
+                    {
+                        urlBuilder_.Append(System.Uri.EscapeDataString("source-types") + "=");
+                        foreach (var item_ in source_types)
+                        {
+                            urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(item_, System.Globalization.CultureInfo.InvariantCulture))).Append(",");
+                        }
+                        urlBuilder_.Length--;
+                        urlBuilder_.Append("&");
+                    }
+                    if (source_origins != null)
+                    {
+                        urlBuilder_.Append(System.Uri.EscapeDataString("source-origins") + "=");
+                        foreach (var item_ in source_origins)
+                        {
+                            urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(item_, System.Globalization.CultureInfo.InvariantCulture))).Append(",");
+                        }
+                        urlBuilder_.Length--;
+                        urlBuilder_.Append("&");
+                    }
+                    if (from_date != null)
+                    {
+                        urlBuilder_
+                            .Append(Uri.EscapeDataString("from-date"))
+                            .Append('=')
+                            .Append(Uri.EscapeDataString(from_date.Value.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ", System.Globalization.CultureInfo.InvariantCulture)))
+                            .Append('&');
+                    }
+                    if (sort != null)
+                    {
+                        urlBuilder_.Append(System.Uri.EscapeDataString("sort") + "=");
+                        foreach (var item_ in sort)
+                        {
+                            urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(item_, System.Globalization.CultureInfo.InvariantCulture))).Append(",");
+                        }
+                        urlBuilder_.Length--;
+                        urlBuilder_.Append("&");
+                    }
+                    if (field != null)
+                    {
+                        urlBuilder_.Append(System.Uri.EscapeDataString("field") + "=");
+                        foreach (var item_ in field)
+                        {
+                            urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(item_, System.Globalization.CultureInfo.InvariantCulture))).Append(",");
+                        }
+                        urlBuilder_.Length--;
+                        urlBuilder_.Append("&");
+                    }
+                    if (search != null)
+                    {
+                        urlBuilder_.Append(System.Uri.EscapeDataString("search")).Append('=')
+                            .Append(System.Uri.EscapeDataString(ConvertToString(search, System.Globalization.CultureInfo.InvariantCulture)))
+                            .Append('&');
+                    }
+                    if (to_date != null)
+                    {
+                        urlBuilder_.Append(System.Uri.EscapeDataString("to-date")).Append('=')
+                                .Append(Uri.EscapeDataString(to_date.Value.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ", System.Globalization.CultureInfo.InvariantCulture)))
+                            .Append('&');
+                    }
+                    if (project_names != null)
+                    {
+                        urlBuilder_.Append(System.Uri.EscapeDataString("project-names") + "=");
+                        foreach (var item_ in project_names)
+                        {
+                            urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(item_, System.Globalization.CultureInfo.InvariantCulture))).Append(",");
+                        }
+                        urlBuilder_.Length--;
+                        urlBuilder_.Append("&");
+                    }
+                    if (initiators != null)
+                    {
+                        urlBuilder_.Append(System.Uri.EscapeDataString("initiators") + "=");
+                        foreach (var item_ in initiators)
+                        {
+                            urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(item_, System.Globalization.CultureInfo.InvariantCulture))).Append(",");
+                        }
+                        urlBuilder_.Length--;
+                        urlBuilder_.Append("&");
+                    }
+                    if (branch != null)
+                    {
+                        urlBuilder_.Append(System.Uri.EscapeDataString("branch")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(branch, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
+                    }
+                    if (branches != null)
+                    {
+                        urlBuilder_.Append(System.Uri.EscapeDataString("branches") + "=");
+                        foreach (var item_ in branches)
+                        {
+                            urlBuilder_.Append(System.Uri.EscapeDataString(ConvertToString(item_, System.Globalization.CultureInfo.InvariantCulture))).Append(",");
+                        }
+                        urlBuilder_.Length--;
+                        urlBuilder_.Append("&");
+                    }
+                    urlBuilder_.Length--;
+
+                    PrepareRequest(client_, request_, urlBuilder_);
+
+                    var url_ = urlBuilder_.ToString();
+                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                    PrepareRequest(client_, request_, url_);
+
+                    var response_ = await _retryPolicy.ExecuteAsync(() => client_.SendAsync(CloneHttpRequestMessage(request_), System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken)).ConfigureAwait(false);
+                    var disposeResponse_ = true;
+                    try
+                    {
+                        var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                        foreach (var item_ in response_.Headers)
+                            headers_[item_.Key] = item_.Value;
+                        if (response_.Content != null && response_.Content.Headers != null)
+                        {
+                            foreach (var item_ in response_.Content.Headers)
+                                headers_[item_.Key] = item_.Value;
+                        }
+
+                        ProcessResponse(client_, response_);
+
+                        var status_ = (int)response_.StatusCode;
+                        if (status_ == 200)
+                        {
+                            var objectResponse_ = await ReadObjectResponseAsync<ScansBriefCollection>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                            if (objectResponse_.Object == null)
+                            {
+                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            }
+                            return objectResponse_.Object;
+                        }
+                        else
+                            if (status_ == 400)
+                            {
+                                var objectResponse_ = await ReadObjectResponseAsync<Error>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                                if (objectResponse_.Object == null)
+                                {
+                                    throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                                }
+                                throw new ApiException<Error>("Bad Request", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                            }
+                            else
+                                if (status_ == 401)
+                                {
+                                    string responseText_ = (response_.Content == null) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                                    throw new ApiException("Unauthorized, access token is missing or invalid", status_, responseText_, headers_, null);
+                                }
+                                else
+                                    if (status_ == 403)
+                                    {
+                                        string responseText_ = (response_.Content == null) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                                        throw new ApiException("Forbidden", status_, responseText_, headers_, null);
+                                    }
+                                    else
+                                    {
+                                        var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                                    }
+                    }
+                    finally
+                    {
+                        if (disposeResponse_)
+                            response_.Dispose();
+                    }
+                }
+            }
+            finally
+            {
+                if (disposeClient_)
+                    client_.Dispose();
+            }
         }
+
+        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+        /// <summary>
+        /// Get a list of scans, with detailed information about each scan. You can limit the results by using pagination and/or setting filters.
+        /// </summary>
+        /// <param name="authorization">JWT access token (REQUIRED)</param>
+        /// <param name="accept">The API version should be appended to this header</param>
+        /// <param name="correlationId">This ID is used to keep track of a flow if many APIs are involved</param>
+        /// <param name="body">The filters and pagination options for the scans to retrieve.</param>
+        /// <returns>OK</returns>
+        /// <exception cref="ApiException">A server side error occurred.</exception>
+        public virtual System.Threading.Tasks.Task<ScansCollection> ByFiltersAsync(ByFiltersInput body, string authorization = null, string accept = null, System.Guid? correlationId = null)
+        {
+            return ByFiltersAsync(body, authorization, accept, correlationId, System.Threading.CancellationToken.None);
+        }
+
+        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+        /// <summary>
+        /// Get a list of scans, with detailed information about each scan. You can limit the results by using pagination and/or setting filters.
+        /// </summary>
+        /// <param name="authorization">JWT access token (REQUIRED)</param>
+        /// <param name="accept">The API version should be appended to this header</param>
+        /// <param name="correlationId">This ID is used to keep track of a flow if many APIs are involved</param>
+        /// <param name="body">The filters and pagination options for the scans to retrieve.</param>
+        /// <returns>OK</returns>
+        /// <exception cref="ApiException">A server side error occurred.</exception>
+        public virtual async System.Threading.Tasks.Task<ScansCollection> ByFiltersAsync(ByFiltersInput body, string authorization, string accept, System.Guid? correlationId, System.Threading.CancellationToken cancellationToken)
+        {
+            if (body == null)
+                throw new System.ArgumentNullException("body");
+
+            var client_ = _httpClient;
+            var disposeClient_ = false;
+            try
+            {
+                using (var request_ = new System.Net.Http.HttpRequestMessage())
+                {
+
+                    if (authorization != null)
+                        request_.Headers.TryAddWithoutValidation("Authorization", ConvertToString(authorization, System.Globalization.CultureInfo.InvariantCulture));
+
+                    if (accept != null)
+                        request_.Headers.TryAddWithoutValidation("Accept", ConvertToString(accept, System.Globalization.CultureInfo.InvariantCulture));
+
+                    if (correlationId != null)
+                        request_.Headers.TryAddWithoutValidation("CorrelationId", ConvertToString(correlationId, System.Globalization.CultureInfo.InvariantCulture));
+                    var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                    var content_ = new System.Net.Http.StringContent(json_);
+                    content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json; version=1.0");
+                    request_.Content = content_;
+                    request_.Method = new System.Net.Http.HttpMethod("POST");
+
+                    var urlBuilder_ = new System.Text.StringBuilder();
+                    if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                    // Operation Path: "byFilters"
+                    urlBuilder_.Append("byFilters");
+
+                    PrepareRequest(client_, request_, urlBuilder_);
+
+                    var url_ = urlBuilder_.ToString();
+                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                    PrepareRequest(client_, request_, url_);
+
+                    var response_ = await _retryPolicy.ExecuteAsync(() => client_.SendAsync(CloneHttpRequestMessage(request_), System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken)).ConfigureAwait(false);
+                    var disposeResponse_ = true;
+                    try
+                    {
+                        var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                        foreach (var item_ in response_.Headers)
+                            headers_[item_.Key] = item_.Value;
+                        if (response_.Content != null && response_.Content.Headers != null)
+                        {
+                            foreach (var item_ in response_.Content.Headers)
+                                headers_[item_.Key] = item_.Value;
+                        }
+
+                        ProcessResponse(client_, response_);
+
+                        var status_ = (int)response_.StatusCode;
+                        if (status_ == 200)
+                        {
+                            var objectResponse_ = await ReadObjectResponseAsync<ScansCollection>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                            if (objectResponse_.Object == null)
+                            {
+                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            }
+                            return objectResponse_.Object;
+                        }
+                        else
+                            if (status_ == 400)
+                            {
+                                var objectResponse_ = await ReadObjectResponseAsync<Error>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                                if (objectResponse_.Object == null)
+                                {
+                                    throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                                }
+                                throw new ApiException<Error>("Bad Request", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                            }
+                            else
+                                if (status_ == 401)
+                                {
+                                    string responseText_ = (response_.Content == null) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                                    throw new ApiException("Unauthorized, access token is missing or invalid", status_, responseText_, headers_, null);
+                                }
+                                else
+                                    if (status_ == 403)
+                                    {
+                                        string responseText_ = (response_.Content == null) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                                        throw new ApiException("Forbidden", status_, responseText_, headers_, null);
+                                    }
+                                    else
+                                    {
+                                        var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                                        throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                                    }
+                    }
+                    finally
+                    {
+                        if (disposeResponse_)
+                            response_.Dispose();
+                    }
+                }
+            }
+            finally
+            {
+                if (disposeClient_)
+                    client_.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// Set for last scan need recalculation flag
+        /// </summary>
 
         /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
         /// <summary>
@@ -930,6 +1357,139 @@ namespace Checkmarx.API.AST.Services.Scans
                                     var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
                                     throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                                 }
+                    }
+                    finally
+                    {
+                        if (disposeResponse_)
+                            response_.Dispose();
+                    }
+                }
+            }
+            finally
+            {
+                if (disposeClient_)
+                    client_.Dispose();
+            }
+        }
+
+        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+        /// <summary>
+        /// Get scan tags with filtering and pagination
+        /// </summary>
+        /// <remarks>
+        /// Get scan tags with advanced filtering capabilities, and pagination support. Returns a paginated response with links and metadata.
+        /// </remarks>
+        /// <param name="authorization">JWT access token (REQUIRED)</param>
+        /// <param name="accept">The API version should be appended to this header</param>
+        /// <param name="correlationId">This ID is used to keep track of a flow if many APIs are involved</param>
+        /// <param name="offset">The number of items to skip before starting to collect the result set</param>
+        /// <param name="limit">The number of items to return</param>
+        /// <param name="search">Search text, filtered by partial match on tag key OR tag value.</param>
+        /// <returns>OK</returns>
+        /// <exception cref="ApiException">A server side error occurred.</exception>
+        public virtual async System.Threading.Tasks.Task<ScanTagsFilterResponse> TagsByFiltersAsync(int? offset = null, int? limit = null, string search = null, string authorization = null, string accept = null, System.Guid? correlationId = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        {
+            var client_ = _httpClient;
+            var disposeClient_ = false;
+            try
+            {
+                using (var request_ = new System.Net.Http.HttpRequestMessage())
+                {
+
+                    if (authorization != null)
+                        request_.Headers.TryAddWithoutValidation("Authorization", ConvertToString(authorization, System.Globalization.CultureInfo.InvariantCulture));
+
+                    if (accept != null)
+                        request_.Headers.TryAddWithoutValidation("Accept", ConvertToString(accept, System.Globalization.CultureInfo.InvariantCulture));
+
+                    if (correlationId != null)
+                        request_.Headers.TryAddWithoutValidation("CorrelationId", ConvertToString(correlationId, System.Globalization.CultureInfo.InvariantCulture));
+                    request_.Method = new System.Net.Http.HttpMethod("GET");
+
+                    var urlBuilder_ = new System.Text.StringBuilder();
+                    if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                    // Operation Path: "tagsByFilters"
+                    urlBuilder_.Append("tagsByFilters");
+                    urlBuilder_.Append('?');
+                    if (offset != null)
+                    {
+                        urlBuilder_.Append(System.Uri.EscapeDataString("offset")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(offset, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
+                    }
+                    if (limit != null)
+                    {
+                        urlBuilder_.Append(System.Uri.EscapeDataString("limit")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(limit, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
+                    }
+                    if (search != null)
+                    {
+                        urlBuilder_.Append(System.Uri.EscapeDataString("search")).Append('=').Append(System.Uri.EscapeDataString(ConvertToString(search, System.Globalization.CultureInfo.InvariantCulture))).Append('&');
+                    }
+                    urlBuilder_.Length--;
+
+                    PrepareRequest(client_, request_, urlBuilder_);
+
+                    var url_ = urlBuilder_.ToString();
+                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                    PrepareRequest(client_, request_, url_);
+
+                    var response_ = await _retryPolicy.ExecuteAsync(() => client_.SendAsync(CloneHttpRequestMessage(request_), System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken)).ConfigureAwait(false);
+                    var disposeResponse_ = true;
+                    try
+                    {
+                        var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                        foreach (var item_ in response_.Headers)
+                            headers_[item_.Key] = item_.Value;
+                        if (response_.Content != null && response_.Content.Headers != null)
+                        {
+                            foreach (var item_ in response_.Content.Headers)
+                                headers_[item_.Key] = item_.Value;
+                        }
+
+                        ProcessResponse(client_, response_);
+
+                        var status_ = (int)response_.StatusCode;
+                        if (status_ == 200)
+                        {
+                            var objectResponse_ = await ReadObjectResponseAsync<ScanTagsFilterResponse>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                            if (objectResponse_.Object == null)
+                            {
+                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            }
+                            return objectResponse_.Object;
+                        }
+                        else
+                            if (status_ == 400)
+                            {
+                                var objectResponse_ = await ReadObjectResponseAsync<Error>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                                if (objectResponse_.Object == null)
+                                {
+                                    throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                                }
+                                throw new ApiException<Error>("Bad Request", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                            }
+                            else
+                                if (status_ == 401)
+                                {
+                                    string responseText_ = (response_.Content == null) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                                    throw new ApiException("Unauthorized, access token is missing or invalid", status_, responseText_, headers_, null);
+                                }
+                                else
+                                    if (status_ == 403)
+                                    {
+                                        string responseText_ = (response_.Content == null) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                                        throw new ApiException("Forbidden", status_, responseText_, headers_, null);
+                                    }
+                                    else
+                                        if (status_ == 500)
+                                        {
+                                            string responseText_ = (response_.Content == null) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                                            throw new ApiException("Internal server error", status_, responseText_, headers_, null);
+                                        }
+                                        else
+                                        {
+                                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                                        }
                     }
                     finally
                     {
@@ -2076,6 +2636,130 @@ namespace Checkmarx.API.AST.Services.Scans
                                         var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
                                         throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
                                     }
+                    }
+                    finally
+                    {
+                        if (disposeResponse_)
+                            response_.Dispose();
+                    }
+                }
+            }
+            finally
+            {
+                if (disposeClient_)
+                    client_.Dispose();
+            }
+        }
+
+        /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+        /// <summary>
+        /// Run a last valid scan for the project
+        /// </summary>
+        /// <param name="authorization">JWT access token (REQUIRED)</param>
+        /// <param name="accept">The API version should be appended to this header</param>
+        /// <param name="correlationId">This ID is used to keep track of a flow if many APIs are involved</param>
+        /// <returns>OK</returns>
+        /// <exception cref="ApiException">A server side error occurred.</exception>
+        public virtual async System.Threading.Tasks.Task<Scan> RescanAsync(RescanInput body, string authorization = null, string accept = null, System.Guid? correlationId = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+        {
+            if (body == null)
+                throw new System.ArgumentNullException("body");
+
+            var client_ = _httpClient;
+            var disposeClient_ = false;
+            try
+            {
+                using (var request_ = new System.Net.Http.HttpRequestMessage())
+                {
+
+                    if (authorization != null)
+                        request_.Headers.TryAddWithoutValidation("Authorization", ConvertToString(authorization, System.Globalization.CultureInfo.InvariantCulture));
+
+                    if (accept != null)
+                        request_.Headers.TryAddWithoutValidation("Accept", ConvertToString(accept, System.Globalization.CultureInfo.InvariantCulture));
+
+                    if (correlationId != null)
+                        request_.Headers.TryAddWithoutValidation("CorrelationId", ConvertToString(correlationId, System.Globalization.CultureInfo.InvariantCulture));
+                    var json_ = Newtonsoft.Json.JsonConvert.SerializeObject(body, JsonSerializerSettings);
+                    var content_ = new System.Net.Http.StringContent(json_);
+                    content_.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("application/json; version=1.0");
+                    request_.Content = content_;
+                    request_.Method = new System.Net.Http.HttpMethod("POST");
+
+                    var urlBuilder_ = new System.Text.StringBuilder();
+                    if (!string.IsNullOrEmpty(_baseUrl)) urlBuilder_.Append(_baseUrl);
+                    // Operation Path: "rescan"
+                    urlBuilder_.Append("rescan");
+
+                    PrepareRequest(client_, request_, urlBuilder_);
+
+                    var url_ = urlBuilder_.ToString();
+                    request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+
+                    PrepareRequest(client_, request_, url_);
+
+                    var response_ = await _retryPolicy.ExecuteAsync(() => client_.SendAsync(CloneHttpRequestMessage(request_), System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken)).ConfigureAwait(false);
+                    var disposeResponse_ = true;
+                    try
+                    {
+                        var headers_ = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.IEnumerable<string>>();
+                        foreach (var item_ in response_.Headers)
+                            headers_[item_.Key] = item_.Value;
+                        if (response_.Content != null && response_.Content.Headers != null)
+                        {
+                            foreach (var item_ in response_.Content.Headers)
+                                headers_[item_.Key] = item_.Value;
+                        }
+
+                        ProcessResponse(client_, response_);
+
+                        var status_ = (int)response_.StatusCode;
+                        if (status_ == 201)
+                        {
+                            var objectResponse_ = await ReadObjectResponseAsync<Scan>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                            if (objectResponse_.Object == null)
+                            {
+                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                            }
+                            return objectResponse_.Object;
+                        }
+                        else
+                            if (status_ == 400)
+                            {
+                                var objectResponse_ = await ReadObjectResponseAsync<Error>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                                if (objectResponse_.Object == null)
+                                {
+                                    throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                                }
+                                throw new ApiException<Error>("Bad Request", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                            }
+                            else
+                                if (status_ == 401)
+                                {
+                                    string responseText_ = (response_.Content == null) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                                    throw new ApiException("Unauthorized, access token is missing or invalid", status_, responseText_, headers_, null);
+                                }
+                                else
+                                    if (status_ == 403)
+                                    {
+                                        string responseText_ = (response_.Content == null) ? string.Empty : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                                        throw new ApiException("Forbidden", status_, responseText_, headers_, null);
+                                    }
+                                    else
+                                        if (status_ == 404)
+                                        {
+                                            var objectResponse_ = await ReadObjectResponseAsync<Error>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                                            if (objectResponse_.Object == null)
+                                            {
+                                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                                            }
+                                            throw new ApiException<Error>("Not Found", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
+                                        }
+                                        else
+                                        {
+                                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                                        }
                     }
                     finally
                     {
@@ -3244,6 +3928,286 @@ namespace Checkmarx.API.AST.Services.Scans
 
         [System.Runtime.Serialization.EnumMember(Value = @"Canceled")]
         Canceled = 2,
+
+    }
+
+    /// <summary>
+    /// A lean scan representation returned by the GET scansBrief request.
+    /// </summary>
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.4.0.0 (NJsonSchema v11.3.2.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class ScanBrief
+    {
+        /// <summary>
+        /// The unique identifier of the scan.
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty("id", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public Guid Id { get; set; }
+
+        /// <summary>
+        /// The associated project id
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty("projectId", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public Guid ProjectId { get; set; }
+
+        /// <summary>
+        /// The date and time that the scan was created.
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty("createdAt", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public System.DateTimeOffset CreatedAt { get; set; }
+
+        private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
+
+        [Newtonsoft.Json.JsonExtensionData]
+        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        {
+            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+            set { _additionalProperties = value; }
+        }
+
+    }
+
+    /// <summary>
+    /// An JSON object containing the list of lean scans returned by the GET scansBrief request.
+    /// </summary>
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.4.0.0 (NJsonSchema v11.3.2.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class ScansBriefCollection
+    {
+        /// <summary>
+        /// The total number of scans in your account.
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty("totalCount", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
+        public int TotalCount { get; set; }
+
+        /// <summary>
+        /// The number of scan results returned, based the applied filters.
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty("filteredTotalCount", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
+        public int FilteredTotalCount { get; set; }
+
+        /// <summary>
+        /// HATEOAS-style pagination links
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty("_links", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public ScansBriefCollectionLinks Links { get; set; }
+
+        /// <summary>
+        /// An array containing the scan results returned, based on the applied filters.
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty("scans", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public System.Collections.Generic.ICollection<ScanBrief> Scans { get; set; }
+
+        private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
+
+        [Newtonsoft.Json.JsonExtensionData]
+        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        {
+            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+            set { _additionalProperties = value; }
+        }
+
+    }
+
+    /// <summary>
+    /// HATEOAS-style pagination links
+    /// </summary>
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.4.0.0 (NJsonSchema v11.3.2.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class ScansBriefCollectionLinks
+    {
+        /// <summary>
+        /// URL for the first page
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty("first", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public ScansBriefLink First { get; set; }
+
+        /// <summary>
+        /// URL for the last page
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty("last", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public ScansBriefLink Last { get; set; }
+
+        /// <summary>
+        /// URL for the next page
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty("next", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public ScansBriefLink Next { get; set; }
+
+        /// <summary>
+        /// URL for the current page
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty("self", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public ScansBriefLink Self { get; set; }
+
+        private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
+
+        [Newtonsoft.Json.JsonExtensionData]
+        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        {
+            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+            set { _additionalProperties = value; }
+        }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.4.0.0 (NJsonSchema v11.3.2.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class ScansBriefLink
+    {
+        [Newtonsoft.Json.JsonProperty("href", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string Href { get; set; }
+
+        private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
+
+        [Newtonsoft.Json.JsonExtensionData]
+        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        {
+            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+            set { _additionalProperties = value; }
+        }
+
+    }
+
+    /// <summary>
+    /// A bounded, searchable, paginated set of distinct scan tags, based on the applied filters.
+    /// </summary>
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.4.0.0 (NJsonSchema v11.3.2.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class ScanTagsFilterResponse
+    {
+        /// <summary>
+        /// Scan custom tags
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty("items", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public System.Collections.Generic.IDictionary<string, System.Collections.Generic.ICollection<string>> Items { get; set; }
+
+        private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
+
+        [Newtonsoft.Json.JsonExtensionData]
+        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        {
+            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+            set { _additionalProperties = value; }
+        }
+
+    }
+
+    /// <summary>
+    /// The filters and pagination options for the scans to retrieve, used by POST /byFilters.
+    /// </summary>
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.4.0.0 (NJsonSchema v11.3.2.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class ByFiltersInput
+    {
+        /// <summary>
+        /// The number of results to skip before returning results
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty("offset", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public int? Offset { get; set; }
+
+        /// <summary>
+        /// The maximum number of results to return
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty("limit", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public int? Limit { get; set; }
+
+        /// <summary>
+        /// Filter results by scan IDs. Only exact matches are returned. (OR operator is used for multiple IDs.)
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty("scan-ids", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public System.Collections.Generic.ICollection<string> Scan_ids { get; set; }
+
+        /// <summary>
+        /// Filter by tag keys (of the key:value pairs) associated with your scans. (OR operator is used for multiple keys.)
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty("tags-keys", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public System.Collections.Generic.ICollection<string> Tags_keys { get; set; }
+
+        /// <summary>
+        /// Filter by tag keys (of the key:value pairs) associated with your scans. (OR operator is used for multiple values.)
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty("tags-values", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public System.Collections.Generic.ICollection<string> Tags_values { get; set; }
+
+        /// <summary>
+        /// Filter results by scans' execution status. (Case insensitive, OR operator for multiple statuses.)
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty("statuses", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public System.Collections.Generic.ICollection<Status> Statuses { get; set; }
+
+        /// <summary>
+        /// Filter results for scans of multiple projects, specified by project IDs. (Exact match, case sensitive, OR operator for multiple IDs, mutually exclusive to 'project-id'.)
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty("projectIDs", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public System.Collections.Generic.ICollection<string> ProjectIDs { get; set; }
+
+        /// <summary>
+        /// Filter scans by their project name
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty("project-names", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public System.Collections.Generic.ICollection<string> Project_names { get; set; }
+
+        /// <summary>
+        /// Filter results by the name of the Git branches.
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty("branches", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public System.Collections.Generic.ICollection<string> Branches { get; set; }
+
+        /// <summary>
+        /// Filter scans by their initiator
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty("initiators", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public System.Collections.Generic.ICollection<string> Initiators { get; set; }
+
+        /// <summary>
+        /// Filter by scan origins.
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty("source-origins", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public System.Collections.Generic.ICollection<string> Source_origins { get; set; }
+
+        /// <summary>
+        /// Source_type from scans table. return zip or github
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty("source-types", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public System.Collections.Generic.ICollection<string> Source_types { get; set; }
+
+        /// <summary>
+        /// The scan searching with substring in all scan columns
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty("searchID", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string SearchID { get; set; }
+
+        /// <summary>
+        /// Sort results by the specified parameter. Enter '+/-' for ascending/descending order, followed by the parameter.
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty("sortBy", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public System.Collections.Generic.ICollection<Anonymous> SortBy { get; set; }
+
+        private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
+
+        [Newtonsoft.Json.JsonExtensionData]
+        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        {
+            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+            set { _additionalProperties = value; }
+        }
+
+    }
+
+    [System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "14.4.0.0 (NJsonSchema v11.3.2.0 (Newtonsoft.Json v13.0.0.0))")]
+    public partial class RescanInput
+    {
+        /// <summary>
+        /// Project id
+        /// </summary>
+        [Newtonsoft.Json.JsonProperty("project_id", Required = Newtonsoft.Json.Required.DisallowNull, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public Guid Project_id { get; set; }
+
+        private System.Collections.Generic.IDictionary<string, object> _additionalProperties;
+
+        [Newtonsoft.Json.JsonExtensionData]
+        public System.Collections.Generic.IDictionary<string, object> AdditionalProperties
+        {
+            get { return _additionalProperties ?? (_additionalProperties = new System.Collections.Generic.Dictionary<string, object>()); }
+            set { _additionalProperties = value; }
+        }
 
     }
 

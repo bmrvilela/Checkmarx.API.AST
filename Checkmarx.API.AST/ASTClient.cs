@@ -1,4 +1,4 @@
-﻿using Checkmarx.API.AST.Enums;
+using Checkmarx.API.AST.Enums;
 using Checkmarx.API.AST.Models;
 using Checkmarx.API.AST.Models.Report;
 using Checkmarx.API.AST.Models.SCA;
@@ -1788,7 +1788,7 @@ namespace Checkmarx.API.AST
             }
         }
 
-        public IEnumerable<Scan> SearchScans(string initiator = null, string tagKey = null, string[] sourceOrigin = null, int itemsPerPage = 1000, int startAt = 0, DateTimeOffset? fromDate = null, IEnumerable<string> scan_ids = null, IEnumerable<Status> statuses = null)
+        public IEnumerable<Scan> SearchScans(string initiator = null, string tagKey = null, string[] sourceOrigin = null, int itemsPerPage = 1000, int startAt = 0, DateTimeOffset? fromDate = null, IEnumerable<string> scan_ids = null, IEnumerable<Status> statuses = null, DateTimeOffset? toDate = null)
         {
             string[] tagKeys = null;
             if (!string.IsNullOrWhiteSpace(tagKey))
@@ -1800,7 +1800,7 @@ namespace Checkmarx.API.AST
 
             while (true)
             {
-                var result = Scans.GetListOfScansAsync(limit: itemsPerPage, offset: startAt, initiators: initiators, tags_keys: tagKeys, source_origins: sourceOrigin, from_date: fromDate, scan_ids: scan_ids, statuses: statuses).Result;
+                var result = Scans.GetListOfScansAsync(limit: itemsPerPage, offset: startAt, initiators: initiators, tags_keys: tagKeys, source_origins: sourceOrigin, from_date: fromDate, scan_ids: scan_ids, statuses: statuses, to_date: toDate).Result;
 
                 foreach (var scan in result.Scans)
                 {
@@ -1812,6 +1812,69 @@ namespace Checkmarx.API.AST
                 if (result.Scans.Count == 0)
                     yield break;
             }
+        }
+
+        /// <summary>
+        /// Same filters as <see cref="SearchScans"/>, but backed by the lean GET /scansBrief endpoint
+        /// (id, project id and created date only) instead of the full scan payload.
+        /// The first page is fetched up front to learn the total count, then the remaining pages are
+        /// fetched concurrently (bounded by <paramref name="maxDegreeOfParallelism"/>).
+        /// </summary>
+        public IEnumerable<ScanBrief> SearchScansBrief(string initiator = null, string tagKey = null, string[] sourceOrigin = null, int itemsPerPage = 1000, int startAt = 0, DateTimeOffset? fromDate = null, IEnumerable<Guid> scan_ids = null, IEnumerable<Status> statuses = null, DateTimeOffset? toDate = null, int maxDegreeOfParallelism = 8)
+        {
+            string[] tagKeys = null;
+            if (!string.IsNullOrWhiteSpace(tagKey))
+                tagKeys = [tagKey];
+
+            string[] initiators = null;
+            if (!string.IsNullOrWhiteSpace(initiator))
+                initiators = [initiator];
+
+            Task<ScansBriefCollection> fetchPage(int offset) =>
+                Scans.GetListOfScansBriefAsync(limit: itemsPerPage, offset: offset, initiators: initiators, tags_keys: tagKeys, source_origins: sourceOrigin, from_date: fromDate, scan_ids: scan_ids, statuses: statuses, to_date: toDate);
+
+            var firstPage = fetchPage(startAt).Result;
+
+            var seenScanIds = new HashSet<Guid>();
+            var scans = new List<ScanBrief>();
+
+            void addScans(IEnumerable<ScanBrief> pageScans)
+            {
+                foreach (var scan in pageScans)
+                    if (seenScanIds.Add(scan.Id))
+                        scans.Add(scan);
+            }
+
+            addScans(firstPage.Scans);
+
+            var remainingOffsets = new List<int>();
+            for (int offset = startAt + itemsPerPage; offset < firstPage.FilteredTotalCount; offset += itemsPerPage)
+                remainingOffsets.Add(offset);
+
+            if (remainingOffsets.Count > 0)
+            {
+                using var throttle = new SemaphoreSlim(maxDegreeOfParallelism);
+
+                var pageTasks = remainingOffsets.Select(async offset =>
+                {
+                    await throttle.WaitAsync();
+                    try
+                    {
+                        return await fetchPage(offset);
+                    }
+                    finally
+                    {
+                        throttle.Release();
+                    }
+                }).ToArray();
+
+                Task.WaitAll(pageTasks);
+
+                foreach (var pageTask in pageTasks)
+                    addScans(pageTask.Result.Scans);
+            }
+
+            return scans;
         }
 
         public Scan GetLastScan(Guid projectId, bool fullScanOnly = false, bool completed = true, string branch = null, ScanTypeEnum scanType = ScanTypeEnum.sast, DateTime? maxScanDate = null, string engineVersion = null)

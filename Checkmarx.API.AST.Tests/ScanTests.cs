@@ -762,6 +762,21 @@ namespace Checkmarx.API.AST.Tests
             Assert.AreEqual(77, search.Count());
         }
 
+        [TestMethod]
+        public void SearchScansBriefTest()
+        {
+            var briefScans = astclient.SearchScansBrief(
+                fromDate: DateTimeOffset.Now.AddDays(-10000),
+                toDate: DateTimeOffset.Now
+                ).ToList();
+
+            Trace.WriteLine(briefScans.Count());
+
+            Assert.IsTrue(briefScans.Any());
+
+            
+        }
+
 
         [TestMethod]
         public void GetScanState()
