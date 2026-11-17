@@ -61,6 +61,9 @@ namespace Checkmarx.API.AST.Models
         CheckmarxOneAssist,
 
         [Description("AISC")]
-        AISC
+        AISC,
+
+        [Description("Credits")]
+        Credits
     }
 }

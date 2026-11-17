@@ -489,7 +489,7 @@ namespace Checkmarx.API.AST.Services.Scans
                     }
                     if (to_date != null)
                     {
-                        urlBuilder_.Append(System.Uri.EscapeDataString("to-date")).Append('=').Append(System.Uri.EscapeDataString(to_date.Value.ToString("s", System.Globalization.CultureInfo.InvariantCulture))).Append('&');
+                        urlBuilder_.Append(System.Uri.EscapeDataString("to-date")).Append('=').Append(System.Uri.EscapeDataString(to_date.Value.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ", System.Globalization.CultureInfo.InvariantCulture))).Append('&');
                     }
                     if (project_names != null)
                     {

@@ -1770,11 +1770,53 @@ namespace Checkmarx.API.AST
             return GetScans(projectId, branch: branch, completed: completed, minScanDate: minScanDate);
         }
 
-        private IEnumerable<Scan> getAllScans(Guid projectId, string branch = null, int itemsPerPage = 1000, int startAt = 0, IEnumerable<string> tagKeys = null)
+        /// <summary>
+        /// Lists the scans of several projects with the same requests (instead of at least one request per project, even
+        /// when the project has no scans in the period) and loads their SAST metadata into the cache, like <see cref="GetScans"/> does.
+        /// Keep the number of projects small: all the scans of all the projects are held in memory at once.
+        /// </summary>
+        /// <returns>All the requested projects as keys, with an empty list when they have no scans.</returns>
+        public Dictionary<Guid, List<Scan>> GetAllScansByProjects(IEnumerable<Guid> projectIds, bool completed = true, DateTime? minScanDate = null, DateTime? maxScanDate = null, int itemsPerPage = 1000)
+        {
+            var ids = projectIds?.Distinct().ToList() ?? throw new ArgumentNullException(nameof(projectIds));
+
+            var result = ids.ToDictionary(x => x, x => new List<Scan>());
+
+            if (ids.Count == 0)
+                return result;
+
+            DateTimeOffset? fromDate = minScanDate.HasValue ? new DateTimeOffset(minScanDate.Value) : null;
+            DateTimeOffset? toDate = maxScanDate.HasValue ? new DateTimeOffset(maxScanDate.Value) : null;
+
+            var projectIdsFilter = string.Join(",", ids);
+            int startAt = 0;
+
+            while (true)
+            {
+                var page = Scans.GetListOfScansAsync(project_ids: projectIdsFilter, limit: itemsPerPage, offset: startAt, from_date: fromDate, to_date: toDate).Result;
+
+                foreach (var scan in page.Scans)
+                {
+                    if ((!completed || scan.Status == Status.Completed || scan.Status == Status.Partial) && result.TryGetValue(scan.ProjectId, out var projectScans))
+                        projectScans.Add(scan);
+                }
+
+                startAt += itemsPerPage;
+
+                if (page.Scans.Count < itemsPerPage)
+                    break;
+            }
+
+            loadSASTMetadataInfoForScans(result.Values.SelectMany(x => x).Select(x => x.Id).ToArray());
+
+            return result;
+        }
+
+        private IEnumerable<Scan> getAllScans(Guid projectId, string branch = null, int itemsPerPage = 1000, int startAt = 0, IEnumerable<string> tagKeys = null, DateTimeOffset? fromDate = null, DateTimeOffset? toDate = null)
         {
             while (true)
             {
-                var result = Scans.GetListOfScansAsync(projectId, limit: itemsPerPage, offset: startAt, branch: branch, tags_keys: tagKeys).Result;
+                var result = Scans.GetListOfScansAsync(projectId, limit: itemsPerPage, offset: startAt, branch: branch, tags_keys: tagKeys, from_date: fromDate, to_date: toDate).Result;
 
                 foreach (var scan in result.Scans)
                 {
@@ -1783,7 +1825,7 @@ namespace Checkmarx.API.AST
 
                 startAt += itemsPerPage;
 
-                if (result.Scans.Count == 0)
+                if (result.Scans.Count < itemsPerPage)
                     yield break;
             }
         }
@@ -1957,16 +1999,17 @@ namespace Checkmarx.API.AST
             IEnumerable<string> tagKeys = null,
             string sastEngineVersion = null)
         {
-            var scans = getAllScans(projectId, branch, tagKeys: tagKeys);
+            DateTimeOffset? serverFromDate = minScanDate.HasValue ? new DateTimeOffset(minScanDate.Value) : null;
+            DateTimeOffset? serverToDate = maxScanDate.HasValue ? new DateTimeOffset(maxScanDate.Value) : null;
+
+            IEnumerable<Scan> scans = getAllScans(projectId, branch, tagKeys: tagKeys, fromDate: serverFromDate, toDate: serverToDate).ToList();
 
             List<Scan> list = [];
             if (scans.Any())
             {
                 scans = scans.Where(x =>
                     (!completed || x.Status == Status.Completed || x.Status == Status.Partial) &&
-                    (string.IsNullOrEmpty(branch) || x.Branch == branch) &&
-                    (maxScanDate == null || x.CreatedAt.DateTime <= maxScanDate) &&
-                    (minScanDate == null || x.CreatedAt.DateTime >= minScanDate)
+                    (string.IsNullOrEmpty(branch) || x.Branch == branch)
                 );
 
                 if (engine == null || engine == SAST_Engine)
