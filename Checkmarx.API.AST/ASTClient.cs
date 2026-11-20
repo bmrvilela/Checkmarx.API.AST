@@ -41,14 +41,15 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Net.Mail;
 using System.Threading;
 using System.Threading.Tasks;
 using DASTResults = Checkmarx.API.AST.Services.DASTResults.DASTResults;
 using DASTScansManager = Checkmarx.API.AST.Services.DASTScansManager.DASTScansManager;
 using EnvWithStatus = Checkmarx.API.AST.Services.DASTScansManager.EnvWithStatus;
-using ScanWithStatus = Checkmarx.API.AST.Services.DASTScansManager.ScanWithStatus;
 using ResultSummarized = Checkmarx.API.AST.Services.DASTResults.ResultSummarized;
 using ResultSummarizedList = Checkmarx.API.AST.Services.DASTResults.ResultSummarizedList;
+using ScanWithStatus = Checkmarx.API.AST.Services.DASTScansManager.ScanWithStatus;
 
 namespace Checkmarx.API.AST
 {
@@ -117,18 +118,133 @@ namespace Checkmarx.API.AST
         // and a set doesn't leak back up to the caller once the request completes.
         internal static readonly AsyncLocal<string> _currentRequestDescription = new AsyncLocal<string>();
 
+        // Marks a request (the token request) that must not get a bearer token nor trigger a token refresh.
+        private static readonly HttpRequestOptionsKey<bool> _skipAuthOption = new HttpRequestOptionsKey<bool>("ASTClient.SkipAuth");
+
         private sealed class RequestDescriptionHandler : DelegatingHandler
         {
             public RequestDescriptionHandler(HttpMessageHandler innerHandler) : base(innerHandler) { }
 
+            // Set by the owning ASTClient right after creating its HttpClient.
+            internal ASTClient Owner { get; set; }
+
+            // Not async on purpose: the AsyncLocal below must be set in the caller's context (the retry
+            // policy's callbacks read it), and a set made inside an async method would not flow back.
             protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
             {
                 _currentRequestDescription.Value = $"{request.Method} {request.RequestUri}";
-                return base.SendAsync(request, cancellationToken);
+
+                var owner = Owner;
+                if (owner == null || (request.Options.TryGetValue(_skipAuthOption, out var skip) && skip))
+                    return base.SendAsync(request, cancellationToken);
+
+                return sendAuthorizedAsync(owner, request, cancellationToken);
+            }
+
+            // The token is checked and applied here, when each request (and so each retry of the
+            // retry policy) is really sent, instead of only when a service property was read before the
+            // call started. A call that stalled in retries for longer than the token lives would otherwise
+            // go out with an expired token while no worker was around to refresh it.
+            private async Task<HttpResponseMessage> sendAuthorizedAsync(ASTClient owner, HttpRequestMessage request, CancellationToken cancellationToken)
+            {
+                var token = owner.getAccessToken();
+                var ours = applyToken(owner, request, token);
+
+                var response = await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
+
+                // Only buffered content can be sent again; a caller-supplied Authorization is not ours to replace.
+                if (response.StatusCode != HttpStatusCode.Unauthorized || !ours || !(request.Content == null || request.Content is ByteArrayContent))
+                    return response;
+
+                // A 401 with a token that is still valid is a genuine 401 (the caller is not allowed): return it.
+                // It is only worth another try when the token we sent was stale: it expired while the request was
+                // waiting or in flight, or another worker already replaced it.
+                var current = owner._accessToken;
+                if (current == token && !isExpired(token))
+                    return response;
+
+                Console.WriteLine(
+                    $"Unauthorized (401) for {request.Method} {request.RequestUri} - the token sent {describeToken(token)}" +
+                    $"{(current != token ? " and has since been replaced" : "")}. Retrying once with a fresh token.");
+
+                response.Dispose();
+
+                token = owner.refreshAccessTokenAfterRejection(token);
+
+                var retry = await cloneForRetryAsync(request).ConfigureAwait(false);
+                applyToken(owner, retry, token);
+
+                response = await base.SendAsync(retry, cancellationToken).ConfigureAwait(false);
+
+                if (response.StatusCode == HttpStatusCode.Unauthorized)
+                    Console.WriteLine($"Unauthorized (401) for {request.Method} {request.RequestUri} persisted with a fresh token ({describeToken(token)}).");
+
+                return response;
+            }
+
+            // Expired, or about to be (the server's clock may differ a little from ours).
+            private static bool isExpired(string token) => tokenTimeLeft(token) is TimeSpan left && left < TimeSpan.FromSeconds(30);
+
+            private static TimeSpan? tokenTimeLeft(string token)
+            {
+                try
+                {
+                    var claims = JwtUtils.GetTokenClaims(token);
+                    if (claims != null && claims.TryGetValue("exp", out var exp) && long.TryParse(exp.FirstOrDefault(), out var seconds))
+                        return DateTimeOffset.FromUnixTimeSeconds(seconds) - DateTimeOffset.UtcNow;
+                }
+                catch (Exception)
+                {
+                    // the token is only inspected for diagnostics and this check: it must never break the call
+                }
+
+                return null;
+            }
+
+            // Returns false when the request already carries an Authorization that was not issued by this client.
+            private static bool applyToken(ASTClient owner, HttpRequestMessage request, string token)
+            {
+                var existing = request.Headers.Authorization;
+
+                if (existing != null && !(existing.Scheme == "Bearer" && existing.Parameter != null && owner._issuedTokens.ContainsKey(existing.Parameter)))
+                    return false;
+
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                return true;
+            }
+
+            private static async Task<HttpRequestMessage> cloneForRetryAsync(HttpRequestMessage request)
+            {
+                var clone = new HttpRequestMessage(request.Method, request.RequestUri) { Version = request.Version, VersionPolicy = request.VersionPolicy };
+
+                foreach (var header in request.Headers)
+                    clone.Headers.TryAddWithoutValidation(header.Key, header.Value);
+
+                foreach (var option in request.Options)
+                    ((IDictionary<string, object>)clone.Options).Add(option);
+
+                if (request.Content != null)
+                {
+                    // Copied, not shared: disposing one message must not break the other.
+                    clone.Content = new ByteArrayContent(await request.Content.ReadAsByteArrayAsync().ConfigureAwait(false));
+                    foreach (var header in request.Content.Headers)
+                        clone.Content.Headers.TryAddWithoutValidation(header.Key, header.Value);
+                }
+
+                return clone;
+            }
+
+            private static string describeToken(string token)
+            {
+                var left = tokenTimeLeft(token);
+                if (left == null)
+                    return "has an unknown expiry";
+
+                return left > TimeSpan.Zero ? $"expires in {left.Value.TotalSeconds:F0}s" : $"expired {-left.Value.TotalSeconds:F0}s ago";
             }
         }
 
-        private readonly HttpClient _httpClient = new HttpClient(new RequestDescriptionHandler(new SocketsHttpHandler
+        private readonly RequestDescriptionHandler _httpHandler = new RequestDescriptionHandler(new SocketsHttpHandler
         {
             // Proactively recycle pooled connections instead of holding them open indefinitely.
             // Long-running exports (many hours) were hitting "connection forcibly closed by remote
@@ -136,12 +252,22 @@ namespace Checkmarx.API.AST
             // connections the pool still thought were alive.
             PooledConnectionLifetime = TimeSpan.FromMinutes(3),
             PooledConnectionIdleTimeout = TimeSpan.FromMinutes(1)
-        }))
+        });
+
+        // Created by the constructors: the handler needs this client to get its tokens.
+        private readonly HttpClient _httpClient;
+
+        private HttpClient createHttpClient()
         {
-            // We don’t want HttpClient controlling timeouts — we want Polly to control them
-            // We are just adding a big timeout just as a safety net in case Polly somehow fails to cancel
-            Timeout = TimeSpan.FromMinutes(10)
-        };
+            _httpHandler.Owner = this;
+
+            return new HttpClient(_httpHandler)
+            {
+                // We don’t want HttpClient controlling timeouts — we want Polly to control them
+                // We are just adding a big timeout just as a safety net in case Polly somehow fails to cancel
+                Timeout = TimeSpan.FromMinutes(10)
+            };
+        }
 
         internal static readonly IAsyncPolicy<HttpResponseMessage> _retryPolicy = createPolicy();
 
@@ -898,7 +1024,18 @@ namespace Checkmarx.API.AST
         private readonly object _connectLock = new object();
         private bool _defaultAcceptSet;
 
-        private bool tokenNeedsRefresh() => (_bearerValidTo - DateTime.UtcNow).TotalMinutes < 5;
+        private bool tokenNeedsRefresh() => DateTime.UtcNow >= _bearerValidTo;
+
+        // The token the client currently uses. Requests read it here (not from DefaultRequestHeaders,
+        // which is rewritten while other threads are sending) when the handler sends them.
+        private volatile string _accessToken;
+        private DateTime _lastRefreshUtc = DateTime.MinValue;
+
+        // Every token this client has issued, to tell its own Authorization headers from a caller-supplied one.
+        private readonly ConcurrentDictionary<string, byte> _issuedTokens = new ConcurrentDictionary<string, byte>();
+
+        // A token is not trusted for its last few minutes. Normally 10, less for tokens that live shorter than 30 minutes.
+        private static int refreshMarginSeconds(int expiresIn) => Math.Min(600, expiresIn / 3);
 
         public bool Connected
         {
@@ -910,21 +1047,52 @@ namespace Checkmarx.API.AST
                     {
                         // Another thread may have refreshed while this one waited for the lock.
                         if (tokenNeedsRefresh())
-                        {
-                            var token = authenticate();
-                            if (!_defaultAcceptSet)
-                            {
-                                _httpClient.DefaultRequestHeaders.Add("Accept", "*/*");
-                                _defaultAcceptSet = true;
-                            }
-                            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                            _httpClient.DefaultRequestHeaders.ConnectionClose = false; // Explicitly ask to keep connection alive
-                            _userPermissions = null; // invalidate on token refresh
-                            _bearerValidTo = DateTime.UtcNow.AddSeconds(_bearerExpiresIn - 300);
-                        }
+                            refreshTokenLocked();
                     }
                 }
                 return true;
+            }
+        }
+
+        // Must be called holding _connectLock.
+        private void refreshTokenLocked()
+        {
+            var token = authenticate();
+            if (!_defaultAcceptSet)
+            {
+                _httpClient.DefaultRequestHeaders.Add("Accept", "*/*");
+                _defaultAcceptSet = true;
+            }
+
+            // Still kept up to date for the callers that read the token from the HttpClient property.
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            _httpClient.DefaultRequestHeaders.ConnectionClose = false; // Explicitly ask to keep connection alive
+            _userPermissions = null; // invalidate on token refresh
+
+            _issuedTokens[token] = 0;
+            _accessToken = token;
+            _lastRefreshUtc = DateTime.UtcNow;
+            _bearerValidTo = _lastRefreshUtc.AddSeconds(_bearerExpiresIn - refreshMarginSeconds(_bearerExpiresIn));
+        }
+
+        private string getAccessToken()
+        {
+            _ = Connected;
+            return _accessToken;
+        }
+
+        /// <summary>
+        /// The server rejected the expired <paramref name="rejectedToken"/>: gets a new one, unless another
+        /// thread already did (many workers hit by the same expiry must trigger a single refresh).
+        /// </summary>
+        private string refreshAccessTokenAfterRejection(string rejectedToken)
+        {
+            lock (_connectLock)
+            {
+                if (_accessToken == rejectedToken)
+                    refreshTokenLocked();
+
+                return _accessToken;
             }
         }
 
@@ -1036,6 +1204,7 @@ namespace Checkmarx.API.AST
             }
 
             var req = new HttpRequestMessage(HttpMethod.Post, identityURL) { Content = new FormUrlEncodedContent(kv) };
+            req.Options.Set(_skipAuthOption, true); // the handler must not ask for a token to get a token
             req.Headers.UserAgent.Add(new ProductInfoHeaderValue("ASAProgramTracker", "1.0"));
 
             // Per-request Accept: adding it to DefaultRequestHeaders on every refresh duplicated the header
@@ -1073,6 +1242,8 @@ namespace Checkmarx.API.AST
             if (string.IsNullOrWhiteSpace(tenant)) throw new ArgumentNullException(nameof(tenant));
             if (string.IsNullOrWhiteSpace(apiKey)) throw new ArgumentNullException(nameof(apiKey));
 
+            _httpClient = createHttpClient();
+
             ASTServer = astServer;
             AccessControlServer = accessControlServer;
             Tenant = tenant;
@@ -1100,6 +1271,8 @@ namespace Checkmarx.API.AST
             if (string.IsNullOrWhiteSpace(tenant)) throw new ArgumentNullException(nameof(tenant));
             if (string.IsNullOrWhiteSpace(clientId)) throw new ArgumentNullException(nameof(clientId));
             if (string.IsNullOrWhiteSpace(clientSecret)) throw new ArgumentNullException(nameof(clientSecret));
+
+            _httpClient = createHttpClient();
 
             ASTServer = astServer;
             AccessControlServer = accessControlServer;
@@ -4334,6 +4507,115 @@ namespace Checkmarx.API.AST
                 var result = JsonConvert.DeserializeObject<ContributorInsightsResponse>(json);
                 return result?.Items ?? Enumerable.Empty<ContributorInsightsGroup>();
             }
+        }
+
+        #endregion
+
+        #region Feedback App
+
+        public List<FeedbackAppDto> GetFeedbackApps(int limit = 25)
+        {
+            var allapps = new List<FeedbackAppDto>();
+            var page = 1;
+
+            while (true)
+            {
+                var apps = Integrations.GetFeedbackAppCollectionAsync(page, limit).Result.Apps;
+
+                allapps.AddRange(apps);
+
+                if (apps.Count() < limit)
+                    break;
+
+                page++;
+            }
+
+            return allapps;
+        }
+
+        public List<Profile> GetFeedbackAppProfiles(int limit = 25)
+        {
+            var allProfiles = new List<Profile>();
+            var page = 1;
+
+            while (true)
+            {
+                var profiles = Integrations.GetProfilesAsync(page, limit).Result;
+
+                allProfiles.AddRange(profiles);
+
+                if (profiles.Count() < limit)
+                    break;
+
+                page++;
+            }
+
+            return allProfiles;
+        }
+
+        public IEnumerable<MailAddress> GetMailAddressesForCVENotification(Guid projectId)
+        {
+            var projectProfiles = GetProjectProfiles();
+
+            var emailstoNotify = GetEmailsToNotifyForSCANewVuln();
+
+            if (projectProfiles.ContainsKey(projectId))
+            {
+                // get project profile.
+                var profileName = projectProfiles[projectId];
+
+                // get the emails to notify
+                if (!emailstoNotify.ContainsKey(profileName))
+                    return [];
+
+                return emailstoNotify[profileName].Select(x => new MailAddress(x));
+            }
+
+            return [];
+        }
+
+        public Dictionary<Guid, string> GetProjectProfiles()
+        {
+            Dictionary<Guid, string> projectProfiles = [];
+
+            foreach (var app in Integrations.GetProjectProfilesAsync().Result)
+            {
+                if (string.IsNullOrWhiteSpace(app.ProfileName))
+                    continue;
+
+                projectProfiles.Add(app.ProjectId, app.ProfileName);
+            }
+
+            return projectProfiles;
+        }
+
+        public Dictionary<string, ICollection<string>> GetEmailsToNotifyForSCANewVuln()
+        {
+            // is the profile id case sensitive?
+            Dictionary<string, ICollection<string>> profileEmails = new Dictionary<string, ICollection<string>>(StringComparer.InvariantCulture);
+
+            foreach (var profile in GetFeedbackAppProfiles())
+            {
+                var list = new List<string>();
+
+                foreach (var feedbackApp in profile.FeedbackAppDtos)
+                {
+                    if (feedbackApp.Type != "Email")
+                        continue;
+
+                    var app = Integrations.GetFeedbackAppAsync(feedbackApp.Id).Result;
+
+                    if (app.TriggerCondition != "SCA_NEW_VULN")
+                        continue;
+
+                    list.AddRange(app.Configuration.Emails);
+                }
+
+                if (list.Any())
+                    profileEmails.Add(profile.Name, list);
+            }
+
+            return profileEmails;
         }
 
         #endregion

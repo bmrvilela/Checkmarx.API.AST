@@ -129,7 +129,7 @@ namespace Checkmarx.API.AST.Services
             }
         }
 
-        public virtual async System.Threading.Tasks.Task<ProfilesCollection> GetProfilesAsync(int page = 1, int limit = 25, System.Threading.CancellationToken cancellationToken = default)
+        public virtual async System.Threading.Tasks.Task<IEnumerable<Profile>> GetProfilesAsync(int page = 1, int limit = 25, System.Threading.CancellationToken cancellationToken = default)
         {
             var urlBuilder_ = new System.Text.StringBuilder();
 
@@ -175,7 +175,7 @@ namespace Checkmarx.API.AST.Services
                         var status_ = (int)response_.StatusCode;
                         if (status_ == 200)
                         {
-                            var objectResponse_ = await ReadObjectResponseAsync<ProfilesCollection>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                            var objectResponse_ = await ReadObjectResponseAsync<IEnumerable<Profile>>(response_, headers_, cancellationToken).ConfigureAwait(false);
                             if (objectResponse_.Object == null)
                             {
                                 throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
@@ -183,20 +183,20 @@ namespace Checkmarx.API.AST.Services
                             return objectResponse_.Object;
                         }
                         else
-                        if (status_ == 400)
-                        {
-                            var objectResponse_ = await ReadObjectResponseAsync<WebError>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
+                            if (status_ == 400)
                             {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                                var objectResponse_ = await ReadObjectResponseAsync<WebError>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                                if (objectResponse_.Object == null)
+                                {
+                                    throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                                }
+                                throw new ApiException<WebError>("Invalid request supplied.", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
                             }
-                            throw new ApiException<WebError>("Invalid request supplied.", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
-                        }
-                        else
-                        {
-                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                        }
+                            else
+                            {
+                                var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                                throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                            }
                     }
                     finally
                     {
@@ -210,73 +210,6 @@ namespace Checkmarx.API.AST.Services
                 if (disposeClient_)
                     client_.Dispose();
             }
-        }
-
-
-        public IEnumerable<MailAddress> GetMailAddressesForCVENotification(Guid projectId)
-        {
-            var projectProfiles = GetProjectProfiles();
-
-            var emailstoNotify = GetEmailsToNotifyForSCANewVuln();
-
-            if (projectProfiles.ContainsKey(projectId))
-            {
-                // get project profile.
-                var profileName = projectProfiles[projectId];
-
-                // get the emails to notify
-                if (!emailstoNotify.ContainsKey(profileName))
-                    return [];
-
-                return emailstoNotify[profileName].Select(x => new MailAddress(x));
-            }
-
-            return [];
-        }
-
-
-        public Dictionary<Guid, string> GetProjectProfiles()
-        {
-            Dictionary<Guid, string> projectProfiles = [];
-
-            foreach (var app in GetProjectProfilesAsync().Result)
-            {
-                if (string.IsNullOrWhiteSpace(app.ProfileName))
-                    continue;
-
-                projectProfiles.Add(app.ProjectId, app.ProfileName);
-            }
-
-            return projectProfiles;
-        }
-
-        public Dictionary<string, ICollection<string>> GetEmailsToNotifyForSCANewVuln()
-        {
-            // is the profile id case sensitive?
-            Dictionary<string, ICollection<string>> profileEmails = new Dictionary<string, ICollection<string>>(StringComparer.InvariantCulture);
-
-            foreach (var profile in GetProfilesAsync().Result.Profiles)
-            {
-                var list = new List<string>();
-
-                foreach (var feedbackApp in profile.FeedbackAppDtos)
-                {
-                    if (feedbackApp.Type != "Email")
-                        continue;
-
-                    var app = GetFeedbackAppAsync(feedbackApp.Id).Result;
-
-                    if (app.TriggerCondition != "SCA_NEW_VULN")
-                        continue;
-
-                    list.AddRange(app.Configuration.Emails);
-                }
-
-                if (list.Any())
-                    profileEmails.Add(profile.Name, list);
-            }
-
-            return profileEmails;
         }
 
         public virtual async System.Threading.Tasks.Task<FeedbackAppConfiguration> GetFeedbackAppAsync(int feedbackAppId, System.Threading.CancellationToken cancellationToken = default)
@@ -324,20 +257,20 @@ namespace Checkmarx.API.AST.Services
                             return objectResponse_.Object;
                         }
                         else
-                        if (status_ == 400)
-                        {
-                            var objectResponse_ = await ReadObjectResponseAsync<WebError>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
+                            if (status_ == 400)
                             {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                                var objectResponse_ = await ReadObjectResponseAsync<WebError>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                                if (objectResponse_.Object == null)
+                                {
+                                    throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                                }
+                                throw new ApiException<WebError>("Invalid request supplied.", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
                             }
-                            throw new ApiException<WebError>("Invalid request supplied.", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
-                        }
-                        else
-                        {
-                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                        }
+                            else
+                            {
+                                var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                                throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                            }
                     }
                     finally
                     {
@@ -405,20 +338,20 @@ namespace Checkmarx.API.AST.Services
                             return objectResponse_.Object;
                         }
                         else
-                        if (status_ == 400)
-                        {
-                            var objectResponse_ = await ReadObjectResponseAsync<WebError>(response_, headers_, cancellationToken).ConfigureAwait(false);
-                            if (objectResponse_.Object == null)
+                            if (status_ == 400)
                             {
-                                throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                                var objectResponse_ = await ReadObjectResponseAsync<WebError>(response_, headers_, cancellationToken).ConfigureAwait(false);
+                                if (objectResponse_.Object == null)
+                                {
+                                    throw new ApiException("Response was null which was not expected.", status_, objectResponse_.Text, headers_, null);
+                                }
+                                throw new ApiException<WebError>("Invalid request supplied.", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
                             }
-                            throw new ApiException<WebError>("Invalid request supplied.", status_, objectResponse_.Text, headers_, objectResponse_.Object, null);
-                        }
-                        else
-                        {
-                            var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
-                        }
+                            else
+                            {
+                                var responseData_ = response_.Content == null ? null : await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+                                throw new ApiException("The HTTP status code of the response was not expected (" + status_ + ").", status_, responseData_, headers_, null);
+                            }
                     }
                     finally
                     {
@@ -762,8 +695,4 @@ namespace Checkmarx.API.AST.Services
         [JsonProperty("filteredTotalCount", NullValueHandling = NullValueHandling.Ignore)]
         public int FilteredTotalCount { get; set; }
     }
-
-
-
-
 }
