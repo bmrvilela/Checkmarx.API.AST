@@ -47,9 +47,9 @@ namespace Checkmarx.API.AST.Tests
         [TestMethod]
         public void ListProjectProfilesTest()
         {
-            Dictionary<string, ICollection<string>> emailstoNotify = astclient.Integrations.GetEmailsToNotifyForSCANewVuln();
+            Dictionary<string, ICollection<string>> emailstoNotify = astclient.GetEmailsToNotifyForSCANewVuln();
 
-            Dictionary<Guid, string> projectProfiles = astclient.Integrations.GetProjectProfiles();
+            Dictionary<Guid, string> projectProfiles = astclient.GetProjectProfiles();
 
             foreach (var proj in astclient.GetAllProjectsDetails())
             {
@@ -74,7 +74,10 @@ namespace Checkmarx.API.AST.Tests
         [TestMethod]
         public void ListProfilesTest()
         {
-
+            foreach (var profile in astclient.GetFeedbackAppProfiles())
+            {
+                Trace.WriteLine(profile.Name);
+            }
         }
 
         [TestMethod]
@@ -97,7 +100,7 @@ namespace Checkmarx.API.AST.Tests
             Dictionary<string, List<string>> profileEmails = new Dictionary<string, List<string>>(StringComparer.InvariantCultureIgnoreCase);
 
             // Get only the Email notification SCA New Vulnerability 
-            foreach (var feedbackApp in astclient.Integrations.GetFeedbackAppCollectionAsync().Result.Apps)
+            foreach (var feedbackApp in astclient.GetFeedbackApps())
             {
                 Trace.WriteLine($"Id: {feedbackApp.Id} - Name: {feedbackApp.Name} - Type: {feedbackApp.Type} - TriggerCondition: {feedbackApp.TriggerCondition}");
 
