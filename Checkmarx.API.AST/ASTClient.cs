@@ -1130,19 +1130,26 @@ namespace Checkmarx.API.AST
 
         public string authenticate()
         {
-            var response = requestAuthenticationToken();
-            if (response.StatusCode == System.Net.HttpStatusCode.OK)
+            try
             {
-                JObject accessToken = JsonConvert.DeserializeObject<JObject>(response.Content.ReadAsStringAsync().Result);
-                string authToken = ((JProperty)accessToken.First).Value.ToString();
-                _bearerExpiresIn = (int)accessToken["expires_in"];
+                var response = requestAuthenticationToken();
+                if (response.StatusCode == System.Net.HttpStatusCode.OK)
+                {
+                    JObject accessToken = JsonConvert.DeserializeObject<JObject>(response.Content.ReadAsStringAsync().Result);
+                    string authToken = ((JProperty)accessToken.First).Value.ToString();
+                    _bearerExpiresIn = (int)accessToken["expires_in"];
 
-                if (_resolveAstServerFromToken)
-                    resolveAstServerFromToken(authToken);
+                    if (_resolveAstServerFromToken)
+                        resolveAstServerFromToken(authToken);
 
-                return authToken;
+                    return authToken;
+                }
+                throw new Exception(response.Content.ReadAsStringAsync().Result);
             }
-            throw new Exception(response.Content.ReadAsStringAsync().Result);
+            catch (TaskCanceledException ex)
+            {
+                throw new Exception("Token request was cancelled (timeout or external cancellation). CxOne may be unresponsive.", ex);
+            }
         }
 
         // Only set by the API-key-only constructor, which has just a guess for the AST server.
@@ -1210,7 +1217,7 @@ namespace Checkmarx.API.AST
             // Per-request Accept: adding it to DefaultRequestHeaders on every refresh duplicated the header
             // and mutated the shared collection while other threads were sending.
             req.Headers.TryAddWithoutValidation("Accept", "*/*");
-            return _httpClient.SendAsync(req).Result;
+            return _httpClient.SendAsync(req, CancellationToken.None).Result;
         }
 
         #endregion
@@ -1938,9 +1945,9 @@ namespace Checkmarx.API.AST
         /// </summary>
         /// <param name="projectId"></param>
         /// <returns></returns>
-        public IEnumerable<Scan> GetAllScans(Guid projectId, string branch = null, bool completed = true, DateTime? minScanDate = null)
+        public IEnumerable<Scan> GetAllScans(Guid projectId, string branch = null, bool completed = true, DateTime? minScanDate = null, DateTime? maxScanDate = null)
         {
-            return GetScans(projectId, branch: branch, completed: completed, minScanDate: minScanDate);
+            return GetScans(projectId, branch: branch, completed: completed, minScanDate: minScanDate, maxScanDate: maxScanDate);
         }
 
         /// <summary>

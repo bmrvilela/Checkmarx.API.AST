@@ -3025,7 +3025,7 @@ namespace Checkmarx.API.AST.Services.Scans
         public string Type { get; set; }
 
         [JsonProperty("value")]
-        public MetadataValue Value { get; set; }
+        public object Value { get; set; }
     }
 
     public class MetadataValue

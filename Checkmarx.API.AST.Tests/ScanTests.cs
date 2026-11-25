@@ -461,7 +461,7 @@ namespace Checkmarx.API.AST.Tests
 
             foreach (var property in lastScan.Metadata.Configs)
             {
-                Trace.WriteLine($"\t+ {property.Type} = {property.Value?.Incremental}");
+                Trace.WriteLine($"\t+ {property.Type} = {property.Value.ToString()}");
             }
 
             Trace.WriteLine("---");
@@ -774,7 +774,7 @@ namespace Checkmarx.API.AST.Tests
 
             Assert.IsTrue(briefScans.Any());
 
-            
+
         }
 
 
